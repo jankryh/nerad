@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  rez-jizdni-rad:
+    image: quay.io/rh-ee-jkryhut/nerad:amd64
+    container_name: rez-jizdni-rad
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Prague
+    labels:
+      - "com.docker.compose.project=rez-jizdni-rad"
+      - "description=Jízdní řád z a do Řeže - React aplikace"
