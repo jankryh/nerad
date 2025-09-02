@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   rez-jizdni-rad:
-    image: quay.io/rh-ee-jkryhut/nerad:amd64
+    image: quay.io/rh-ee-jkryhut/nerad:latest
     container_name: rez-jizdni-rad
     ports:
       - "8080:80"
