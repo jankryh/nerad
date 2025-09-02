@@ -4,10 +4,10 @@
 
 **🎯 Image je dostupný na Quay.io:**
 - **Repository**: `quay.io/rh-ee-jkryhut/nerad`
-- **Latest**: `quay.io/rh-ee-jkryhut/nerad:latest`
-- **Versioned**: `quay.io/rh-ee-jkryhut/nerad:v1.0.0`
-- **AMD64**: `quay.io/rh-ee-jkryhut/nerad:amd64`
-- **Multi-arch**: `quay.io/rh-ee-jkryhut/nerad:multi-arch`
+- **Latest**: `quay.io/rh-ee-jkryhut/nerad:latest` (Node.js 20, npm latest)
+- **Stable**: `quay.io/rh-ee-jkryhut/nerad:v1.1.0` (opravené deprecated závislosti)
+- **Legacy**: `quay.io/rh-ee-jkryhut/nerad:v1.0.0` (původní verze)
+- **AMD64**: `quay.io/rh-ee-jkryhut/nerad:amd64` (kompatibilní s Linux AMD64)
 
 ## 🚀 Spuštění s Podman
 
