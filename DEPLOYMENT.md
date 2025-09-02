@@ -30,15 +30,25 @@ Po spuštění bude aplikace dostupná na:
 ## 🔧 Container Details
 
 ### Technické specifikace:
-- **Base Image**: `nginx:alpine`
+- **Base Image**: `docker.io/library/nginx:alpine`
+- **Build Image**: `docker.io/library/node:20-alpine`
 - **Port**: 80 (HTTP)
 - **Size**: ~187 kB (gzipped: ~63 kB)
 - **Runtime**: Nginx server
 
 ### Build informace:
-- **Multi-stage build** s Node.js 18 Alpine
+- **Multi-stage build** s Node.js 20 Alpine
+- **NPM**: Nejnovější verze (11.5.2+)
 - **Produkční build** s Vite
 - **Optimalizované** pro production
+- **Linux kompatibilní** - plné registry názvy
+
+### Linux deployment:
+Pro Linux systémy použijte plné registry názvy v Dockerfile:
+```dockerfile
+FROM docker.io/library/node:20-alpine AS builder
+FROM docker.io/library/nginx:alpine
+```
 
 ## 🛠️ Správa containeru
 
