@@ -89,7 +89,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
   return (
     <main id="main-content" className="w-full space-y-12" role="main" aria-label="Jízdní řády vlaků a autobusů">
       {/* Enhanced Direction headers */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 lg:gap-12">
+      {/* <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 lg:gap-12">
         <div className="text-center xl:text-left space-y-4">
           <div className="flex items-center justify-center xl:justify-start space-x-4 mb-4">
             <div className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 p-4 rounded-2xl border border-blue-400/20">
@@ -133,38 +133,34 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Enhanced Departure boards grid */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 lg:gap-12">
         {/* From Řež column */}
         <section className="space-y-8" aria-label="Odjezdy z Řeže">
           <DepartureBoard
-            title={
-              <div className="flex items-center justify-center space-x-3">
-                <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 p-3 rounded-2xl border border-blue-400/20">
-                  <Train className="w-6 h-6 text-blue-300" aria-hidden="true" />
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold">Vlak S4</div>
-                  <div className="text-sm text-white/70 font-medium">→ Praha Masarykovo</div>
-                </div>
+            title={{
+              icon: <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 p-3 rounded-2xl border border-blue-400/20">
+                <Train className="w-6 h-6 text-blue-300" aria-hidden="true" />
+              </div>,
+              content: <div className="text-center">
+                <div className="text-lg font-bold">S4</div>
+                <div className="text-sm text-white/70 font-medium">Řež → Praha Masarykovo</div>
               </div>
-            }
+            }}
             departures={trainFromRez}
           />
           <DepartureBoard
-            title={
-              <div className="flex items-center justify-center space-x-3">
-                <div className="bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 p-3 rounded-2xl border border-emerald-400/20">
-                  <Bus className="w-6 h-6 text-emerald-300" aria-hidden="true" />
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold">Autobus 371</div>
-                  <div className="text-sm text-white/70 font-medium">→ Praha Kobylisy</div>
-                </div>
+            title={{
+              icon: <div className="bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 p-3 rounded-2xl border border-emerald-400/20">
+                <Bus className="w-6 h-6 text-emerald-300" aria-hidden="true" />
+              </div>,
+              content: <div className="text-center">
+                <div className="text-lg font-bold">371</div>
+                <div className="text-sm text-white/70 font-medium">Řež → Praha Kobylisy</div>
               </div>
-            }
+            }}
             departures={busFromRez}
           />
         </section>
@@ -172,31 +168,27 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
         {/* To Řež column */}
         <section className="space-y-8" aria-label="Příjezdy do Řeže">
           <DepartureBoard
-            title={
-              <div className="flex items-center justify-center space-x-3">
-                <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 p-3 rounded-2xl border border-blue-400/20">
-                  <Train className="w-6 h-6 text-blue-300" aria-hidden="true" />
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold">Vlak S4</div>
-                  <div className="text-sm text-white/70 font-medium">→ Řež</div>
-                </div>
+            title={{
+              icon: <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 p-3 rounded-2xl border border-blue-400/20">
+                <Train className="w-6 h-6 text-blue-300" aria-hidden="true" />
+              </div>,
+              content: <div className="text-center">
+                <div className="text-lg font-bold">S4</div>
+                <div className="text-sm text-white/70 font-medium">Praha Masarykovo → Řež</div>
               </div>
-            }
+            }}
             departures={trainToRez}
           />
           <DepartureBoard
-            title={
-              <div className="flex items-center justify-center space-x-3">
-                <div className="bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 p-3 rounded-2xl border border-emerald-400/20">
-                  <Bus className="w-6 h-6 text-emerald-300" aria-hidden="true" />
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold">Autobus 371</div>
-                  <div className="text-sm text-white/70 font-medium">→ Řež</div>
-                </div>
+            title={{
+              icon: <div className="bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 p-3 rounded-2xl border border-emerald-400/20">
+                <Bus className="w-6 h-6 text-emerald-300" aria-hidden="true" />
+              </div>,
+              content: <div className="text-center">
+                <div className="text-lg font-bold">371</div>
+                <div className="text-sm text-white/70 font-medium">Praha Kobylisy → Řež</div>
               </div>
-            }
+            }}
             departures={busToRez}
           />
         </section>
