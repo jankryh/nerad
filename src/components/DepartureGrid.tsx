@@ -49,21 +49,21 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
       <div className="grid-row">
         <div className="grid-column">
           <DepartureBoard
-            title="🚆 Z Řeže do Prahy"
+            title="🚆 Z Řeže do Prahy (S4)"
             departures={trainFromRez}
           />
           <DepartureBoard
-            title="🚌 Z Řeže do Prahy"
+            title="🚌 Z Řeže do Prahy (371)"
             departures={busFromRez}
           />
         </div>
         <div className="grid-column">
           <DepartureBoard
-            title="🚆 Z Prahy do Řeže"
+            title="🚆 Z Prahy do Řeže (S4)"
             departures={trainToRez}
           />
           <DepartureBoard
-            title="🚌 Z Prahy do Řeže"
+            title="🚌 Z Prahy do Řeže (371)"
             departures={busToRez}
           />
         </div>

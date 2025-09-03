@@ -18,10 +18,11 @@
 .header-left h1 {
   margin: 0 0 0.25rem 0;
   color: #ffffff;
-  font-size: 2rem;
+  font-size: 1.6rem;
   font-weight: 700;
   text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   line-height: 1.2;
+  max-width: 400px;
 }
 
 .header-left p {
@@ -78,7 +79,8 @@
   }
   
   .header-left h1 {
-    font-size: 2rem;
+    font-size: 1.6rem;
+    max-width: 100%;
   }
   
   .header-left p {
@@ -104,7 +106,8 @@
   }
   
   .header-left h1 {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
+    max-width: 100%;
   }
   
   .header-left p {
