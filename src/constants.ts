@@ -1,5 +1,5 @@
-export const API_BASE_URL = 'https://api.golemio.cz/pid/v4/pid/transferboards';
-export const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzM0OCwiaWF0IjoxNzM5NjQ2NDA2LCJleHAiOjExNzM5NjQ2NDA2LCJpc3MiOiJnb2xlbWlvIiwianRpIjoiODRiZGRlYWQtNGMzMi00NTg2LTgwZDgtYjFkM2I2ZWU2NmY3In0.4aqFmHTrzXh8pdvK1T99GIGeB7assGzbS3nIhPfKKzc';
+export const API_BASE_URL = 'https://api.golemio.cz/v2';
+export const API_KEY = import.meta.env.VITE_PID_API_KEY || '';
 
 // ✅ KOMPLETNÍ: Všechny 4 zastávky mají skutečná PID ID
 export const STOPS = {

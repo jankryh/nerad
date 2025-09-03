@@ -128,16 +128,36 @@ remove_old_container() {
 docker_run() {
     log_info "Spouštím nový kontejner..."
     
-    if docker run -d \
-        --name ${CONTAINER_NAME} \
-        -p ${LOCAL_PORT}:${CONTAINER_PORT} \
-        --restart unless-stopped \
-        -e TZ=Europe/Prague \
-        ${IMAGE_NAME}:${TAG}; then
-        log_success "Kontejner úspěšně spuštěn"
+    # Načtení API klíče z .env souboru nebo environment
+    local api_key="${VITE_PID_API_KEY:-$(grep VITE_PID_API_KEY .env 2>/dev/null | cut -d'=' -f2 || echo '')}"
+    
+    if [ -n "$api_key" ]; then
+        log_info "API klíč nalezen, spouštím s environment proměnnými"
+        if docker run -d \
+            --name ${CONTAINER_NAME} \
+            -p ${LOCAL_PORT}:${CONTAINER_PORT} \
+            --restart unless-stopped \
+            -e TZ=Europe/Prague \
+            -e VITE_PID_API_KEY="${api_key}" \
+            ${IMAGE_NAME}:${TAG}; then
+            log_success "Kontejner úspěšně spuštěn s API klíčem"
+        else
+            log_error "Spuštění kontejneru selhalo"
+            exit 1
+        fi
     else
-        log_error "Spuštění kontejneru selhalo"
-        exit 1
+        log_warning "API klíč nenalezen, spouštím bez environment proměnných"
+        if docker run -d \
+            --name ${CONTAINER_NAME} \
+            -p ${LOCAL_PORT}:${CONTAINER_PORT} \
+            --restart unless-stopped \
+            -e TZ=Europe/Prague \
+            ${IMAGE_NAME}:${TAG}; then
+            log_success "Kontejner úspěšně spuštěn (bez API klíče)"
+        else
+            log_error "Spuštění kontejneru selhalo"
+            exit 1
+        fi
     fi
 }
 
