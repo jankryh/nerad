@@ -16,7 +16,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   error
 }) => {
   // Debug variable - set to true to add fake delay to first departure
-  const DEBUG_ADD_DELAY = true;
+  const DEBUG_ADD_DELAY = false;
   const DEBUG_DELAY_MINUTES = 7;
 
   // Calculate minutes until the next departure (accounting for delays)
