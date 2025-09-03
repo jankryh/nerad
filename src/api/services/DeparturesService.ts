@@ -1,4 +1,4 @@
-// 🚆 Služba pro odjezdy s modulární architekturou
+// Služba pro odjezdy s modulární architekturou
 
 import { BaseAPIService } from './BaseAPIService';
 import { DepartureBoardResponse, ApiError } from '../../types';
@@ -145,7 +145,7 @@ export class DeparturesService extends BaseAPIService {
     // Filtrování podle linky
     if (lineId) {
       filtered = filtered.filter(dep => dep.route?.short_name === lineId);
-      console.log(`🚂 Po filtrování podle linky ${lineId}: ${filtered.length} odjezdů`);
+      console.log(`[TRAIN] Po filtrování podle linky ${lineId}: ${filtered.length} odjezdů`);
     }
 
     // Filtrování podle směru
