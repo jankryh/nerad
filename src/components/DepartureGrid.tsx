@@ -1,7 +1,7 @@
 import React from 'react';
 import { DepartureBoard } from './DepartureBoard';
 import { Departure } from '../types';
-import { Train, Bus, ArrowRight, ArrowLeft, AlertTriangle, Loader } from 'lucide-react';
+import { Train, Bus, AlertTriangle, Loader } from 'lucide-react';
 
 interface DepartureGridProps {
   trainFromRez: Departure[];
