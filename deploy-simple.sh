@@ -13,7 +13,20 @@ git pull origin main
 
 # 2. Docker build
 echo "🏗️ Docker build..."
-docker build -t quay.io/rh-ee-jkryhut/nerad:latest .
+
+# Načtení API klíče z .env souboru
+if [ -f .env ] && grep -q VITE_PID_API_KEY .env; then
+  API_KEY=$(grep VITE_PID_API_KEY .env | cut -d'=' -f2)
+  API_BASE_URL=$(grep VITE_PID_API_BASE_URL .env | cut -d'=' -f2 || echo "https://api.golemio.cz/v2")
+  echo "🔑 API klíč nalezen, build s environment proměnnými"
+  docker build \
+    --build-arg VITE_PID_API_KEY="$API_KEY" \
+    --build-arg VITE_PID_API_BASE_URL="$API_BASE_URL" \
+    -t quay.io/rh-ee-jkryhut/nerad:latest .
+else
+  echo "⚠️  API klíč nenalezen, build bez environment proměnných"
+  docker build -t quay.io/rh-ee-jkryhut/nerad:latest .
+fi
 
 # 3. Docker push
 echo "📤 Docker push..."

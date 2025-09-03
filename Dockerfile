@@ -18,6 +18,15 @@ COPY . .
 
 # Build produkční verze s omezenou pamětí
 ENV NODE_OPTIONS="--max-old-space-size=2048"
+
+# Build argumenty pro environment proměnné
+ARG VITE_PID_API_KEY
+ARG VITE_PID_API_BASE_URL
+
+# Nastavení environment proměnných pro build
+ENV VITE_PID_API_KEY=$VITE_PID_API_KEY
+ENV VITE_PID_API_BASE_URL=$VITE_PID_API_BASE_URL
+
 RUN npm run build
 
 # Produkční stage s Nginx
