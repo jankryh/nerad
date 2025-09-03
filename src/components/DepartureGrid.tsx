@@ -136,9 +136,9 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
       </div> */}
 
       {/* Enhanced Departure boards grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 lg:gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8 lg:gap-12">
         {/* From Řež column */}
-        <section className="space-y-8" aria-label="Odjezdy z Řeže">
+        <section className="space-y-4 sm:space-y-8" aria-label="Odjezdy z Řeže">
           <DepartureBoard
             title={{
               icon: <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 p-3 rounded-2xl border border-blue-400/20">
@@ -166,7 +166,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
         </section>
 
         {/* To Řež column */}
-        <section className="space-y-8" aria-label="Příjezdy do Řeže">
+        <section className="space-y-4 sm:space-y-8" aria-label="Příjezdy do Řeže">
           <DepartureBoard
             title={{
               icon: <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 p-3 rounded-2xl border border-blue-400/20">

@@ -156,40 +156,40 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   }
 
   return (
-    <article className="glass glass-hover rounded-4xl border border-white/10 shadow-card hover:shadow-hover transition-all duration-400 group" role="region" aria-labelledby="departure-board-title">
+    <article className="glass glass-hover rounded-2xl sm:rounded-4xl border border-white/10 shadow-card hover:shadow-hover transition-all duration-400 group" role="region" aria-labelledby="departure-board-title">
       {/* Header */}
-      <div className="p-6 border-b border-white/10 bg-gradient-to-r from-white/[0.02] to-transparent">
-        <div className="relative flex items-center">
-          {/* Icon positioned on the left */}
-          {typeof title === 'object' && 'icon' in title && (
-            <div className="absolute left-0 top-1/2 transform -translate-y-1/2">
-              {title.icon}
+      <div className="p-3 sm:p-6 border-b border-white/10 bg-gradient-to-r from-white/[0.02] to-transparent">
+        <div className="flex items-center justify-between gap-2">
+          {/* Icon and title */}
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+            {typeof title === 'object' && 'icon' in title && (
+              <div className="flex-shrink-0">
+                {title.icon}
+              </div>
+            )}
+            <div className="min-w-0">
+              <h3 id="departure-board-title" className="text-white text-sm sm:text-xl font-bold tracking-wide truncate">
+                {typeof title === 'object' && 'content' in title ? title.content : title}
+              </h3>
             </div>
-          )}
-          
-          {/* Centered content */}
-          <div className="flex-1 flex justify-center">
-            <h3 id="departure-board-title" className="text-white text-xl font-bold tracking-wide">
-              {typeof title === 'object' && 'content' in title ? title.content : title}
-            </h3>
           </div>
           
-          {/* Right side - dalsi za */}
-          <div className="absolute right-0 top-1/2 transform -translate-y-1/2">
-            {!isLoading && !error && departures && departures.length > 0 && (
-              <span className="text-white/50 text-sm font-normal">
+          {/* Next departure info */}
+          {!isLoading && !error && departures && departures.length > 0 && (
+            <div className="flex-shrink-0">
+              <span className="text-white/50 text-xs sm:text-sm font-normal">
                 {(() => {
                   const minutesUntil = getMinutesUntilNextDeparture(departures);
-                  return minutesUntil !== null ? `(dalsi za: ${minutesUntil}min)` : '';
+                  return minutesUntil !== null ? `dalsi za: ${minutesUntil}min` : '';
                 })()}
               </span>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
       
       {/* Departure cards */}
-      <div className="p-6 space-y-4">
+      <div className="p-3 sm:p-6 space-y-3 sm:space-y-4">
         {departures.map((departure, index) => {
           // Apply debug delay to first departure only
           const debugDeparture = DEBUG_ADD_DELAY && index === 0 
@@ -200,7 +200,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                       <div
             key={`${departure.line}-${departure.scheduledTime}-${index}`}
             className={`
-              relative glass rounded-3xl p-6 border transition-all duration-300 group/card overflow-hidden
+              relative glass rounded-xl sm:rounded-3xl p-3 sm:p-6 border transition-all duration-300 group/card overflow-hidden
               ${index === 0 
                 ? 'border-amber-400/40 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-yellow-500/10 shadow-lg shadow-amber-500/10' 
                 : 'border-white/15 hover:border-white/25'
@@ -211,13 +211,86 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
           >
 
             
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 items-center">
-              {/* Departure time */}
-              <div className="flex items-center space-x-4 justify-center sm:justify-start">
-                {/* <div className="bg-gradient-to-br from-primary-500/20 to-primary-600/20 p-4 rounded-2xl border border-primary-400/20 group-hover/card:shadow-glow transition-all duration-300">
-                  <Clock className="w-6 h-6 text-primary-300" aria-hidden="true" />
-                </div> */}
-                <div className="text-center sm:text-left min-h-[80px] flex flex-col justify-center">
+            <div className="flex flex-col sm:grid sm:grid-cols-3 gap-3 sm:gap-6 sm:items-center">
+              {/* Mobile: Both times on same line */}
+              <div className="sm:hidden">
+                <div className="flex justify-between items-center">
+                  {/* Departure time */}
+                  <div className="text-left">
+                    <div className="space-y-1">
+                      {debugDeparture.delay !== null && debugDeparture.delay > 0 ? (
+                        <>
+                          <time className="block text-sm font-medium text-white/40 font-mono tracking-tight line-through">
+                            {formatTime(debugDeparture.scheduledTime)}
+                          </time>
+                          <time 
+                            className="block text-2xl font-bold text-red-400 font-mono tracking-tight"
+                            dateTime={debugDeparture.scheduledTime}
+                          >
+                            {formatTime(new Date(new Date(debugDeparture.scheduledTime).getTime() + debugDeparture.delay * 60 * 1000).toISOString())}
+                          </time>
+                        </>
+                      ) : (
+                        <>
+                          <div className="h-[20px]"></div>
+                          <time 
+                            className="block text-2xl font-bold text-white font-mono tracking-tight"
+                            dateTime={debugDeparture.scheduledTime}
+                          >
+                            {formatTime(debugDeparture.scheduledTime)}
+                          </time>
+                        </>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 justify-start mt-1">
+                      <div className="text-white/70 text-xs font-semibold uppercase tracking-wide">Odjezd</div>
+                      {debugDeparture.delay !== null && debugDeparture.delay > 0 && (
+                        <span className="text-red-400 text-xs font-semibold">
+                          (+{debugDeparture.delay}m)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Arrival time */}
+                  <div className="text-right">
+                    <div className="space-y-1">
+                      {debugDeparture.delay !== null && debugDeparture.delay > 0 ? (
+                        <>
+                          <time className="block text-sm font-medium text-white/40 font-mono tracking-tight line-through">
+                            {calculateArrivalTime(debugDeparture)}
+                          </time>
+                          <time className="block text-2xl font-bold text-red-400 font-mono tracking-tight">
+                            {(() => {
+                              const scheduledDeparture = new Date(debugDeparture.scheduledTime);
+                              const delayedDeparture = new Date(scheduledDeparture.getTime() + debugDeparture.delay * 60 * 1000);
+                              const travelMinutes = debugDeparture.mode === 'train' ? 18 : 28;
+                              const delayedArrival = new Date(delayedDeparture.getTime() + travelMinutes * 60 * 1000);
+                              return delayedArrival.toLocaleTimeString('cs-CZ', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: false
+                              });
+                            })()}
+                          </time>
+                        </>
+                      ) : (
+                        <>
+                          <div className="h-[20px]"></div>
+                          <time className="block text-2xl font-bold text-white/90 font-mono tracking-tight">
+                            {calculateArrivalTime(debugDeparture)}
+                          </time>
+                        </>
+                      )}
+                    </div>
+                    <div className="text-white/70 text-xs font-semibold uppercase tracking-wide mt-1">Příjezd</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop: Departure time only */}
+              <div className="hidden sm:flex items-center justify-center space-x-4">
+                <div className="text-center flex-1 min-h-[80px] flex flex-col justify-center">
                   <div className="space-y-1">
                     {debugDeparture.delay !== null && debugDeparture.delay > 0 ? (
                       <>
@@ -243,7 +316,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                       </>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 justify-center sm:justify-start mt-2">
+                  <div className="flex items-center gap-2 justify-center mt-2">
                     <div className="text-white/70 text-sm font-semibold uppercase tracking-wide">Odjezd</div>
                     {debugDeparture.delay !== null && debugDeparture.delay > 0 && (
                       <span className="text-red-400 text-sm font-semibold">
@@ -254,8 +327,8 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                 </div>
               </div>
               
-              {/* Arrow and travel info */}
-              <div className="relative flex items-center justify-center min-h-[80px]">
+              {/* Desktop: Arrow and travel info */}
+              <div className="hidden sm:flex relative items-center justify-center min-h-[80px]">
                 {/* Arrow centered with main times */}
                 <div className="flex items-center space-x-2">
                   <div className="w-16 h-0.5 bg-gradient-to-r from-primary-400/60 to-transparent"></div>
@@ -270,8 +343,8 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                 </div>
               </div>
               
-              {/* Arrival time */}
-              <div className="flex items-center space-x-4 justify-center sm:justify-end">
+              {/* Desktop: Arrival time */}
+              <div className="hidden sm:flex items-center space-x-4 justify-center sm:justify-end">
                 <div className="text-center sm:text-right order-2 sm:order-1 min-h-[80px] flex flex-col justify-center">
                   <div className="space-y-1">
                     {debugDeparture.delay !== null && debugDeparture.delay > 0 ? (
@@ -304,9 +377,14 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                   </div>
                   <div className="text-white/70 text-sm font-semibold uppercase tracking-wide mt-2">Příjezd</div>
                 </div>
-                {/* <div className="bg-gradient-to-br from-white/10 to-white/5 p-4 rounded-2xl border border-white/10 order-1 sm:order-2">
-                  <Clock className="w-6 h-6 text-white/80" aria-hidden="true" />
-                </div> */}
+              </div>
+              
+              {/* Mobile: Travel time info */}
+              <div className="sm:hidden flex items-center justify-center gap-2 mt-2 pt-2 border-t border-white/10">
+                <ArrowRight className="w-4 h-4 text-primary-400" aria-hidden="true" />
+                <span className="text-white/60 text-xs font-medium uppercase tracking-wider">
+                  {debugDeparture.mode === 'train' ? '~18 min cesta' : '~28 min cesta'}
+                </span>
               </div>
             </div>
             
