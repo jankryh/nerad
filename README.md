@@ -74,9 +74,47 @@ npm run lint         # ESLint kontrola
 **API klíče se NIKDY nesmí commitovat do Git repozitáře!**
 
 ### **1. Získání API klíče**
-- Jděte na: https://api.golemio.cz/
-- Zaregistrujte se a vytvořte aplikaci
-- Získejte API klíč (JWT token)
+
+#### **Registrace na Golemio.cz:**
+1. **Jděte na**: https://api.golemio.cz/
+2. **Klikněte na "Registrace"** nebo "Sign Up"
+3. **Vyplňte formulář** s vašimi údaji:
+   - Email adresa
+   - Heslo
+   - Jméno a příjmení
+   - Organizace (volitelné)
+4. **Potvrďte email** (ověřovací odkaz)
+5. **Přihlaste se** do účtu
+
+#### **Vytvoření aplikace:**
+1. **V dashboardu** klikněte na "Nová aplikace"
+2. **Vyplňte údaje** o aplikaci:
+   - Název: např. "Jízdní řád Řež"
+   - Popis: "Aplikace pro zobrazení odjezdů vlaků S4 a autobusů 371"
+   - Kategorie: "Doprava" nebo "Veřejné služby"
+3. **Potvrďte vytvoření**
+
+#### **Získání API klíče:**
+1. **V detailu aplikace** najděte sekci "API klíče"
+2. **Vygenerujte nový klíč** (JWT token)
+3. **Zkopírujte klíč** - bude vypadat jako: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+4. **Uložte klíč** do `.env` souboru
+
+#### **⚠️ Důležité poznámky:**
+- **API klíč je citlivý** - nikdy ho nesdílejte
+- **Klíč má platnost** - může vypršet
+- **Rate limiting** - dodržujte limity API
+- **Podmínky použití** - přečtěte si je před použitím
+
+#### **Testování API klíče:**
+```bash
+# Ověřte, že API klíč funguje
+curl -H "X-Access-Token: YOUR_API_KEY" \
+     "https://api.golemio.cz/v2/pid/departureboards?ids[]=U2823Z301&limit=1"
+
+# Měli byste dostat JSON odpověď s odjezdy
+# Pokud dostanete 401/403, zkontrolujte API klíč
+```
 
 ### **2. Lokální development**
 Vytvořte `.env` soubor v root adresáři:
