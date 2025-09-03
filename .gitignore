@@ -84,3 +84,4 @@ dist
 # Temporary folders
 tmp/
 temp/
+source/config.ts
