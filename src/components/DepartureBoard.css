@@ -71,6 +71,7 @@
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-size: 1rem;
 }
 
 .departures-table th {
@@ -98,26 +99,7 @@
   border-left: 4px solid #ffc107;
 }
 
-.line-cell {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
 
-.transport-icon {
-  font-size: 1.2rem;
-}
-
-.line-number {
-  background: #007bff;
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  min-width: 30px;
-  text-align: center;
-}
 
 .time-cell {
   font-weight: 600;
@@ -179,35 +161,67 @@
   font-style: italic;
 }
 
-/* Responzivní design */
+/* Responzivní design pro mobil */
 @media (max-width: 768px) {
   .departure-board {
-    padding: 1rem;
-    margin: 0.5rem 0;
+    padding: 0.75rem;
+    margin: 0.25rem 0;
+  }
+  
+  .departure-board h3 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .departures-table {
+    font-size: 0.9rem;
+  }
+  
+  .departures-table th {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.85rem;
+  }
+  
+  .departures-table td {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .time-cell {
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+  
+  .delay, .on-time {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .departure-board {
+    padding: 0.5rem;
   }
   
   .departure-board h3 {
     font-size: 1.1rem;
+    margin-bottom: 0.75rem;
   }
   
-  .departure-item {
-    padding: 0.75rem;
+  .departures-table {
+    font-size: 0.85rem;
   }
   
-  .departure-header {
-    gap: 0.5rem;
+  .departures-table th {
+    padding: 0.5rem 0.25rem;
+    font-size: 0.8rem;
   }
   
-  .direction {
-    font-size: 0.9rem;
+  .departures-table td {
+    padding: 0.5rem 0.25rem;
   }
   
-  .time {
-    font-size: 1.25rem;
-  }
-  
-  .transport-icon {
-    font-size: 1.25rem;
+  .time-cell {
+    font-size: 1rem;
   }
 }
 

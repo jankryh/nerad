@@ -53,9 +53,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 
 
 
-  const getTransportIcon = (mode: string): string => {
-    return mode === 'train' ? '🚆' : '🚌';
-  };
+
 
   if (isLoading) {
     return (
@@ -90,7 +88,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
       <table className="departures-table">
         <thead>
           <tr>
-            <th>Linka</th>
             <th>Odjezd</th>
             <th>Příjezd</th>
             <th>Zpoždění</th>
@@ -102,12 +99,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
               key={`${departure.line}-${departure.scheduledTime}-${index}`}
               className={index === 0 ? 'next-departure' : ''}
             >
-              <td className="line-cell">
-                <span className="transport-icon">
-                  {getTransportIcon(departure.mode)}
-                </span>
-                <span className="line-number">{departure.line}</span>
-              </td>
               <td className="time-cell departure-time">
                 {formatTime(departure.scheduledTime)}
               </td>
