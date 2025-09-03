@@ -1,6 +1,7 @@
 
 import { Header } from './components/Header';
 import { DepartureGrid } from './components/DepartureGrid';
+import { PerformanceMonitor } from './components/PerformanceMonitor';
 import { useDepartures } from './hooks/useDepartures';
 import './App.css';
 
@@ -52,6 +53,9 @@ function App() {
             </button>
           </div>
         )}
+        
+        {/* Performance Monitor - pouze v development módu */}
+        {import.meta.env.DEV && <PerformanceMonitor />}
       </div>
     </div>
   );

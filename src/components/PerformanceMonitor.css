@@ -1,0 +1,300 @@
+/* 📊 Performance Monitor CSS */
+
+.performance-monitor {
+  background: var(--background-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin: 20px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.performance-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 15px 20px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.3s ease;
+}
+
+.performance-header:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
+
+.performance-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.expand-icon {
+  font-size: 0.8rem;
+  transition: transform 0.3s ease;
+}
+
+.performance-content {
+  padding: 20px;
+  background: white;
+}
+
+/* Základní statistiky */
+.stats-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid #e1e8ed;
+}
+
+.stat-card h4 {
+  margin: 0 0 10px 0;
+  font-size: 0.9rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+/* Detailní statistiky */
+.detailed-stats {
+  margin-bottom: 25px;
+}
+
+.detailed-stats h4 {
+  margin: 0 0 15px 0;
+  color: #2c3e50;
+  font-size: 1.1rem;
+}
+
+.endpoint-stat {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.endpoint-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  background: #f1f3f4;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.endpoint-header:hover {
+  background: #e8eaed;
+}
+
+.performance-icon {
+  font-size: 1.2rem;
+  margin-right: 10px;
+}
+
+.endpoint-name {
+  flex: 1;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.endpoint-calls {
+  background: #007bff;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.endpoint-details {
+  padding: 15px;
+  background: white;
+  border-top: 1px solid #e9ecef;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-row span:first-child {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.detail-value {
+  font-weight: 600;
+  color: #2c3e50;
+  font-family: 'Courier New', monospace;
+}
+
+/* Akce */
+.performance-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.action-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.details-btn {
+  background: #17a2b8;
+  color: white;
+}
+
+.details-btn:hover {
+  background: #138496;
+}
+
+.clear-btn {
+  background: #ffc107;
+  color: #212529;
+}
+
+.clear-btn:hover {
+  background: #e0a800;
+}
+
+.reset-btn {
+  background: #6c757d;
+  color: white;
+}
+
+.reset-btn:hover {
+  background: #5a6268;
+}
+
+.export-btn {
+  background: #28a745;
+  color: white;
+}
+
+.export-btn:hover {
+  background: #218838;
+}
+
+/* Performance report */
+.performance-report {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 15px;
+}
+
+.performance-report h4 {
+  margin: 0 0 15px 0;
+  color: #2c3e50;
+  font-size: 1.1rem;
+}
+
+.report-content {
+  background: #2d3748;
+  color: #e2e8f0;
+  padding: 15px;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+/* Responzivní design */
+@media (max-width: 768px) {
+  .stats-overview {
+    grid-template-columns: 1fr;
+  }
+  
+  .performance-actions {
+    flex-direction: column;
+  }
+  
+  .action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .endpoint-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .endpoint-calls {
+    align-self: flex-end;
+  }
+}
+
+/* Dark mode podpora */
+@media (prefers-color-scheme: dark) {
+  .performance-content {
+    background: #1a1a1a;
+    color: #e0e0e0;
+  }
+  
+  .stat-card {
+    background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+    border-color: #4a5568;
+  }
+  
+  .stat-value {
+    color: #e2e8f0;
+  }
+  
+  .endpoint-stat {
+    background: #2d3748;
+    border-color: #4a5568;
+  }
+  
+  .endpoint-header {
+    background: #4a5568;
+  }
+  
+  .endpoint-header:hover {
+    background: #718096;
+  }
+  
+  .endpoint-details {
+    background: #1a1a1a;
+  }
+  
+  .performance-report {
+    background: #2d3748;
+    border-color: #4a5568;
+  }
+}
