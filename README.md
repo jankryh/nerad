@@ -78,7 +78,7 @@ npm run lint         # ESLint kontrola
 ### **1. Získání API klíče**
 
 #### **Registrace na Golemio.cz:**
-1. **Jděte na**: https://api.golemio.cz/
+1. **Jděte na**: https://api.golemio.cz/api-keys/auth/sign-up
 2. **Klikněte na "Registrace"** nebo "Sign Up"
 3. **Vyplňte formulář** s vašimi údaji:
    - Email adresa
