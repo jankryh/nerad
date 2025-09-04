@@ -5,7 +5,6 @@ import { TRAVEL_TIMES, TRAVEL_TIME_CONFIG } from '../constants';
 import {
   getMinutesUntilNextDeparture,
   formatTime,
-  formatArrivalTime,
   getEnhancedTravelTime
 } from '../utils/timeCalculations';
 
@@ -24,7 +23,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 }) => {
   // Debug variable - set to true to add fake delay to first departure
   const DEBUG_ADD_DELAY = false;
-  const DEBUG_DELAY_MINUTES = 6;
+  const DEBUG_DELAY_MINUTES = 1;
 
   // State for enhanced travel times
   const [enhancedTravelTimes, setEnhancedTravelTimes] = useState<Map<string, number>>(new Map());
@@ -127,6 +126,29 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
       
       // Calculate arrival time
       const arrivalTime = new Date(actualDepartureTime.getTime() + travelMinutes * 60 * 1000);
+      
+      return arrivalTime.toLocaleTimeString('cs-CZ', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+    } catch {
+      return '--:--';
+    }
+  };
+
+  // Helper function to calculate scheduled arrival time with enhanced travel time (no delay)
+  const calculateScheduledArrivalTime = (departure: Departure): string => {
+    try {
+      // Use scheduled time (no delay)
+      const scheduledTime = new Date(departure.scheduledTime);
+      
+      // Get travel time (enhanced or hardcoded) - use original departure for scheduled time
+      const originalDeparture = { ...departure, delay: null };
+      const travelMinutes = getTravelTime(originalDeparture);
+      
+      // Calculate scheduled arrival time
+      const arrivalTime = new Date(scheduledTime.getTime() + travelMinutes * 60 * 1000);
       
       return arrivalTime.toLocaleTimeString('cs-CZ', {
         hour: '2-digit',
@@ -318,7 +340,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                       {debugDeparture.delay !== null && debugDeparture.delay > 0 ? (
                         <>
                           <time className="block text-sm font-medium text-white/40 font-mono tracking-tight line-through">
-                            {formatArrivalTime(departure)}
+                            {calculateScheduledArrivalTime(departure)}
                           </time>
                           <time 
                             className="block text-2xl font-bold text-red-400 font-mono tracking-tight"
@@ -411,7 +433,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                     {debugDeparture.delay !== null && debugDeparture.delay > 0 ? (
                       <>
                         <time className="block text-lg font-medium text-white/40 font-mono tracking-tight line-through">
-                          {formatArrivalTime(departure)}
+                          {calculateScheduledArrivalTime(departure)}
                         </time>
                         <time 
                           className="block text-3xl font-bold text-red-400 font-mono tracking-tight"
