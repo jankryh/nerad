@@ -3,9 +3,9 @@ import { Departure, DepartureBoardTitle } from '../types';
 import { Clock, AlertCircle, ArrowRight, Timer } from 'lucide-react';
 import { TRAVEL_TIMES, TRAVEL_TIME_CONFIG } from '../constants';
 import {
-  getMinutesUntilNextDeparture,
   formatTime,
-  getEnhancedTravelTime
+  getEnhancedTravelTime,
+  calculateActualDepartureTime
 } from '../utils/timeCalculations';
 
 interface DepartureBoardProps {
@@ -23,7 +23,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 }) => {
   // Debug variable - set to true to add fake delay to first departure
   const DEBUG_ADD_DELAY = false;
-  const DEBUG_DELAY_MINUTES = 1;
+  const DEBUG_DELAY_MINUTES = 3;
 
   // State for enhanced travel times
   const [enhancedTravelTimes, setEnhancedTravelTimes] = useState<Map<string, number>>(new Map());
@@ -160,6 +160,30 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
     }
   };
 
+  // Helper function to calculate minutes until departure
+  const getMinutesUntilDeparture = (departure: Departure): number | null => {
+    try {
+      const now = new Date();
+      const actualDepartureTime = calculateActualDepartureTime(departure);
+      const minutesUntil = Math.round((actualDepartureTime.getTime() - now.getTime()) / (1000 * 60));
+      
+      return minutesUntil > 0 ? minutesUntil : null;
+    } catch {
+      return null;
+    }
+  };
+
+  // Helper function to format minutes until departure
+  const formatMinutesUntilDeparture = (minutes: number): string => {
+    if (minutes < 60) {
+      return `${minutes} min`;
+    } else {
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      return `${hours}h ${remainingMinutes} min`;
+    }
+  };
+
 
 
 
@@ -230,35 +254,27 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
     <article className="glass glass-hover rounded-2xl sm:rounded-4xl border border-white/10 shadow-card hover:shadow-hover transition-all duration-400 group" role="region" aria-labelledby="departure-board-title">
       {/* Header */}
       <div className="p-3 sm:p-6 border-b border-white/10 bg-gradient-to-r from-white/[0.02] to-transparent">
-        <div className="flex items-center justify-between gap-2">
-          {/* Icon and title */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-            {typeof title === 'object' && 'icon' in title && (
-              <div className="flex-shrink-0">
-                {title.icon}
-              </div>
-            )}
-            <div className="min-w-0">
-              <h3 id="departure-board-title" className="text-white text-sm sm:text-xl font-bold tracking-wide truncate">
-                {typeof title === 'object' && 'content' in title ? title.content : title}
-              </h3>
+        <div className="flex items-center gap-2 relative">
+          {/* Icon - left positioned */}
+          {typeof title === 'object' && 'icon' in title && (
+            <div className="flex-shrink-0">
+              {title.icon}
             </div>
+          )}
+          
+          {/* Title - centered */}
+          <div className="flex-1 flex justify-center">
+            <h3 id="departure-board-title" className="text-white text-sm sm:text-xl font-bold tracking-wide">
+              {typeof title === 'object' && 'content' in title ? title.content : title}
+            </h3>
           </div>
           
-          {/* Next departure info */}
-          {!isLoading && !error && departures && departures.length > 0 && (
-            <div className="flex-shrink-0 flex items-center gap-2">
-              <span className="text-white/50 text-xs sm:text-sm font-normal">
-                {(() => {
-                  const minutesUntil = getMinutesUntilNextDeparture(departures);
-                  return minutesUntil !== null ? `dalsi za: ${minutesUntil}min` : '';
-                })()}
+          {/* Real-time calculation indicator - positioned absolutely */}
+          {!isLoading && !error && departures && departures.length > 0 && TRAVEL_TIME_CONFIG.enableRealTimeInUI && isCalculatingTimes && (
+            <div className="absolute right-0 flex items-center gap-2">
+              <span className="text-primary-400 text-xs animate-pulse" title="Calculating real-time travel duration">
+                ⏳
               </span>
-              {TRAVEL_TIME_CONFIG.enableRealTimeInUI && isCalculatingTimes && (
-                <span className="text-primary-400 text-xs animate-pulse" title="Calculating real-time travel duration">
-                  ⏳
-                </span>
-              )}
             </div>
           )}
         </div>
@@ -285,6 +301,23 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
             aria-describedby={`departure-${index}-details`}
           >
 
+            {/* Minutes until departure - top left */}
+            {(() => {
+              const minutesUntil = getMinutesUntilDeparture(debugDeparture);
+              const hasDelay = debugDeparture.delay && debugDeparture.delay > 0;
+              
+              return minutesUntil !== null ? (
+                <div className="absolute top-2 left-4 z-10">
+                  <span className={`text-[10px] font-medium bg-black/20 px-1.5 py-0.5 rounded-md ${
+                    hasDelay 
+                      ? 'text-red-400' 
+                      : 'text-white/60'
+                  }`}>
+                    za {formatMinutesUntilDeparture(minutesUntil)}
+                  </span>
+                </div>
+              ) : null;
+            })()}
             
             <div 
               id={`departure-${index}-details`}
