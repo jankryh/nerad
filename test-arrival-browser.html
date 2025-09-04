@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Arrival Mode</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success { border-color: #28a745; background: #d4edda; }
+        .error { border-color: #dc3545; background: #f8d7da; }
+        .warning { border-color: #ffc107; background: #fff3cd; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Arrival Mode Test</h1>
+    <p>This page tests the arrival mode functionality of the Golemio API integration.</p>
+
+    <div class="test-section">
+        <h2>Test 1: Train Arrivals (S4 at Masarykovo)</h2>
+        <button class="test-button" onclick="testTrainArrivals()">Test Train Arrivals</button>
+        <div id="train-result" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Bus Arrivals (371 at Kobylisy)</h2>
+        <button class="test-button" onclick="testBusArrivals()">Test Bus Arrivals</button>
+        <div id="bus-result" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Travel Time Calculation</h2>
+        <button class="test-button" onclick="testTravelTimeCalculation()">Test Travel Time</button>
+        <div id="travel-result" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: API Response Structure</h2>
+        <button class="test-button" onclick="testAPIStructure()">Test API Structure</button>
+        <div id="structure-result" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Test configuration
+        const TEST_CONFIG = {
+            REZ_STOP: 'U2823Z301',
+            MASARYKOVO_STOP: 'U480Z301',
+            HUSINEC_STOP: 'U2245Z2',
+            KOBYLISY_STOP: 'U675Z12',
+            TRAIN_LINE: 'S4',
+            BUS_LINE: '371'
+        };
+
+        function showResult(elementId, content, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${type}`;
+            element.textContent = content;
+        }
+
+        async function testTrainArrivals() {
+            showResult('train-result', 'Testing train arrivals...', 'info');
+            
+            try {
+                const response = await fetch('/api/test-arrivals', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        stopId: TEST_CONFIG.MASARYKOVO_STOP,
+                        lineId: TEST_CONFIG.TRAIN_LINE,
+                        direction: 'to-masarykovo'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('train-result', `✅ Train arrivals test successful!\n\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    const error = await response.text();
+                    showResult('train-result', `❌ Train arrivals test failed: ${error}`, 'error');
+                }
+            } catch (error) {
+                showResult('train-result', `❌ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testBusArrivals() {
+            showResult('bus-result', 'Testing bus arrivals...', 'info');
+            
+            try {
+                const response = await fetch('/api/test-arrivals', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        stopId: TEST_CONFIG.KOBYLISY_STOP,
+                        lineId: TEST_CONFIG.BUS_LINE,
+                        direction: 'to-kobylisy'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('bus-result', `✅ Bus arrivals test successful!\n\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    const error = await response.text();
+                    showResult('bus-result', `❌ Bus arrivals test failed: ${error}`, 'error');
+                }
+            } catch (error) {
+                showResult('bus-result', `❌ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testTravelTimeCalculation() {
+            showResult('travel-result', 'Testing travel time calculation...', 'info');
+            
+            try {
+                const response = await fetch('/api/test-travel-time', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        departureStopId: TEST_CONFIG.REZ_STOP,
+                        arrivalStopId: TEST_CONFIG.MASARYKOVO_STOP,
+                        lineId: TEST_CONFIG.TRAIN_LINE,
+                        direction: 'to-masarykovo'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('travel-result', `✅ Travel time calculation successful!\n\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    const error = await response.text();
+                    showResult('travel-result', `❌ Travel time calculation failed: ${error}`, 'error');
+                }
+            } catch (error) {
+                showResult('travel-result', `❌ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAPIStructure() {
+            showResult('structure-result', 'Testing API response structure...', 'info');
+            
+            try {
+                // Test both departure and arrival modes
+                const [departureResponse, arrivalResponse] = await Promise.all([
+                    fetch(`/api/departures/${TEST_CONFIG.REZ_STOP}/${TEST_CONFIG.TRAIN_LINE}`),
+                    fetch(`/api/arrivals/${TEST_CONFIG.MASARYKOVO_STOP}/${TEST_CONFIG.TRAIN_LINE}`)
+                ]);
+
+                const departureData = await departureResponse.json();
+                const arrivalData = await arrivalResponse.json();
+
+                const result = {
+                    departure: {
+                        status: departureResponse.status,
+                        data: departureData
+                    },
+                    arrival: {
+                        status: arrivalResponse.status,
+                        data: arrivalData
+                    },
+                    comparison: {
+                        departureCount: departureData.departures?.length || 0,
+                        arrivalCount: arrivalData.arrivals?.length || 0,
+                        canMatchTrips: false // Will be calculated
+                    }
+                };
+
+                // Check if we can match trips
+                if (departureData.departures && arrivalData.arrivals) {
+                    const departureTripIds = departureData.departures.map(d => d.tripId).filter(Boolean);
+                    const arrivalTripIds = arrivalData.arrivals.map(a => a.tripId).filter(Boolean);
+                    const matchingTrips = departureTripIds.filter(id => arrivalTripIds.includes(id));
+                    result.comparison.canMatchTrips = matchingTrips.length > 0;
+                    result.comparison.matchingTrips = matchingTrips;
+                }
+
+                showResult('structure-result', `✅ API structure test completed!\n\n${JSON.stringify(result, null, 2)}`, 'success');
+            } catch (error) {
+                showResult('structure-result', `❌ API structure test failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run basic test on page load
+        window.addEventListener('load', () => {
+            console.log('🧪 Arrival Mode Test Page Loaded');
+            console.log('Available test functions:');
+            console.log('- testTrainArrivals()');
+            console.log('- testBusArrivals()');
+            console.log('- testTravelTimeCalculation()');
+            console.log('- testAPIStructure()');
+        });
+    </script>
+</body>
+</html>

@@ -2,6 +2,8 @@
 
 > Aktuální odjezdy vlaků S4 a autobusů 371 z a do Řeže pomocí PID API
 
+📚 **Pro kompletní technickou dokumentaci viz [COMPREHENSIVE_DOCUMENTATION.md](COMPREHENSIVE_DOCUMENTATION.md)**
+
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://hub.docker.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2+-blue.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18.2+-blue.svg)](https://reactjs.org/)
@@ -331,13 +333,10 @@ curl -I http://localhost:8080
 
 ## 📚 Dokumentace
 
-### **Soubory v projektu**
-- **`README.md`** - tento soubor
-- **`ENVIRONMENT_SETUP.md`** - detailní nastavení environment
-- **`DEPLOYMENT.md`** - deployment instrukce
-- **`DEPLOYMENT_SCRIPTS.md`** - deployment scripty
-- **`SECURITY_CHECKLIST.md`** - bezpečnostní checklist
-- **`PID_ID_INSTRUCTIONS.md`** - PID API instrukce
+### **Kompletní dokumentace**
+- **`COMPREHENSIVE_DOCUMENTATION.md`** - kompletní technická dokumentace
+- **`README.md`** - tento soubor (základní přehled)
+- **`UBUNTU_DEPLOYMENT.md`** - Ubuntu deployment instrukce
 
 ### **Užitečné odkazy**
 - [Golemio API](https://api.golemio.cz/)

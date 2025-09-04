@@ -3,6 +3,7 @@ import { Header } from './components/Header';
 import { DepartureGrid } from './components/DepartureGrid';
 import { PerformanceMonitor } from './components/PerformanceMonitor';
 import { useDepartures } from './hooks/useDepartures';
+import { UI_CONFIG } from './constants';
 
 function App() {
   const {
@@ -94,8 +95,10 @@ function App() {
             </section>
           )}
           
-          {/* Performance Monitor - pouze v development módu */}
-          {import.meta.env.DEV && <PerformanceMonitor />}
+          {/* Performance Monitor - configurable visibility */}
+          {((import.meta.env.DEV && UI_CONFIG.showPerformanceMonitor) || 
+            (import.meta.env.PROD && UI_CONFIG.showPerformanceInProduction && UI_CONFIG.showPerformanceMonitor)) && 
+            <PerformanceMonitor />}
         </div>
       </div>
       

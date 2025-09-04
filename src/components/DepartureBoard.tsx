@@ -1,9 +1,16 @@
-import React from 'react';
-import { Departure } from '../types';
+import React, { useState, useEffect } from 'react';
+import { Departure, DepartureBoardTitle } from '../types';
 import { Clock, AlertCircle, ArrowRight, Timer } from 'lucide-react';
+import { TRAVEL_TIMES, TRAVEL_TIME_CONFIG } from '../constants';
+import {
+  getMinutesUntilNextDeparture,
+  formatTime,
+  formatArrivalTime,
+  getEnhancedTravelTime
+} from '../utils/timeCalculations';
 
 interface DepartureBoardProps {
-  title: string | React.ReactElement | { icon: React.ReactElement; content: React.ReactElement };
+  title: DepartureBoardTitle;
   departures: Departure[];
   isLoading?: boolean;
   error?: string;
@@ -17,68 +24,109 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 }) => {
   // Debug variable - set to true to add fake delay to first departure
   const DEBUG_ADD_DELAY = false;
-  const DEBUG_DELAY_MINUTES = 7;
+  const DEBUG_DELAY_MINUTES = 6;
 
-  // Calculate minutes until the next departure (accounting for delays)
-  const getMinutesUntilNextDeparture = (departures: Departure[]): number | null => {
-    if (!departures || departures.length === 0) return null;
-    
-    const now = new Date();
-    
-    // Find the next departure that hasn't happened yet
-    for (const departure of departures) {
-      // Apply debug delay to first departure only
-      const debugDeparture = DEBUG_ADD_DELAY && departures.indexOf(departure) === 0 
-        ? { ...departure, delay: DEBUG_DELAY_MINUTES }
-        : departure;
+  // State for enhanced travel times
+  const [enhancedTravelTimes, setEnhancedTravelTimes] = useState<Map<string, number>>(new Map());
+  const [isCalculatingTimes, setIsCalculatingTimes] = useState(false);
+
+  // Helper function to get debug departure with delay applied
+  const getDebugDeparture = (departure: Departure, index: number): Departure => {
+    return DEBUG_ADD_DELAY && index === 0 
+      ? { ...departure, delay: DEBUG_DELAY_MINUTES }
+      : departure;
+  };
+
+  // Enhanced travel time calculation
+  const calculateEnhancedTimes = async (departures: Departure[]) => {
+    if (!TRAVEL_TIME_CONFIG.enableRealTimeInUI || !departures.length) {
+      return;
+    }
+
+    setIsCalculatingTimes(true);
+    const newTravelTimes = new Map<string, number>();
+
+    try {
+      // Calculate enhanced times for each departure
+      const promises = departures.map(async (departure, index) => {
+        const key = `${departure.tripId}-${departure.scheduledTime}`;
+        
+        try {
+          // Get enhanced travel time for original departure
+          const travelTime = await getEnhancedTravelTime(departure, true);
+          newTravelTimes.set(key, travelTime);
+          
+          // If this is the first departure and debug delay is enabled, also calculate for delayed departure
+          if (DEBUG_ADD_DELAY && index === 0) {
+            const delayedDeparture = { ...departure, delay: DEBUG_DELAY_MINUTES };
+            const delayedKey = `${departure.tripId}-${departure.scheduledTime}-delayed`;
+            try {
+              const delayedTravelTime = await getEnhancedTravelTime(delayedDeparture, true);
+              newTravelTimes.set(delayedKey, delayedTravelTime);
+              console.log(`🔄 Calculated delayed travel time: ${delayedTravelTime} minutes for ${departure.line}`);
+            } catch (error) {
+              console.warn(`Failed to calculate delayed travel time for ${delayedKey}:`, error);
+              newTravelTimes.set(delayedKey, TRAVEL_TIMES[departure.mode]);
+            }
+          }
+        } catch (error) {
+          console.warn(`Failed to calculate enhanced times for ${key}:`, error);
+          // Fallback to hardcoded values
+          newTravelTimes.set(key, TRAVEL_TIMES[departure.mode]);
+        }
+      });
+
+      await Promise.allSettled(promises);
       
-      const scheduledTime = new Date(debugDeparture.scheduledTime);
-      // Add delay if present
-      const actualDepartureTime = debugDeparture.delay && debugDeparture.delay > 0 
-        ? new Date(scheduledTime.getTime() + debugDeparture.delay * 60 * 1000)
+      setEnhancedTravelTimes(newTravelTimes);
+    } catch (error) {
+      console.error('Error calculating enhanced times:', error);
+    } finally {
+      setIsCalculatingTimes(false);
+    }
+  };
+
+  // Calculate enhanced times when departures change
+  useEffect(() => {
+    if (departures && departures.length > 0) {
+      calculateEnhancedTimes(departures);
+    }
+  }, [departures]);
+
+  // Helper function to get travel time (enhanced or hardcoded)
+  const getTravelTime = (departure: Departure): number => {
+    if (TRAVEL_TIME_CONFIG.enableRealTimeInUI) {
+      // Check if this is a delayed departure and we have delayed travel time
+      if (departure.delay && departure.delay > 0) {
+        const delayedKey = `${departure.tripId}-${departure.scheduledTime}-delayed`;
+        const delayedTravelTime = enhancedTravelTimes.get(delayedKey);
+        if (delayedTravelTime) {
+          console.log(`🚀 Using delayed travel time: ${delayedTravelTime} minutes for ${departure.line}`);
+          return delayedTravelTime;
+        }
+      }
+      
+      // Fallback to regular enhanced travel time
+      const key = `${departure.tripId}-${departure.scheduledTime}`;
+      return enhancedTravelTimes.get(key) || TRAVEL_TIMES[departure.mode];
+    }
+    return TRAVEL_TIMES[departure.mode];
+  };
+
+  // Helper function to calculate arrival time with enhanced travel time and delay
+  const calculateArrivalTimeWithDelay = (departure: Departure): string => {
+    try {
+      // Get the actual departure time (with delay)
+      const scheduledTime = new Date(departure.scheduledTime);
+      const actualDepartureTime = departure.delay && departure.delay > 0
+        ? new Date(scheduledTime.getTime() + departure.delay * 60 * 1000)
         : scheduledTime;
       
-      const minutesUntil = Math.round((actualDepartureTime.getTime() - now.getTime()) / (1000 * 60));
+      // Get travel time (enhanced or hardcoded)
+      const travelMinutes = getTravelTime(departure);
       
-      if (minutesUntil > 0) {
-        return minutesUntil;
-      }
-    }
-    
-    // If no upcoming departures in the list, calculate next one based on interval
-    const lastDeparture = departures[departures.length - 1];
-    const lastTime = new Date(lastDeparture.scheduledTime);
-    const intervalMinutes = lastDeparture.mode === 'train' ? 30 : 60;
-    const nextTime = new Date(lastTime.getTime() + intervalMinutes * 60 * 1000);
-    const minutesUntil = Math.round((nextTime.getTime() - now.getTime()) / (1000 * 60));
-    
-    return Math.max(0, minutesUntil);
-  };
-  const formatTime = (isoTime: string): string => {
-    try {
-      const date = new Date(isoTime);
-      return date.toLocaleTimeString('cs-CZ', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      });
-    } catch {
-      return '--:--';
-    }
-  };
-
-  const calculateArrivalTime = (departure: Departure): string => {
-    try {
-      const departureTime = new Date(departure.scheduledTime);
-      let arrivalTime: Date;
-      
-      if (departure.mode === 'train') {
-        // Vlak S4: Řež ↔ Praha Masarykovo (cca 18 minut)
-        arrivalTime = new Date(departureTime.getTime() + 18 * 60 * 1000); // +18 minut
-      } else {
-        // Autobus 371: Řež ↔ Praha Kobylisy (cca 28 minut)
-        arrivalTime = new Date(departureTime.getTime() + 28 * 60 * 1000); // +28 minut
-      }
+      // Calculate arrival time
+      const arrivalTime = new Date(actualDepartureTime.getTime() + travelMinutes * 60 * 1000);
       
       return arrivalTime.toLocaleTimeString('cs-CZ', {
         hour: '2-digit',
@@ -89,6 +137,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
       return '--:--';
     }
   };
+
 
 
 
@@ -176,13 +225,18 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
           
           {/* Next departure info */}
           {!isLoading && !error && departures && departures.length > 0 && (
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 flex items-center gap-2">
               <span className="text-white/50 text-xs sm:text-sm font-normal">
                 {(() => {
                   const minutesUntil = getMinutesUntilNextDeparture(departures);
                   return minutesUntil !== null ? `dalsi za: ${minutesUntil}min` : '';
                 })()}
               </span>
+              {TRAVEL_TIME_CONFIG.enableRealTimeInUI && isCalculatingTimes && (
+                <span className="text-primary-400 text-xs animate-pulse" title="Calculating real-time travel duration">
+                  ⏳
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -192,9 +246,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
       <div className="p-3 sm:p-6 space-y-3 sm:space-y-4">
         {departures.map((departure, index) => {
           // Apply debug delay to first departure only
-          const debugDeparture = DEBUG_ADD_DELAY && index === 0 
-            ? { ...departure, delay: DEBUG_DELAY_MINUTES }
-            : departure;
+          const debugDeparture = getDebugDeparture(departure, index);
           
           return (
                       <div
@@ -207,11 +259,17 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
               }
             `}
             role="article"
-            aria-label={`Odjezd v ${formatTime(debugDeparture.scheduledTime)}, ${debugDeparture.delay && debugDeparture.delay > 0 ? `zpoždění ${debugDeparture.delay} minut` : 'včas'}`}
+            aria-label={`Odjezd ${debugDeparture.line} v ${formatTime(debugDeparture.scheduledTime)}, ${debugDeparture.delay && debugDeparture.delay > 0 ? `zpoždění ${debugDeparture.delay} minut` : 'včas'}`}
+            aria-describedby={`departure-${index}-details`}
           >
 
             
-            <div className="flex flex-col sm:grid sm:grid-cols-3 gap-3 sm:gap-6 sm:items-center">
+            <div 
+              id={`departure-${index}-details`}
+              className="flex flex-col sm:grid sm:grid-cols-3 gap-3 sm:gap-6 sm:items-center"
+              role="group"
+              aria-label={`Detaily odjezdu ${debugDeparture.line}`}
+            >
               {/* Mobile: Both times on same line */}
               <div className="sm:hidden">
                 <div className="flex justify-between items-center">
@@ -225,7 +283,8 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                           </time>
                           <time 
                             className="block text-2xl font-bold text-red-400 font-mono tracking-tight"
-                            dateTime={debugDeparture.scheduledTime}
+                            dateTime={new Date(new Date(debugDeparture.scheduledTime).getTime() + debugDeparture.delay * 60 * 1000).toISOString()}
+                            aria-label={`Skutečný čas odjezdu: ${formatTime(new Date(new Date(debugDeparture.scheduledTime).getTime() + debugDeparture.delay * 60 * 1000).toISOString())}`}
                           >
                             {formatTime(new Date(new Date(debugDeparture.scheduledTime).getTime() + debugDeparture.delay * 60 * 1000).toISOString())}
                           </time>
@@ -236,6 +295,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                           <time 
                             className="block text-2xl font-bold text-white font-mono tracking-tight"
                             dateTime={debugDeparture.scheduledTime}
+                            aria-label={`Naplánovaný čas odjezdu: ${formatTime(debugDeparture.scheduledTime)}`}
                           >
                             {formatTime(debugDeparture.scheduledTime)}
                           </time>
@@ -258,27 +318,23 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                       {debugDeparture.delay !== null && debugDeparture.delay > 0 ? (
                         <>
                           <time className="block text-sm font-medium text-white/40 font-mono tracking-tight line-through">
-                            {calculateArrivalTime(debugDeparture)}
+                            {formatArrivalTime(departure)}
                           </time>
-                          <time className="block text-2xl font-bold text-red-400 font-mono tracking-tight">
-                            {(() => {
-                              const scheduledDeparture = new Date(debugDeparture.scheduledTime);
-                              const delayedDeparture = new Date(scheduledDeparture.getTime() + debugDeparture.delay * 60 * 1000);
-                              const travelMinutes = debugDeparture.mode === 'train' ? 18 : 28;
-                              const delayedArrival = new Date(delayedDeparture.getTime() + travelMinutes * 60 * 1000);
-                              return delayedArrival.toLocaleTimeString('cs-CZ', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: false
-                              });
-                            })()}
+                          <time 
+                            className="block text-2xl font-bold text-red-400 font-mono tracking-tight"
+                            aria-label={`Skutečný čas příjezdu: ${calculateArrivalTimeWithDelay(debugDeparture)}`}
+                          >
+                            {calculateArrivalTimeWithDelay(debugDeparture)}
                           </time>
                         </>
                       ) : (
                         <>
                           <div className="h-[20px]"></div>
-                          <time className="block text-2xl font-bold text-white/90 font-mono tracking-tight">
-                            {calculateArrivalTime(debugDeparture)}
+                          <time 
+                            className="block text-2xl font-bold text-white/90 font-mono tracking-tight"
+                            aria-label={`Naplánovaný čas příjezdu: ${calculateArrivalTimeWithDelay(debugDeparture)}`}
+                          >
+                            {calculateArrivalTimeWithDelay(debugDeparture)}
                           </time>
                         </>
                       )}
@@ -299,7 +355,8 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                         </time>
                         <time 
                           className="block text-3xl font-bold text-red-400 font-mono tracking-tight"
-                          dateTime={debugDeparture.scheduledTime}
+                          dateTime={new Date(new Date(debugDeparture.scheduledTime).getTime() + debugDeparture.delay * 60 * 1000).toISOString()}
+                          aria-label={`Skutečný čas odjezdu: ${formatTime(new Date(new Date(debugDeparture.scheduledTime).getTime() + debugDeparture.delay * 60 * 1000).toISOString())}`}
                         >
                           {formatTime(new Date(new Date(debugDeparture.scheduledTime).getTime() + debugDeparture.delay * 60 * 1000).toISOString())}
                         </time>
@@ -310,6 +367,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                         <time 
                           className="block text-3xl font-bold text-white font-mono tracking-tight"
                           dateTime={debugDeparture.scheduledTime}
+                          aria-label={`Naplánovaný čas odjezdu: ${formatTime(debugDeparture.scheduledTime)}`}
                         >
                           {formatTime(debugDeparture.scheduledTime)}
                         </time>
@@ -338,7 +396,10 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                 {/* Travel time positioned below */}
                 <div className="absolute bottom-2 text-center">
                   <div className="text-white/60 text-xs font-medium uppercase tracking-wider">
-                    {debugDeparture.mode === 'train' ? '~18 min' : '~28 min'}
+                    ~{getTravelTime(debugDeparture)} min
+                    {TRAVEL_TIME_CONFIG.enableRealTimeInUI && isCalculatingTimes && (
+                      <span className="ml-1 text-primary-400">⏳</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -350,27 +411,23 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                     {debugDeparture.delay !== null && debugDeparture.delay > 0 ? (
                       <>
                         <time className="block text-lg font-medium text-white/40 font-mono tracking-tight line-through">
-                          {calculateArrivalTime(debugDeparture)}
+                          {formatArrivalTime(departure)}
                         </time>
-                        <time className="block text-3xl font-bold text-red-400 font-mono tracking-tight">
-                          {(() => {
-                            const scheduledDeparture = new Date(debugDeparture.scheduledTime);
-                            const delayedDeparture = new Date(scheduledDeparture.getTime() + debugDeparture.delay * 60 * 1000);
-                            const travelMinutes = debugDeparture.mode === 'train' ? 18 : 28;
-                            const delayedArrival = new Date(delayedDeparture.getTime() + travelMinutes * 60 * 1000);
-                            return delayedArrival.toLocaleTimeString('cs-CZ', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              hour12: false
-                            });
-                          })()}
+                        <time 
+                          className="block text-3xl font-bold text-red-400 font-mono tracking-tight"
+                          aria-label={`Skutečný čas příjezdu: ${calculateArrivalTimeWithDelay(debugDeparture)}`}
+                        >
+                          {calculateArrivalTimeWithDelay(debugDeparture)}
                         </time>
                       </>
                     ) : (
                       <>
                         <div className="h-[28px]"></div>
-                        <time className="block text-3xl font-bold text-white/90 font-mono tracking-tight">
-                          {calculateArrivalTime(debugDeparture)}
+                        <time 
+                          className="block text-3xl font-bold text-white/90 font-mono tracking-tight"
+                          aria-label={`Naplánovaný čas příjezdu: ${calculateArrivalTimeWithDelay(debugDeparture)}`}
+                        >
+                          {calculateArrivalTimeWithDelay(debugDeparture)}
                         </time>
                       </>
                     )}
@@ -383,7 +440,10 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
               <div className="sm:hidden flex items-center justify-center gap-2 mt-2 pt-2 border-t border-white/10">
                 <ArrowRight className="w-4 h-4 text-primary-400" aria-hidden="true" />
                 <span className="text-white/60 text-xs font-medium uppercase tracking-wider">
-                  {debugDeparture.mode === 'train' ? '~18 min cesta' : '~28 min cesta'}
+                  ~{getTravelTime(debugDeparture)} min cesta
+                  {TRAVEL_TIME_CONFIG.enableRealTimeInUI && isCalculatingTimes && (
+                    <span className="ml-1 text-primary-400">⏳</span>
+                  )}
                 </span>
               </div>
             </div>

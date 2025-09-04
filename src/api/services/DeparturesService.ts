@@ -1,7 +1,7 @@
 // Služba pro odjezdy s modulární architekturou
 
 import { BaseAPIService } from './BaseAPIService';
-import { DepartureBoardResponse, ApiError } from '../../types';
+import { DepartureBoardResponse, ArrivalBoardResponse, ApiError, TravelTimeCalculation } from '../../types';
 import { cacheKeys } from '../../utils/cache';
 
 export interface DepartureRequest {
@@ -15,6 +15,22 @@ export interface DepartureRequest {
 export interface BatchDepartureRequest {
   requests: DepartureRequest[];
   maxConcurrent?: number;
+}
+
+export interface ArrivalRequest {
+  stopPlaceId: string;
+  lineId: string;
+  limit?: number;
+  direction?: string;
+  useCache?: boolean;
+}
+
+export interface TravelTimeRequest {
+  departureStopId: string;
+  arrivalStopId: string;
+  lineId: string;
+  direction?: string;
+  useCache?: boolean;
 }
 
 export class DeparturesService extends BaseAPIService {
@@ -79,6 +95,63 @@ export class DeparturesService extends BaseAPIService {
 
     } catch (error) {
       console.error('Error fetching departures:', error);
+      throw this.handleError(error);
+    }
+  }
+
+  /**
+   * Získá příjezdy pro jednu zastávku
+   */
+  async getArrivals(request: ArrivalRequest): Promise<ArrivalBoardResponse> {
+    const { stopPlaceId, lineId, limit = 3, direction, useCache = true } = request;
+    
+    try {
+      const cacheKey = `arrivals:${stopPlaceId}:${lineId}:${direction || 'all'}`;
+      
+      console.log(`🔍 Načítám příjezdy pro zastávku ${stopPlaceId}, linku ${lineId}, směr: ${direction}`);
+      
+      const response = await this.get<any>(
+        '/pid/departureboards',
+        {
+          params: {
+            'ids[]': stopPlaceId,
+            limit: 50,
+            minutesAfter: 240,
+            mode: 'arrivals',
+            order: 'real'
+          }
+        },
+        cacheKey,
+        useCache
+      );
+
+      if (response.data && response.data.departures) {
+        console.log(`📊 API vrátilo ${response.data.departures.length} příjezdů celkem`);
+        
+        const filteredArrivals = this.filterDepartures(
+          response.data.departures,
+          lineId,
+          direction
+        );
+
+        const formattedArrivals = this.formatArrivals(filteredArrivals);
+        const limitedArrivals = formattedArrivals.slice(0, limit);
+
+        console.log(`✅ Načteno ${limitedArrivals.length} příjezdů pro zastávku ${stopPlaceId}, směr: ${direction}`);
+        
+        return {
+          arrivals: limitedArrivals,
+          message: `Načteno ${limitedArrivals.length} příjezdů`
+        };
+      }
+
+      return {
+        arrivals: [],
+        message: 'Žádné příjezdy nenalezeny'
+      };
+
+    } catch (error) {
+      console.error('Error fetching arrivals:', error);
       throw this.handleError(error);
     }
   }
@@ -198,6 +271,93 @@ export class DeparturesService extends BaseAPIService {
       routeId: dep.route?.short_name || 'N/A',
       tripId: dep.trip?.id || 'N/A'
     }));
+  }
+
+  /**
+   * Formátuje příjezdy do požadovaného formátu
+   */
+  private formatArrivals(arrivals: any[]): any[] {
+    return arrivals.map(arr => ({
+      id: arr.trip?.id || `arr_${Date.now()}_${Math.random()}`,
+      scheduledTime: arr.arrival_timestamp?.scheduled || arr.arrival_timestamp?.predicted,
+      predictedTime: arr.arrival_timestamp?.predicted,
+      delay: arr.delay?.minutes || 0,
+      line: arr.route?.short_name || 'N/A',
+      direction: arr.trip?.headsign || 'N/A',
+      mode: arr.route?.type === 2 ? 'train' : 'bus',
+      platform: arr.stop?.platform_code || null,
+      routeId: arr.route?.short_name || 'N/A',
+      tripId: arr.trip?.id || 'N/A'
+    }));
+  }
+
+  /**
+   * Vypočítá dobu jízdy mezi dvěma zastávkami
+   */
+  async calculateTravelTime(request: TravelTimeRequest): Promise<TravelTimeCalculation[]> {
+    const { departureStopId, arrivalStopId, lineId, direction, useCache = true } = request;
+    
+    try {
+      console.log(`🚀 Vypočítávám dobu jízdy: ${departureStopId} → ${arrivalStopId}, linka ${lineId}`);
+      
+      // Získat odjezdy a příjezdy paralelně
+      const [departureResponse, arrivalResponse] = await Promise.allSettled([
+        this.getDepartures({
+          stopPlaceId: departureStopId,
+          lineId,
+          limit: 10,
+          direction,
+          useCache
+        }),
+        this.getArrivals({
+          stopPlaceId: arrivalStopId,
+          lineId,
+          limit: 10,
+          direction,
+          useCache
+        })
+      ]);
+
+      if (departureResponse.status === 'rejected' || arrivalResponse.status === 'rejected') {
+        console.warn('⚠️ Nepodařilo se načíst data pro výpočet doby jízdy');
+        return [];
+      }
+
+      const departures = departureResponse.value.departures;
+      const arrivals = arrivalResponse.value.arrivals;
+
+      // Spárovat odjezdy s příjezdy podle tripId
+      const tripDurations: TravelTimeCalculation[] = [];
+      
+      for (const departure of departures) {
+        const matchingArrival = arrivals.find(arrival => arrival.tripId === departure.tripId);
+        
+        if (matchingArrival) {
+          const departureTime = new Date(departure.scheduledTime);
+          const arrivalTime = new Date(matchingArrival.scheduledTime);
+          const duration = Math.round((arrivalTime.getTime() - departureTime.getTime()) / (1000 * 60)); // v minutách
+          
+          if (duration > 0 && duration < 180) { // Rozumné limity: 0-180 minut
+            tripDurations.push({
+              tripId: departure.tripId,
+              line: departure.line,
+              mode: departure.mode,
+              duration,
+              isRealTime: true,
+              fallbackUsed: false,
+              calculatedAt: new Date()
+            });
+          }
+        }
+      }
+
+      console.log(`✅ Vypočítáno ${tripDurations.length} dob jízdy pro linku ${lineId}`);
+      return tripDurations;
+
+    } catch (error) {
+      console.error('Error calculating travel time:', error);
+      throw this.handleError(error);
+    }
   }
 
   /**
