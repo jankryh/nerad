@@ -254,7 +254,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
     <article className="glass glass-hover rounded-2xl sm:rounded-4xl border border-white/10 shadow-card hover:shadow-hover transition-all duration-400 group" role="region" aria-labelledby="departure-board-title">
       {/* Header */}
       <div className="p-3 sm:p-6 border-b border-white/10 bg-gradient-to-r from-white/[0.02] to-transparent">
-        <div className="flex items-center gap-2 relative">
+        <div className="flex items-center relative">
           {/* Icon - left positioned */}
           {typeof title === 'object' && 'icon' in title && (
             <div className="flex-shrink-0">
@@ -262,8 +262,8 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
             </div>
           )}
           
-          {/* Title - centered */}
-          <div className="flex-1 flex justify-center">
+          {/* Title - absolutely centered */}
+          <div className="absolute inset-0 flex items-center justify-center">
             <h3 id="departure-board-title" className="text-white text-sm sm:text-xl font-bold tracking-wide">
               {typeof title === 'object' && 'content' in title ? title.content : title}
             </h3>
