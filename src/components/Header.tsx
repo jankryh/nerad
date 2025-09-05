@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Train, Clock } from 'lucide-react';
+import { ThemeSelector } from './ThemeSelector';
 
 export const Header: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -41,16 +42,22 @@ export const Header: React.FC = () => {
             </div>
           </div>
 
-          {/* Right section - Time */}
-          <div className="flex items-center gap-2 sm:gap-3 bg-white/5 backdrop-blur-sm rounded-lg sm:rounded-xl px-2 sm:px-4 py-1.5 sm:py-2 flex-shrink-0">
-            <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-primary-400" aria-hidden="true" />
-            <time 
-              className="text-sm sm:text-xl font-bold text-white font-mono"
-              dateTime={currentTime.toISOString()}
-              aria-label={`Aktuální čas: ${formatTime(currentTime)}`}
-            >
-              {formatTime(currentTime)}
-            </time>
+          {/* Right section - Time and Theme Selector */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Theme Selector */}
+            <ThemeSelector />
+            
+            {/* Time */}
+            <div className="flex items-center gap-2 sm:gap-3 bg-white/5 backdrop-blur-sm rounded-lg sm:rounded-xl px-2 sm:px-4 py-1.5 sm:py-2 flex-shrink-0">
+              <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-primary-400" aria-hidden="true" />
+              <time 
+                className="text-sm sm:text-xl font-bold text-white font-mono"
+                dateTime={currentTime.toISOString()}
+                aria-label={`Aktuální čas: ${formatTime(currentTime)}`}
+              >
+                {formatTime(currentTime)}
+              </time>
+            </div>
           </div>
         </div>
       </div>

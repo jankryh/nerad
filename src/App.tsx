@@ -4,6 +4,7 @@ import { DepartureGrid } from './components/DepartureGrid';
 import { PerformanceMonitor } from './components/PerformanceMonitor';
 import { useDepartures } from './hooks/useDepartures';
 import { UI_CONFIG } from './constants';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 function App() {
   const {
@@ -18,12 +19,22 @@ function App() {
   } = useDepartures();
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900" role="application" aria-label="Jízdní řád Řež - Aplikace pro sledování odjezdů vlaků a autobusů">
+    <ThemeProvider>
+      <div className="min-h-screen w-full" role="application" aria-label="Jízdní řád Řež - Aplikace pro sledování odjezdů vlaků a autobusů">
       {/* Background decorative elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div className="absolute top-0 left-1/4 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-float"></div>
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-float" style={{animationDelay: '1s'}}></div>
-        <div className="absolute top-1/2 left-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div 
+          className="absolute top-0 left-1/4 w-72 h-72 rounded-full blur-3xl animate-float"
+          style={{ backgroundColor: 'var(--color-primary) 0.1' }}
+        ></div>
+        <div 
+          className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full blur-3xl animate-float" 
+          style={{ animationDelay: '1s', backgroundColor: 'var(--color-secondary) 0.1' }}
+        ></div>
+        <div 
+          className="absolute top-1/2 left-0 w-64 h-64 rounded-full blur-3xl animate-pulse-slow"
+          style={{ backgroundColor: 'var(--color-accent) 0.05' }}
+        ></div>
       </div>
       
       {/* Main content */}
@@ -109,7 +120,8 @@ function App() {
       >
         Přeskočit na hlavní obsah
       </a>
-    </div>
+      </div>
+    </ThemeProvider>
   );
 }
 
