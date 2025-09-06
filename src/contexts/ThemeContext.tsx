@@ -123,6 +123,26 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       // Default to dark theme if no saved theme
       setCurrentTheme(THEMES.dark);
     }
+    
+    // Immediate mobile dark mode enforcement
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      // Add mobile dark mode class
+      document.documentElement.classList.add('mobile-dark-mode');
+      
+      // Force dark background immediately on mobile
+      document.documentElement.style.backgroundColor = '#0f172a';
+      document.documentElement.style.background = 'linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 20%, #16213e 40%, #0f3460 60%, #533483 80%, #1a1a2e 100%)';
+      document.body.style.backgroundColor = '#0f172a';
+      document.body.style.background = 'linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 20%, #16213e 40%, #0f3460 60%, #533483 80%, #1a1a2e 100%)';
+      document.body.style.color = '#ffffff';
+      
+      const rootElement = document.getElementById('root');
+      if (rootElement) {
+        rootElement.style.backgroundColor = 'transparent';
+        rootElement.style.background = 'transparent';
+      }
+    }
   }, []);
 
   // Funkce pro změnu tématu
@@ -139,6 +159,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Aplikování tématu na dokument
   const applyThemeToDocument = (theme: ColorTheme) => {
     const root = document.documentElement;
+    const isMobile = window.innerWidth <= 768;
     
     // Přidání třídy pro animaci změny tématu
     document.body.classList.add('theme-transitioning');
@@ -163,12 +184,35 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     // Aplikování textové barvy
     document.body.style.color = theme.colors.text;
     
-    // Zajištění správného zobrazení na mobilních zařízeních
-    if (window.innerWidth <= 768) {
+    // Agresivní aplikace pro mobilní zařízení
+    if (isMobile) {
       // Force reflow to ensure styles are applied
       document.body.offsetHeight;
-      document.body.style.background = theme.gradients.background;
-      document.body.style.backgroundColor = theme.colors.background;
+      
+      // Apply to all relevant elements
+      const elements = [document.documentElement, document.body, document.getElementById('root')];
+      elements.forEach(element => {
+        if (element) {
+          element.style.backgroundColor = theme.colors.background;
+          element.style.background = theme.gradients.background;
+          element.style.color = theme.colors.text;
+        }
+      });
+      
+      // Force dark mode on mobile regardless of theme
+      if (theme.id === 'dark') {
+        document.documentElement.style.backgroundColor = '#0f172a';
+        document.documentElement.style.background = 'linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 20%, #16213e 40%, #0f3460 60%, #533483 80%, #1a1a2e 100%)';
+        document.body.style.backgroundColor = '#0f172a';
+        document.body.style.background = 'linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 20%, #16213e 40%, #0f3460 60%, #533483 80%, #1a1a2e 100%)';
+        document.body.style.color = '#ffffff';
+        
+        const rootElement = document.getElementById('root');
+        if (rootElement) {
+          rootElement.style.backgroundColor = 'transparent';
+          rootElement.style.background = 'transparent';
+        }
+      }
     }
     
     // Odstranění třídy po dokončení animace

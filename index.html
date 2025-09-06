@@ -6,6 +6,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Jízdní řád z a do Řeže</title>
     <meta name="description" content="Aktuální odjezdy vlaků S4 a autobusů 371 z a do Řeže" />
+    <style>
+      /* Prevent white flash on mobile - inline critical CSS */
+      @media (max-width: 768px) {
+        html, body {
+          background-color: #0f172a !important;
+          background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 20%, #16213e 40%, #0f3460 60%, #533483 80%, #1a1a2e 100%) !important;
+          color: #ffffff !important;
+        }
+        #root {
+          background-color: transparent !important;
+          background: transparent !important;
+        }
+      }
+    </style>
+    <script>
+      // Immediate mobile dark mode enforcement - runs before any other scripts
+      (function() {
+        if (window.innerWidth <= 768) {
+          // Add mobile dark mode class
+          document.documentElement.classList.add('mobile-dark-mode');
+          
+          document.documentElement.style.backgroundColor = '#0f172a';
+          document.documentElement.style.background = 'linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 20%, #16213e 40%, #0f3460 60%, #533483 80%, #1a1a2e 100%)';
+          document.body.style.backgroundColor = '#0f172a';
+          document.body.style.background = 'linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 20%, #16213e 40%, #0f3460 60%, #533483 80%, #1a1a2e 100%)';
+          document.body.style.color = '#ffffff';
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
