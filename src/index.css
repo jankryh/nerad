@@ -90,8 +90,11 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   
+  /* Default dark background - fallback for mobile */
+  background: #0f172a;
+  
   /* Modern gradient background - using theme variable */
-  background: var(--gradient-background);
+  background: var(--gradient-background, linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 20%, #16213e 40%, #0f3460 60%, #533483 80%, #1a1a2e 100%));
   
   /* Enhanced background patterns - using theme colors */
   background-image: 
@@ -305,6 +308,13 @@ body::before {
   }
 }
 
+/* Dark theme specific adjustments */
+[data-theme="dark"] body {
+  background: #0f172a !important;
+  background: var(--gradient-background) !important;
+  color: #ffffff !important;
+}
+
 /* Light theme specific adjustments */
 [data-theme="light"] {
   --glass-bg: rgba(255, 255, 255, 0.95);
@@ -314,8 +324,9 @@ body::before {
 }
 
 [data-theme="light"] body {
+  background: #ffffff !important;
   background: var(--gradient-background) !important;
-  color: var(--color-text) !important;
+  color: #0f172a !important;
 }
 
 [data-theme="light"] .glass {
@@ -377,9 +388,25 @@ body::before {
 @media (max-width: 768px) {
   body {
     background-attachment: scroll; /* Better performance on mobile */
+    /* Ensure dark background on mobile */
+    background: #0f172a !important;
+    background: var(--gradient-background, linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 20%, #16213e 40%, #0f3460 60%, #533483 80%, #1a1a2e 100%)) !important;
   }
   
   :root {
     --glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Force dark mode on mobile */
+  [data-theme="dark"] body {
+    background: #0f172a !important;
+    background: var(--gradient-background) !important;
+    color: #ffffff !important;
+  }
+  
+  [data-theme="light"] body {
+    background: #ffffff !important;
+    background: var(--gradient-background) !important;
+    color: #0f172a !important;
   }
 }

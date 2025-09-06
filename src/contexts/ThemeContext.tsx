@@ -119,6 +119,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const savedTheme = localStorage.getItem('color-theme');
     if (savedTheme && THEMES[savedTheme]) {
       setCurrentTheme(THEMES[savedTheme]);
+    } else {
+      // Default to dark theme if no saved theme
+      setCurrentTheme(THEMES.dark);
     }
   }, []);
 
@@ -153,11 +156,20 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       root.style.setProperty(`--gradient-${key}`, value);
     });
 
-    // Aplikování background gradientu na body
+    // Aplikování background gradientu na body - s fallback pro mobilní zařízení
     document.body.style.background = theme.gradients.background;
+    document.body.style.backgroundColor = theme.colors.background;
     
     // Aplikování textové barvy
     document.body.style.color = theme.colors.text;
+    
+    // Zajištění správného zobrazení na mobilních zařízeních
+    if (window.innerWidth <= 768) {
+      // Force reflow to ensure styles are applied
+      document.body.offsetHeight;
+      document.body.style.background = theme.gradients.background;
+      document.body.style.backgroundColor = theme.colors.background;
+    }
     
     // Odstranění třídy po dokončení animace
     setTimeout(() => {
@@ -168,6 +180,19 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Aplikování tématu při změně
   useEffect(() => {
     applyThemeToDocument(currentTheme);
+  }, [currentTheme]);
+
+  // Re-apply theme on window resize (for mobile orientation changes)
+  useEffect(() => {
+    const handleResize = () => {
+      // Small delay to ensure the resize is complete
+      setTimeout(() => {
+        applyThemeToDocument(currentTheme);
+      }, 100);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [currentTheme]);
 
   const value: ThemeContextType = {
