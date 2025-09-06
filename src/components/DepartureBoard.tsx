@@ -307,11 +307,11 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
               const hasDelay = debugDeparture.delay && debugDeparture.delay > 0;
               
               return minutesUntil !== null ? (
-                <div className="absolute top-2 left-4 z-10">
-                  <span className={`text-[10px] font-medium bg-black/20 px-1.5 py-0.5 rounded-md ${
+                <div className="absolute top-2 left-2 z-10">
+                  <span className={`text-[10px] font-medium bg-black/30 backdrop-blur-sm px-2 py-1 rounded-lg border border-white/10 ${
                     hasDelay 
                       ? 'text-red-400' 
-                      : 'text-white/60'
+                      : 'text-white/70'
                   }`}>
                     za {formatMinutesUntilDeparture(minutesUntil)}
                   </span>
@@ -321,7 +321,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
             
             <div 
               id={`departure-${index}-details`}
-              className="flex flex-col sm:grid sm:grid-cols-3 gap-3 sm:gap-6 sm:items-center"
+              className="flex flex-col sm:grid sm:grid-cols-3 gap-3 sm:gap-6 sm:items-center pt-8 sm:pt-0"
               role="group"
               aria-label={`Detaily odjezdu ${debugDeparture.line}`}
             >
@@ -329,15 +329,15 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
               <div className="sm:hidden">
                 <div className="flex justify-between items-center">
                   {/* Departure time */}
-                  <div className="text-left">
+                  <div className="text-left flex-1">
                     <div className="space-y-1">
                       {debugDeparture.delay !== null && debugDeparture.delay > 0 ? (
                         <>
-                          <time className="block text-sm font-medium text-white/40 font-mono tracking-tight line-through">
+                          <time className="block text-xs font-medium text-white/40 font-mono tracking-tight line-through">
                             {formatTime(debugDeparture.scheduledTime)}
                           </time>
                           <time 
-                            className="block text-2xl font-bold text-red-400 font-mono tracking-tight"
+                            className="block text-xl font-bold text-red-400 font-mono tracking-tight"
                             dateTime={new Date(new Date(debugDeparture.scheduledTime).getTime() + debugDeparture.delay * 60 * 1000).toISOString()}
                             aria-label={`Skutečný čas odjezdu: ${formatTime(new Date(new Date(debugDeparture.scheduledTime).getTime() + debugDeparture.delay * 60 * 1000).toISOString())}`}
                           >
@@ -346,9 +346,9 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                         </>
                       ) : (
                         <>
-                          <div className="h-[20px]"></div>
+                          <div className="h-[16px]"></div>
                           <time 
-                            className="block text-2xl font-bold text-white font-mono tracking-tight"
+                            className="block text-xl font-bold text-white font-mono tracking-tight"
                             dateTime={debugDeparture.scheduledTime}
                             aria-label={`Naplánovaný čas odjezdu: ${formatTime(debugDeparture.scheduledTime)}`}
                           >
@@ -357,7 +357,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                         </>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 justify-start mt-1">
+                    <div className="flex items-center gap-1 justify-start mt-1">
                       <div className="text-white/70 text-xs font-semibold uppercase tracking-wide">Odjezd</div>
                       {debugDeparture.delay !== null && debugDeparture.delay > 0 && (
                         <span className="text-red-400 text-xs font-semibold">
@@ -368,15 +368,15 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                   </div>
 
                   {/* Arrival time */}
-                  <div className="text-right">
+                  <div className="text-right flex-1">
                     <div className="space-y-1">
                       {debugDeparture.delay !== null && debugDeparture.delay > 0 ? (
                         <>
-                          <time className="block text-sm font-medium text-white/40 font-mono tracking-tight line-through">
+                          <time className="block text-xs font-medium text-white/40 font-mono tracking-tight line-through">
                             {calculateScheduledArrivalTime(departure)}
                           </time>
                           <time 
-                            className="block text-2xl font-bold text-red-400 font-mono tracking-tight"
+                            className="block text-xl font-bold text-red-400 font-mono tracking-tight"
                             aria-label={`Skutečný čas příjezdu: ${calculateArrivalTimeWithDelay(debugDeparture)}`}
                           >
                             {calculateArrivalTimeWithDelay(debugDeparture)}
@@ -384,9 +384,9 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                         </>
                       ) : (
                         <>
-                          <div className="h-[20px]"></div>
+                          <div className="h-[16px]"></div>
                           <time 
-                            className="block text-2xl font-bold text-white/90 font-mono tracking-tight"
+                            className="block text-xl font-bold text-white/90 font-mono tracking-tight"
                             aria-label={`Naplánovaný čas příjezdu: ${calculateArrivalTimeWithDelay(debugDeparture)}`}
                           >
                             {calculateArrivalTimeWithDelay(debugDeparture)}
@@ -492,8 +492,8 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
               </div>
               
               {/* Mobile: Travel time info */}
-              <div className="sm:hidden flex items-center justify-center gap-2 mt-2 pt-2 border-t border-white/10">
-                <ArrowRight className="w-4 h-4 text-primary-400" aria-hidden="true" />
+              <div className="sm:hidden flex items-center justify-center gap-2 mt-3 pt-2 border-t border-white/10">
+                <ArrowRight className="w-3 h-3 text-primary-400" aria-hidden="true" />
                 <span className="text-white/60 text-xs font-medium uppercase tracking-wider">
                   ~{getTravelTime(debugDeparture)} min cesta
                   {TRAVEL_TIME_CONFIG.enableRealTimeInUI && isCalculatingTimes && (
