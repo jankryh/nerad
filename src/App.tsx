@@ -2,6 +2,7 @@
 import { Header } from './components/Header';
 import { DepartureGrid } from './components/DepartureGrid';
 import { PerformanceMonitor } from './components/PerformanceMonitor';
+import { MobileDebug } from './components/MobileDebug';
 import { useDepartures } from './hooks/useDepartures';
 import { UI_CONFIG } from './constants';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -20,6 +21,7 @@ function App() {
 
   return (
     <ThemeProvider>
+      <MobileDebug />
       <div className="min-h-screen w-full" role="application" aria-label="Jízdní řád Řež - Aplikace pro sledování odjezdů vlaků a autobusů">
       {/* Background decorative elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">

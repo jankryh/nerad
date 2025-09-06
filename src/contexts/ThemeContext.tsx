@@ -113,6 +113,61 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [currentTheme, setCurrentTheme] = useState<ColorTheme>(THEMES.dark);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Mobile detection and theme application
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      
+      if (mobile) {
+        // Force dark mode on mobile with direct styles
+        const darkGradient = 'linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 20%, #16213e 40%, #0f3460 60%, #533483 80%, #1a1a2e 100%)';
+        
+        // Apply to all elements
+        document.documentElement.style.setProperty('background-color', '#0f172a', 'important');
+        document.documentElement.style.setProperty('background', darkGradient, 'important');
+        document.documentElement.style.setProperty('color', '#ffffff', 'important');
+        
+        document.body.style.setProperty('background-color', '#0f172a', 'important');
+        document.body.style.setProperty('background', darkGradient, 'important');
+        document.body.style.setProperty('color', '#ffffff', 'important');
+        
+        const rootElement = document.getElementById('root');
+        if (rootElement) {
+          rootElement.style.setProperty('background-color', 'transparent', 'important');
+          rootElement.style.setProperty('background', 'transparent', 'important');
+        }
+        
+        // Add mobile class
+        document.documentElement.classList.add('mobile-dark-mode');
+      } else {
+        // Remove mobile class and reset styles
+        document.documentElement.classList.remove('mobile-dark-mode');
+        document.documentElement.style.removeProperty('background-color');
+        document.documentElement.style.removeProperty('background');
+        document.documentElement.style.removeProperty('color');
+        document.body.style.removeProperty('background-color');
+        document.body.style.removeProperty('background');
+        document.body.style.removeProperty('color');
+        
+        const rootElement = document.getElementById('root');
+        if (rootElement) {
+          rootElement.style.removeProperty('background-color');
+          rootElement.style.removeProperty('background');
+        }
+      }
+    };
+
+    // Initial check
+    checkMobile();
+    
+    // Listen for resize events
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Načtení uloženého tématu při inicializaci
   useEffect(() => {
@@ -122,26 +177,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     } else {
       // Default to dark theme if no saved theme
       setCurrentTheme(THEMES.dark);
-    }
-    
-    // Immediate mobile dark mode enforcement
-    const isMobile = window.innerWidth <= 768;
-    if (isMobile) {
-      // Add mobile dark mode class
-      document.documentElement.classList.add('mobile-dark-mode');
-      
-      // Force dark background immediately on mobile
-      document.documentElement.style.backgroundColor = '#0f172a';
-      document.documentElement.style.background = 'linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 20%, #16213e 40%, #0f3460 60%, #533483 80%, #1a1a2e 100%)';
-      document.body.style.backgroundColor = '#0f172a';
-      document.body.style.background = 'linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 20%, #16213e 40%, #0f3460 60%, #533483 80%, #1a1a2e 100%)';
-      document.body.style.color = '#ffffff';
-      
-      const rootElement = document.getElementById('root');
-      if (rootElement) {
-        rootElement.style.backgroundColor = 'transparent';
-        rootElement.style.background = 'transparent';
-      }
     }
   }, []);
 
@@ -159,7 +194,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Aplikování tématu na dokument
   const applyThemeToDocument = (theme: ColorTheme) => {
     const root = document.documentElement;
-    const isMobile = window.innerWidth <= 768;
     
     // Přidání třídy pro animaci změny tématu
     document.body.classList.add('theme-transitioning');
@@ -177,42 +211,29 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       root.style.setProperty(`--gradient-${key}`, value);
     });
 
-    // Aplikování background gradientu na body - s fallback pro mobilní zařízení
-    document.body.style.background = theme.gradients.background;
-    document.body.style.backgroundColor = theme.colors.background;
-    
-    // Aplikování textové barvy
-    document.body.style.color = theme.colors.text;
-    
-    // Agresivní aplikace pro mobilní zařízení
+    // Different handling for mobile vs desktop
     if (isMobile) {
-      // Force reflow to ensure styles are applied
-      document.body.offsetHeight;
+      // On mobile, always force dark mode with direct styles
+      const darkGradient = 'linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 20%, #16213e 40%, #0f3460 60%, #533483 80%, #1a1a2e 100%)';
       
-      // Apply to all relevant elements
-      const elements = [document.documentElement, document.body, document.getElementById('root')];
-      elements.forEach(element => {
-        if (element) {
-          element.style.backgroundColor = theme.colors.background;
-          element.style.background = theme.gradients.background;
-          element.style.color = theme.colors.text;
-        }
-      });
+      document.documentElement.style.setProperty('background-color', '#0f172a', 'important');
+      document.documentElement.style.setProperty('background', darkGradient, 'important');
+      document.documentElement.style.setProperty('color', '#ffffff', 'important');
       
-      // Force dark mode on mobile regardless of theme
-      if (theme.id === 'dark') {
-        document.documentElement.style.backgroundColor = '#0f172a';
-        document.documentElement.style.background = 'linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 20%, #16213e 40%, #0f3460 60%, #533483 80%, #1a1a2e 100%)';
-        document.body.style.backgroundColor = '#0f172a';
-        document.body.style.background = 'linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 20%, #16213e 40%, #0f3460 60%, #533483 80%, #1a1a2e 100%)';
-        document.body.style.color = '#ffffff';
-        
-        const rootElement = document.getElementById('root');
-        if (rootElement) {
-          rootElement.style.backgroundColor = 'transparent';
-          rootElement.style.background = 'transparent';
-        }
+      document.body.style.setProperty('background-color', '#0f172a', 'important');
+      document.body.style.setProperty('background', darkGradient, 'important');
+      document.body.style.setProperty('color', '#ffffff', 'important');
+      
+      const rootElement = document.getElementById('root');
+      if (rootElement) {
+        rootElement.style.setProperty('background-color', 'transparent', 'important');
+        rootElement.style.setProperty('background', 'transparent', 'important');
       }
+    } else {
+      // On desktop, use normal theme application
+      document.body.style.background = theme.gradients.background;
+      document.body.style.backgroundColor = theme.colors.background;
+      document.body.style.color = theme.colors.text;
     }
     
     // Odstranění třídy po dokončení animace
@@ -226,18 +247,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     applyThemeToDocument(currentTheme);
   }, [currentTheme]);
 
-  // Re-apply theme on window resize (for mobile orientation changes)
+  // Re-apply theme when mobile state changes
   useEffect(() => {
-    const handleResize = () => {
-      // Small delay to ensure the resize is complete
-      setTimeout(() => {
-        applyThemeToDocument(currentTheme);
-      }, 100);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [currentTheme]);
+    applyThemeToDocument(currentTheme);
+  }, [isMobile, currentTheme]);
 
   const value: ThemeContextType = {
     currentTheme,
