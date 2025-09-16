@@ -336,6 +336,7 @@ curl -I http://localhost:8080
 ### **Kompletní dokumentace**
 - **`COMPREHENSIVE_DOCUMENTATION.md`** - kompletní technická dokumentace
 - **`README.md`** - tento soubor (základní přehled)
+- **`AGENTS.md`** - přehled pravidel pro přispěvatele
 - **`UBUNTU_DEPLOYMENT.md`** - Ubuntu deployment instrukce
 
 ### **Užitečné odkazy**

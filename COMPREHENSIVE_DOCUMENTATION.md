@@ -12,6 +12,7 @@
 - [🚀 Quick Start](#-quick-start)
 - [🔧 Installation & Setup](#-installation--setup)
 - [🔐 API Configuration](#-api-configuration)
+- [🗺️ Golemio PID API](#️-golemio-pid-api)
 - [📱 Features & Functionality](#-features--functionality)
 - [🏗️ Architecture & Technical Implementation](#️-architecture--technical-implementation)
 - [🎛️ Configuration Options](#️-configuration-options)
@@ -125,6 +126,54 @@ curl -H "X-Access-Token: YOUR_API_KEY" \
 # Should return JSON response with departures
 # If you get 401/403, check API key
 ```
+
+---
+
+## 🗺️ Golemio PID API
+
+### **Base Endpoint & Authentication**
+- Base URL: `https://api.golemio.cz/v2`
+- Auth header: `X-Access-Token: <JWT>` (the app reads `VITE_PID_API_KEY` from `.env`)
+- Default headers: `Accept: application/json`, `Content-Type: application/json` (set in `BaseAPIService`)
+- Keys expire periodically; regenerate them in the Golemio dashboard and update both local and deployed environments.
+
+### **Departure Boards Endpoint**
+- Path: `GET /pid/departureboards`
+- Key query parameters used:
+  - `ids[]`: PID stop-place identifier (e.g., `U2823Z301` for Řež, `U480Z301` for Masarykovo)
+  - `mode`: `departures` for outbound boards, `arrivals` for inbound matching
+  - `limit`: API-side clamp (we request 50, then slice to the UI limit)
+  - `minutesAfter`: forward-looking window in minutes (app uses 240 to cover evening gaps)
+  - `order`: `real` to honour PID’s live ordering
+- Additional filters (`minutesBefore`, `routeIds[]`, `includeNotDeparted`) can be appended when new features need broader context.
+
+### **Response Shape Highlights**
+Each call returns a `departures` array with rich metadata:
+```json
+{
+  "departures": [
+    {
+      "route": { "short_name": "S4", "type": 2 },
+      "trip": { "id": "123", "headsign": "Praha Masarykovo n." },
+      "departure_timestamp": {
+        "scheduled": "2025-01-06T17:53:00+01:00",
+        "predicted": "2025-01-06T17:54:00+01:00"
+      },
+      "delay": { "minutes": 1 },
+      "stop": { "platform_code": "1" }
+    }
+  ]
+}
+```
+- `route.short_name` drives the line badge in UI (`S4`, `371`)
+- `trip.headsign` feeds the direction heuristics in `matchesDirection`
+- `departure_timestamp` values power countdowns; `delay.minutes` toggles red styling
+
+### **Usage Within the App**
+- `getDepartures` and `getArrivals` call the same endpoint with different `mode` values, trim to three items, and normalise into `Departure`/`Arrival` types.
+- Travel-time logic pairs departures and arrivals by `tripId` to produce real-time durations.
+- Results are cached for 30 s (`apiCache`) and batched (max four concurrent requests) to stay under PID rate policies.
+- Retry with exponential backoff handles transient `429` or `5xx` responses; persistent failures bubble up as user-facing errors.
 
 ---
 
