@@ -376,10 +376,14 @@ export class DeparturesService extends BaseAPIService {
           
           return [{
             tripId: 'estimated_371',
-            departureTime: new Date().toISOString(),
-            arrivalTime: new Date(Date.now() + estimatedDuration * 60 * 1000).toISOString(),
+            line: lineId,
+            mode: 'bus' as const,
             duration: estimatedDuration,
-            lineId,
+            isRealTime: false,
+            fallbackUsed: true,
+            calculatedAt: new Date(),
+            departureTime: new Date(),
+            arrivalTime: new Date(Date.now() + estimatedDuration * 60 * 1000),
             sampleCount: 1
           }];
         }
