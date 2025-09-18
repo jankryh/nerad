@@ -147,6 +147,50 @@ curl -H "X-Access-Token: YOUR_API_KEY" \
   - `order`: `real` to honour PID’s live ordering
 - Additional filters (`minutesBefore`, `routeIds[]`, `includeNotDeparted`) can be appended when new features need broader context.
 
+### **PID Departure Boards Cheat Sheet (v2)**
+- **Endpoint:** `GET /v2/pid/departureboards`
+- **Auth:** `X-Access-Token: <API key>` header (401 when missing/invalid).
+- **Stop identifiers (choose one set, max 100 stops per request):** `ids[]` (GTFS), `aswIds[]` (node_stop), `cisIds[]`, `names[]` (exact match; incompatible with `includeMetroTrains`).
+- **Time window controls:**
+  - `minutesBefore` (default 0, max 30, min -4320) — start offset relative to now or `timeFrom`.
+  - `minutesAfter` (default 180, max 4320, min -4350) — end offset; combined window must be positive.
+  - `timeFrom` (ISO 8601) — shift "now" (range −6 h to +2 days).
+  - `preferredTimezone` (default `Europe/Prague`).
+- **Result mode:** `mode=departures` (default) | `arrivals` | `mixed` (avoid mixed for dual listings).
+- **Ordering:** `order=real` (live, default) or `order=timetable`.
+- **Filters/formatting:** `filter=routeOnce`, `routeHeadingOnce`, `...NoGap`, `...Fill`; `skip[]=canceled|atStop|untracked|missing` (prefer `missing` over `untracked`).
+- **Extras:**
+  - `includeMetroTrains=true` adds metro/train when querying by node name (not with `aswIds`).
+  - `airCondition` (default true) toggles climate info.
+  - `limit` (default 20, max 1000), `total` (default limit, max 1000), `offset` for pagination.
+- **Response highlights:**
+  - `stops[]` — metadata for included stops (name, platform, coordinates, accessibility).
+  - `departures[]` — individual services with `arrival_timestamp`, `departure_timestamp`, `delay`, `route`, `trip`, `stop`, `last_stop`.
+  - `infotexts[]` — temporary advisories with validity window.
+- **Common errors:** 401 invalid key, 404 unknown ID. Responses carry cache headers (e.g., `Cache-Control: public, s-maxage=5`).
+- **Tips:**
+  - Request multiple stops via repeated parameters (`ids[]=U118Z101P&ids[]=U754Z1P`).
+  - When querying terminals, combine `skip[]=missing` to surface departures earlier.
+  - Use `filter=routeHeadingOnce` variants for "one line per row" displays; the `...Fill` suffix pads results to the requested total.
+  - Paginate with `total` + `offset` for rotating screens.
+- **Example requests:**
+  - Basic window: `/v2/pid/departureboards?ids[]=U118Z101P&minutesAfter=180`
+  - Node with filter: `/v2/pid/departureboards?aswIds[]=458_101&filter=routeOnce&order=real`
+  - Named node + metro: `/v2/pid/departureboards?names[]=Na%20Knížecí&includeMetroTrains=true&minutesBefore=10&minutesAfter=60`
+  - Arrivals at fixed time: `/v2/pid/departureboards?ids[]=U458Z101P&mode=arrivals&order=timetable&timeFrom=2021-01-21T06:00:00`
+  - Skipping canceled/missing with paging: `/v2/pid/departureboards?ids[]=U118Z101P&skip[]=canceled&skip[]=missing&limit=20&total=100&offset=40`
+- **cURL template:**
+  ```bash
+  curl -G 'https://api.golemio.cz/v2/pid/departureboards' \
+    -H 'X-Access-Token: YOUR_API_KEY' \
+    --data-urlencode 'ids[]=U118Z101P' \
+    --data-urlencode 'minutesBefore=0' \
+    --data-urlencode 'minutesAfter=180' \
+    --data-urlencode 'order=real' \
+    --data-urlencode 'filter=none' \
+    --data-urlencode 'preferredTimezone=Europe/Prague'
+  ```
+
 ### **Response Shape Highlights**
 Each call returns a `departures` array with rich metadata:
 ```json
@@ -174,6 +218,7 @@ Each call returns a `departures` array with rich metadata:
 - Travel-time logic pairs departures and arrivals by `tripId` to produce real-time durations.
 - Results are cached for 30 s (`apiCache`) and batched (max four concurrent requests) to stay under PID rate policies.
 - Retry with exponential backoff handles transient `429` or `5xx` responses; persistent failures bubble up as user-facing errors.
+
 
 ---
 
@@ -257,18 +302,23 @@ export class DeparturesService extends BaseAPIService {
 ```typescript
 // Configuration
 export const TRAVEL_TIME_CONFIG = {
-  useRealTimeAPI: true,        // Enable real-time API calculation
+  useRealTimeAPI: true,        // Enable real-time API calculation (PRIORITIZED)
   fallbackToHardcoded: true,   // Fallback to hardcoded times if API fails
   cacheDuration: 300000,       // Cache travel times for 5 minutes
   maxRetries: 2,               // Maximum retries for API calls
   timeout: 5000,               // API timeout in milliseconds
-  enableRealTimeInUI: true    // Toggle for UI: false = hardcoded, true = real-time
+  enableRealTimeInUI: true,    // Toggle for UI: false = hardcoded, true = real-time
+  validationEnabled: true,     // Enable validation of calculated travel times
+  minSampleCount: 1,           // Minimum number of samples for average calculation
+  maxCacheSize: 50             // Maximum number of cached travel time entries
 } as const;
 
-// Enhanced calculation functions
+// Enhanced calculation functions with caching and validation
 export const getEnhancedTravelTime = async (departure: Departure): Promise<number>
 export const calculateEnhancedArrivalTime = async (departure: Departure): Promise<Date>
 export const formatEnhancedArrivalTime = async (departure: Departure): Promise<string>
+export const clearTravelTimeCache = (): void
+export const getTravelTimeCacheStats = (): CacheStats
 ```
 
 ### **Performance Optimizations**
@@ -346,8 +396,8 @@ private async retryRequest(config: AxiosRequestConfig): Promise<AxiosResponse> {
 ```typescript
 // src/constants.ts
 export const TRAVEL_TIMES = {
-  train: 18, // Train travel time in minutes
-  bus: 28    // Bus travel time in minutes
+  train: 18, // Train travel time in minutes (FALLBACK ONLY)
+  bus: 28    // Bus travel time in minutes (FALLBACK ONLY)
 } as const;
 
 export const DEPARTURE_INTERVALS = {
@@ -356,14 +406,36 @@ export const DEPARTURE_INTERVALS = {
 } as const;
 
 export const TRAVEL_TIME_CONFIG = {
-  useRealTimeAPI: true,        // Enable real-time API calculation
+  useRealTimeAPI: true,        // Enable real-time API calculation (PRIORITIZED)
   fallbackToHardcoded: true,   // Fallback to hardcoded times if API fails
   cacheDuration: 300000,       // Cache travel times for 5 minutes
   maxRetries: 2,               // Maximum retries for API calls
   timeout: 5000,               // API timeout in milliseconds
-  enableRealTimeInUI: true    // Toggle for UI: false = hardcoded, true = real-time
+  enableRealTimeInUI: true,    // Toggle for UI: false = hardcoded, true = real-time
+  validationEnabled: true,     // Enable validation of calculated travel times
+  minSampleCount: 1,           // Minimum number of samples for average calculation
+  maxCacheSize: 50             // Maximum number of cached travel time entries
 } as const;
 ```
+
+### **🚀 Enhanced Travel Time Calculation**
+
+The application now uses **real-time API data** from Golemio PID API to calculate travel times instead of hardcoded values:
+
+#### **How It Works:**
+1. **API Data Collection**: Fetches departure and arrival data for the same trip ID
+2. **Real-time Calculation**: Calculates actual travel duration based on real departure/arrival times
+3. **Average Calculation**: Computes average travel time from multiple trips for better accuracy
+4. **Validation**: Ensures calculated times are within reasonable bounds (50%-200% of hardcoded values)
+5. **Caching**: Stores results for 5 minutes to improve performance
+6. **Fallback**: Uses hardcoded values only when API data is unavailable
+
+#### **Benefits:**
+- ✅ **Accurate travel times** based on real traffic conditions
+- ✅ **Delay-aware calculations** that account for actual delays
+- ✅ **Performance optimized** with intelligent caching
+- ✅ **Reliable fallbacks** when API data is unavailable
+- ✅ **Validation system** prevents unreasonable calculations
 
 ### **UI Configuration**
 ```typescript
@@ -775,7 +847,9 @@ export class LinesService extends BaseAPIService {
 10. **🎯 Future Roadmap** - Planned enhancements
 
 **Key Achievements:**
-- ✅ **Enhanced Travel Time Calculation** with real-time API data
+- ✅ **Dynamic Travel Time Calculation** using real Golemio API data (no more hardcoded values!)
+- ✅ **Intelligent Caching System** for optimal performance
+- ✅ **Validation & Fallback System** ensures reliable calculations
 - ✅ **Robust Delay Handling** with accurate arrival time propagation
 - ✅ **Performance Monitoring** with configurable visibility
 - ✅ **Modular Architecture** ready for expansion

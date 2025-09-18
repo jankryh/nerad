@@ -1,6 +1,11 @@
 import { useState, useCallback } from 'react';
 import { Departure } from '../types';
-import { getEnhancedTravelTime, formatEnhancedArrivalTime } from '../utils/timeCalculations';
+import { 
+  getEnhancedTravelTime, 
+  formatEnhancedArrivalTime,
+  clearTravelTimeCache,
+  getTravelTimeCacheStats
+} from '../utils/timeCalculations';
 import { TRAVEL_TIME_CONFIG } from '../constants';
 
 interface UseEnhancedTravelTimeReturn {
@@ -9,6 +14,8 @@ interface UseEnhancedTravelTimeReturn {
   isLoading: boolean;
   error: string | null;
   clearError: () => void;
+  clearCache: () => void;
+  getCacheStats: () => { size: number; entries: Array<{ key: string; duration: number; age: number; line: string }> };
 }
 
 export const useEnhancedTravelTime = (): UseEnhancedTravelTimeReturn => {
@@ -17,6 +24,14 @@ export const useEnhancedTravelTime = (): UseEnhancedTravelTimeReturn => {
 
   const clearError = useCallback(() => {
     setError(null);
+  }, []);
+
+  const clearCache = useCallback(() => {
+    clearTravelTimeCache();
+  }, []);
+
+  const getCacheStats = useCallback(() => {
+    return getTravelTimeCacheStats();
   }, []);
 
   const getTravelTime = useCallback(async (departure: Departure): Promise<number> => {
@@ -88,6 +103,8 @@ export const useEnhancedTravelTime = (): UseEnhancedTravelTimeReturn => {
     getFormattedArrivalTime,
     isLoading,
     error,
-    clearError
+    clearError,
+    clearCache,
+    getCacheStats
   };
 };

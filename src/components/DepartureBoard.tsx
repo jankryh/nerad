@@ -52,7 +52,9 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
         
         try {
           // Get enhanced travel time for original departure
+          console.log(`🔍 Calculating enhanced travel time for ${departure.line} (${departure.direction})`);
           const travelTime = await getEnhancedTravelTime(departure, true);
+          console.log(`✅ Enhanced travel time calculated: ${travelTime} minutes for ${departure.line}`);
           newTravelTimes.set(key, travelTime);
           
           // If this is the first departure and debug delay is enabled, also calculate for delayed departure
@@ -99,7 +101,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
       if (departure.delay && departure.delay > 0) {
         const delayedKey = `${departure.tripId}-${departure.scheduledTime}-delayed`;
         const delayedTravelTime = enhancedTravelTimes.get(delayedKey);
-        if (delayedTravelTime) {
+        if (delayedTravelTime && delayedTravelTime > 0) {
           console.log(`🚀 Using delayed travel time: ${delayedTravelTime} minutes for ${departure.line}`);
           return delayedTravelTime;
         }
@@ -107,8 +109,31 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
       
       // Fallback to regular enhanced travel time
       const key = `${departure.tripId}-${departure.scheduledTime}`;
-      return enhancedTravelTimes.get(key) || TRAVEL_TIMES[departure.mode];
+      const enhancedTime = enhancedTravelTimes.get(key);
+      if (enhancedTime && enhancedTime > 0) {
+        console.log(`📊 Using enhanced travel time: ${enhancedTime} minutes for ${departure.line} (${departure.direction})`);
+        return enhancedTime;
+      } else {
+        // For buses, never use hardcoded fallback - return 0 to indicate no data
+        if (departure.mode === 'bus') {
+          console.warn(`⚠️ Bus ${departure.line}: No real-time travel time available, no travel time shown`);
+          return 0;
+        } else {
+          // For trains, use hardcoded fallback
+          console.warn(`⚠️ Train ${departure.line}: No enhanced travel time found, using fallback: ${TRAVEL_TIMES[departure.mode]} minutes`);
+          return TRAVEL_TIMES[departure.mode];
+        }
+      }
     }
+    
+    // For buses, never use hardcoded values even when real-time is disabled
+    if (departure.mode === 'bus') {
+      console.log(`🚌 Bus ${departure.line}: Real-time disabled, no travel time shown`);
+      return 0;
+    }
+    
+    // For trains, use hardcoded values when real-time is disabled
+    console.log(`🚂 Train ${departure.line}: Using hardcoded travel time: ${TRAVEL_TIMES[departure.mode]} minutes`);
     return TRAVEL_TIMES[departure.mode];
   };
 
@@ -123,6 +148,11 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
       
       // Get travel time (enhanced or hardcoded)
       const travelMinutes = getTravelTime(departure);
+      
+      // For buses with no travel time data, show "N/A"
+      if (departure.mode === 'bus' && travelMinutes === 0) {
+        return 'N/A';
+      }
       
       // Calculate arrival time
       const arrivalTime = new Date(actualDepartureTime.getTime() + travelMinutes * 60 * 1000);
@@ -146,6 +176,11 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
       // Get travel time (enhanced or hardcoded) - use original departure for scheduled time
       const originalDeparture = { ...departure, delay: null };
       const travelMinutes = getTravelTime(originalDeparture);
+      
+      // For buses with no travel time data, show "N/A"
+      if (departure.mode === 'bus' && travelMinutes === 0) {
+        return 'N/A';
+      }
       
       // Calculate scheduled arrival time
       const arrivalTime = new Date(scheduledTime.getTime() + travelMinutes * 60 * 1000);
@@ -451,7 +486,16 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                 {/* Travel time positioned below */}
                 <div className="absolute bottom-2 text-center">
                   <div className="text-white/60 text-xs font-medium uppercase tracking-wider">
-                    ~{getTravelTime(debugDeparture)} min
+                    {(() => {
+                      const travelTime = getTravelTime(debugDeparture);
+                      if (travelTime > 0) {
+                        return `~${travelTime} min`;
+                      } else if (debugDeparture.mode === 'bus') {
+                        return 'API data only';
+                      } else {
+                        return `~${travelTime} min`;
+                      }
+                    })()}
                     {TRAVEL_TIME_CONFIG.enableRealTimeInUI && isCalculatingTimes && (
                       <span className="ml-1 text-primary-400">⏳</span>
                     )}
@@ -495,7 +539,16 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
               <div className="sm:hidden flex items-center justify-center gap-2 mt-3 pt-2 border-t border-white/10">
                 <ArrowRight className="w-3 h-3 text-primary-400" aria-hidden="true" />
                 <span className="text-white/60 text-xs font-medium uppercase tracking-wider">
-                  ~{getTravelTime(debugDeparture)} min cesta
+                  {(() => {
+                    const travelTime = getTravelTime(debugDeparture);
+                    if (travelTime > 0) {
+                      return `~${travelTime} min cesta`;
+                    } else if (debugDeparture.mode === 'bus') {
+                      return 'API data only';
+                    } else {
+                      return `~${travelTime} min cesta`;
+                    }
+                  })()}
                   {TRAVEL_TIME_CONFIG.enableRealTimeInUI && isCalculatingTimes && (
                     <span className="ml-1 text-primary-400">⏳</span>
                   )}

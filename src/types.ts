@@ -84,4 +84,10 @@ export interface TravelTimeCalculation {
   isRealTime: boolean;
   fallbackUsed: boolean;
   calculatedAt: Date;
+  departureTime?: Date;
+  arrivalTime?: Date;
+  delay?: number;
+  sampleCount?: number;
+  minDuration?: number;
+  maxDuration?: number;
 }

@@ -223,6 +223,11 @@ export class DeparturesService extends BaseAPIService {
 
     // Filtrování podle směru
     if (direction) {
+      console.log(`🔍 PŘED filtrováním podle směru "${direction}": ${filtered.length} odjezdů`);
+      filtered.forEach((dep, index) => {
+        console.log(`  ${index + 1}. "${dep.trip?.headsign || 'N/A'}" (${dep.route?.short_name || 'N/A'})`);
+      });
+      
       filtered = filtered.filter(dep => this.matchesDirection(dep, direction));
       console.log(`📋 Po filtrování podle směru: ${filtered.length} odjezdů`);
     }
@@ -236,23 +241,37 @@ export class DeparturesService extends BaseAPIService {
   private matchesDirection(departure: any, direction: string): boolean {
     const headsign = departure.trip?.headsign || '';
     
+    console.log(`🎯 matchesDirection: checking "${headsign}" for direction "${direction}"`);
+    
+    let matches = false;
     switch (direction) {
       case 'to-masarykovo':
-        return headsign.includes('Masarykovo') || headsign.includes('Praha');
+        matches = headsign.includes('Masarykovo') || headsign.includes('Praha');
+        break;
       
       case 'to-rez':
-        return (headsign.includes('Ústí') || headsign.includes('Kralupy') || headsign.includes('Řež')) && 
+        matches = (headsign.includes('Ústí') || headsign.includes('Kralupy') || headsign.includes('Řež')) && 
                !headsign.includes('Praha');
+        break;
+      
+      case 'to-kobylisy':
+        matches = headsign.includes('Kobylisy') || headsign.includes('Praha') || headsign.includes('Klecany');
+        break;
       
       case 'to-husinec':
-        return (headsign.includes('Husinec') || headsign.includes('Řež')) && 
+        matches = (headsign.includes('Husinec') || headsign.includes('Řež')) && 
                !headsign.includes('Klecany') && 
                !headsign.includes('Astrapark') &&
                !headsign.includes('Klecánky');
+        break;
       
       default:
-        return true;
+        matches = true;
+        break;
     }
+    
+    console.log(`🎯 matchesDirection result: "${headsign}" ${matches ? '✅ MATCHES' : '❌ DOES NOT MATCH'} "${direction}"`);
+    return matches;
   }
 
   /**
@@ -292,7 +311,7 @@ export class DeparturesService extends BaseAPIService {
   }
 
   /**
-   * Vypočítá dobu jízdy mezi dvěma zastávkami
+   * Vypočítá dobu jízdy mezi dvěma zastávkami s vylepšenou logikou
    */
   async calculateTravelTime(request: TravelTimeRequest): Promise<TravelTimeCalculation[]> {
     const { departureStopId, arrivalStopId, lineId, direction, useCache = true } = request;
@@ -300,19 +319,19 @@ export class DeparturesService extends BaseAPIService {
     try {
       console.log(`🚀 Vypočítávám dobu jízdy: ${departureStopId} → ${arrivalStopId}, linka ${lineId}`);
       
-      // Získat odjezdy a příjezdy paralelně
+      // Získat odjezdy a příjezdy paralelně s větším limitem pro lepší přesnost
       const [departureResponse, arrivalResponse] = await Promise.allSettled([
         this.getDepartures({
           stopPlaceId: departureStopId,
           lineId,
-          limit: 10,
+          limit: 20, // Více dat pro lepší průměr
           direction,
           useCache
         }),
         this.getArrivals({
           stopPlaceId: arrivalStopId,
           lineId,
-          limit: 10,
+          limit: 20, // Více dat pro lepší průměr
           direction,
           useCache
         })
@@ -326,18 +345,70 @@ export class DeparturesService extends BaseAPIService {
       const departures = departureResponse.value.departures;
       const arrivals = arrivalResponse.value.arrivals;
 
+      console.log(`📊 Načteno ${departures.length} odjezdů a ${arrivals.length} příjezdů`);
+
       // Spárovat odjezdy s příjezdy podle tripId
       const tripDurations: TravelTimeCalculation[] = [];
+      const durationMap = new Map<string, number[]>(); // Pro seskupení podle linky
+
+      // Pokud nejsou dostupné příjezdy (konečná zastávka), použijeme fallback
+      if (arrivals.length === 0) {
+        console.warn(`⚠️ Žádné příjezdy na zastávku ${arrivalStopId} - pravděpodobně konečná zastávka`);
+        
+        // Pro autobusy 371 použijeme standardní dobu jízdy na základě směru
+        if (lineId === '371') {
+          let estimatedDuration: number;
+          
+          // Určit směr na základě zastávek
+          if (departureStopId === 'U675Z12' && arrivalStopId === 'U2823Z301') {
+            // Kobylisy → Řež
+            estimatedDuration = 20;
+            console.log(`🕒 Kobylisy → Řež: ${estimatedDuration} minut`);
+          } else if (departureStopId === 'U2245Z2' && arrivalStopId === 'U675Z12') {
+            // Husinec → Kobylisy (Řež → Kobylisy)
+            estimatedDuration = 23;
+            console.log(`🕒 Husinec → Kobylisy: ${estimatedDuration} minut`);
+          } else {
+            // Fallback pro ostatní směry
+            estimatedDuration = 20;
+            console.log(`🕒 Fallback doba jízdy pro autobus ${lineId}: ${estimatedDuration} minut`);
+          }
+          
+          return [{
+            tripId: 'estimated_371',
+            departureTime: new Date().toISOString(),
+            arrivalTime: new Date(Date.now() + estimatedDuration * 60 * 1000).toISOString(),
+            duration: estimatedDuration,
+            lineId,
+            sampleCount: 1
+          }];
+        }
+        
+        return [];
+      }
       
       for (const departure of departures) {
         const matchingArrival = arrivals.find(arrival => arrival.tripId === departure.tripId);
         
         if (matchingArrival) {
-          const departureTime = new Date(departure.scheduledTime);
-          const arrivalTime = new Date(matchingArrival.scheduledTime);
-          const duration = Math.round((arrivalTime.getTime() - departureTime.getTime()) / (1000 * 60)); // v minutách
+          // Použít skutečný čas odjezdu (s delay) a příjezdu
+          const actualDepartureTime = departure.delay && departure.delay > 0
+            ? new Date(new Date(departure.scheduledTime).getTime() + departure.delay * 60 * 1000)
+            : new Date(departure.scheduledTime);
+            
+          const actualArrivalTime = matchingArrival.delay && matchingArrival.delay > 0
+            ? new Date(new Date(matchingArrival.scheduledTime).getTime() + matchingArrival.delay * 60 * 1000)
+            : new Date(matchingArrival.scheduledTime);
+          
+          const duration = Math.round((actualArrivalTime.getTime() - actualDepartureTime.getTime()) / (1000 * 60));
           
           if (duration > 0 && duration < 180) { // Rozumné limity: 0-180 minut
+            // Seskupit doby jízdy podle linky pro výpočet průměru
+            if (!durationMap.has(departure.line)) {
+              durationMap.set(departure.line, []);
+            }
+            durationMap.get(departure.line)!.push(duration);
+            
             tripDurations.push({
               tripId: departure.tripId,
               line: departure.line,
@@ -345,14 +416,42 @@ export class DeparturesService extends BaseAPIService {
               duration,
               isRealTime: true,
               fallbackUsed: false,
-              calculatedAt: new Date()
+              calculatedAt: new Date(),
+              departureTime: actualDepartureTime,
+              arrivalTime: actualArrivalTime,
+              delay: departure.delay || 0
             });
           }
         }
       }
 
-      console.log(`✅ Vypočítáno ${tripDurations.length} dob jízdy pro linku ${lineId}`);
-      return tripDurations;
+      // Vypočítat průměrnou dobu jízdy pro každou linku
+      const averageDurations: TravelTimeCalculation[] = [];
+      for (const [line, durations] of durationMap.entries()) {
+        if (durations.length > 0) {
+          const averageDuration = Math.round(durations.reduce((sum, d) => sum + d, 0) / durations.length);
+          const mode = line === 'S4' ? 'train' : 'bus';
+          
+          averageDurations.push({
+            tripId: `average_${line}`,
+            line,
+            mode,
+            duration: averageDuration,
+            isRealTime: true,
+            fallbackUsed: false,
+            calculatedAt: new Date(),
+            sampleCount: durations.length,
+            minDuration: Math.min(...durations),
+            maxDuration: Math.max(...durations)
+          });
+        }
+      }
+
+      // Vrátit jak jednotlivé jízdy, tak průměrné hodnoty
+      const allResults = [...tripDurations, ...averageDurations];
+      
+      console.log(`✅ Vypočítáno ${tripDurations.length} jednotlivých dob jízdy a ${averageDurations.length} průměrných pro linku ${lineId}`);
+      return allResults;
 
     } catch (error) {
       console.error('Error calculating travel time:', error);
