@@ -15,7 +15,7 @@ interface DepartureBoardProps {
   error?: string;
 }
 
-const DEBUG_ADD_DELAY = true;
+const DEBUG_ADD_DELAY = false;
 const DEBUG_DELAY_MINUTES = 3;
 const LEAVE_BUFFER_MINUTES = 2;
 
