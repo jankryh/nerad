@@ -8,10 +8,10 @@ import { ThemeProvider } from './contexts/ThemeContext';
 
 function App() {
   const {
-    trainFromRez,
-    trainToRez,
-    busFromRez,
-    busToRez,
+    trainToPrague,
+    trainFromPrague,
+    busToPrague,
+    busFromPrague,
     isLoading,
     error,
     lastUpdate,
@@ -43,10 +43,10 @@ function App() {
         
         <div className="space-y-6 sm:space-y-12 lg:space-y-16">
           <DepartureGrid
-            trainFromRez={trainFromRez}
-            trainToRez={trainToRez}
-            busFromRez={busFromRez}
-            busToRez={busToRez}
+            trainToPrague={trainToPrague}
+            trainFromPrague={trainFromPrague}
+            busToPrague={busToPrague}
+            busFromPrague={busFromPrague}
             isLoading={isLoading}
             error={error}
           />
@@ -61,7 +61,7 @@ function App() {
                       <div className="absolute inset-0 w-2 h-2 sm:w-3 sm:h-3 bg-emerald-400 rounded-full animate-ping opacity-20"></div>
                     </div>
                     <p className="text-white/90 text-sm sm:text-lg font-semibold">
-                      Data se automaticky obnovují každých 30 sekund
+                      Data se automaticky obnovují každých 30 sekund pro všechny 4 směry
                     </p>
                   </div>
                 </div>

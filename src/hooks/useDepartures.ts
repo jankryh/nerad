@@ -1,24 +1,32 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Departure, ApiError } from '../types';
-import { getAllDepartures } from '../api/pidApi'; // Použít skutečné PID API
+import { getAllDepartures } from '../api/pidApi';
 import { REFRESH_INTERVAL } from '../constants';
+import { logger } from '../utils/logger';
 
-interface UseDeparturesReturn {
-  trainFromRez: Departure[];
-  trainToRez: Departure[];
-  busFromRez: Departure[];
-  busToRez: Departure[];
+interface DeparturesState {
+  trainToPrague: Departure[];
+  trainFromPrague: Departure[];
+  busToPrague: Departure[];
+  busFromPrague: Departure[];
+}
+
+interface UseDeparturesReturn extends DeparturesState {
   isLoading: boolean;
   error: string | null;
   lastUpdate: Date | null;
   refreshData: () => void;
 }
 
+const emptyState: DeparturesState = {
+  trainToPrague: [],
+  trainFromPrague: [],
+  busToPrague: [],
+  busFromPrague: [],
+};
+
 export const useDepartures = (): UseDeparturesReturn => {
-  const [trainFromRez, setTrainFromRez] = useState<Departure[]>([]);
-  const [trainToRez, setTrainToRez] = useState<Departure[]>([]);
-  const [busFromRez, setBusFromRez] = useState<Departure[]>([]);
-  const [busToRez, setBusToRez] = useState<Departure[]>([]);
+  const [departures, setDepartures] = useState<DeparturesState>(emptyState);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -27,48 +35,36 @@ export const useDepartures = (): UseDeparturesReturn => {
     try {
       setIsLoading(true);
       setError(null);
-      
-      // Použít skutečné PID API
+
       const data = await getAllDepartures();
-      
-      setTrainFromRez(data.rezToMasarykovo.departures || []);
-      setTrainToRez(data.masarykovoToRez.departures || []);
-      setBusFromRez(data.husinecsToKobylisy.departures || []);
-      setBusToRez(data.kobylisyToHusinec.departures || []);
-      
+
+      setDepartures({
+        trainToPrague: data.rezToMasarykovo.departures,
+        trainFromPrague: data.masarykovoToRez.departures,
+        busToPrague: data.husinecsToKobylisy.departures,
+        busFromPrague: data.kobylisyToHusinec.departures,
+      });
       setLastUpdate(new Date());
     } catch (err) {
       const apiError = err as ApiError;
       setError(apiError.message || 'Nepodařilo se načíst data');
-      console.error('Chyba při načítání dat:', err);
+      logger.error('Chyba při načítání dat', err);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const refreshData = useCallback(() => {
-    fetchData();
-  }, [fetchData]);
-
   useEffect(() => {
-    // První načtení dat
     fetchData();
-
-    // Nastavení intervalu pro automatické obnovování
-    const interval = setInterval(fetchData, REFRESH_INTERVAL);
-
-    // Cleanup při unmount
-    return () => clearInterval(interval);
+    const interval = window.setInterval(fetchData, REFRESH_INTERVAL);
+    return () => window.clearInterval(interval);
   }, [fetchData]);
 
   return {
-    trainFromRez,
-    trainToRez,
-    busFromRez,
-    busToRez,
+    ...departures,
     isLoading,
     error,
     lastUpdate,
-    refreshData,
+    refreshData: fetchData,
   };
 };

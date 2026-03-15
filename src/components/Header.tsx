@@ -33,11 +33,16 @@ export const Header: React.FC = () => {
               <Train className="w-4 h-4 sm:w-6 sm:h-6 text-white" aria-hidden="true" />
             </div>
             <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-white/70">
+                  Live PID
+                </span>
+              </div>
               <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-white leading-tight truncate">
-                Jízdní řád Řež
+                Řež ↔ Praha
               </h1>
               <p className="text-white/70 text-xs sm:text-sm truncate">
-                Vlaky S4 a autobusy 371
+                Vlak S4 a bus 371 v obou směrech na jedné tabuli
               </p>
             </div>
           </div>
