@@ -28,6 +28,8 @@ const LEAVE_BUFFER_MINUTES = 2;
 
 type Urgency = 'missed' | 'leave-now' | 'soon' | 'relaxed';
 
+const PROGRESS_MAX_MINUTES = 180;
+
 export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   title,
   departures,
@@ -232,39 +234,18 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   const debugDepartures = departures.map(getDebugDeparture);
 
   const getProgressPercent = (departure: Departure): number => {
-    const futureDepartures = debugDepartures
-      .map((item) => ({
-        departure: item,
-        minutesUntilDeparture: getMinutesUntilDeparture(item),
-      }))
-      .filter((item) => item.minutesUntilDeparture !== null && item.minutesUntilDeparture! >= 0);
+    const minutesUntilDeparture = getMinutesUntilDeparture(departure);
 
-    const currentMinutes = getMinutesUntilDeparture(departure);
-    if (currentMinutes === null) {
+    if (minutesUntilDeparture === null) {
       return 0;
     }
 
-    if (currentMinutes < 0) {
+    if (minutesUntilDeparture <= 0) {
       return 100;
     }
 
-    if (futureDepartures.length <= 1) {
-      return 100;
-    }
-
-    const minuteValues = futureDepartures
-      .map((item) => item.minutesUntilDeparture as number)
-      .sort((a, b) => a - b);
-
-    const minMinutes = minuteValues[0];
-    const maxMinutes = minuteValues[minuteValues.length - 1];
-
-    if (maxMinutes === minMinutes) {
-      return 100;
-    }
-
-    const normalized = ((maxMinutes - currentMinutes) / (maxMinutes - minMinutes)) * 100;
-    return Math.max(8, Math.min(100, normalized));
+    const normalized = ((PROGRESS_MAX_MINUTES - minutesUntilDeparture) / PROGRESS_MAX_MINUTES) * 100;
+    return Math.max(0, Math.min(100, normalized));
   };
 
   const nearestDeparture = [...debugDepartures].sort((a, b) => {
@@ -292,10 +273,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 
   const dividerStyle = {
     backgroundColor: 'color-mix(in srgb, var(--color-text) 12%, transparent)',
-  } as const;
-
-  const progressTrackStyle = {
-    backgroundColor: 'color-mix(in srgb, var(--color-text) 8%, transparent)',
   } as const;
 
   const cardHeaderStyle = {
@@ -413,21 +390,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
               aria-label={`Odjezd ${departure.line} v ${formatTime(departure.scheduledTime)}, ${hasDelay ? `zpoždění ${departure.delay} minut` : 'včas'}`}
               aria-describedby={`departure-${index}-details`}
             >
-              <div className="absolute inset-x-0 top-0 h-1 overflow-hidden" style={progressTrackStyle}>
-                <div
-                  className={`h-full transition-all duration-500 ${
-                    urgency === 'leave-now'
-                      ? 'bg-gradient-to-r from-red-500 to-rose-400'
-                      : urgency === 'soon'
-                        ? 'bg-gradient-to-r from-yellow-500 to-amber-300'
-                        : urgency === 'missed'
-                          ? 'bg-white/10'
-                          : 'bg-gradient-to-r from-emerald-500 to-teal-300'
-                  }`}
-                  style={{ width: `${progressPercent}%` }}
-                ></div>
-              </div>
-
               <div id={`departure-${index}-details`} className="space-y-4" role="group" aria-label={`Detaily odjezdu ${departure.line}`}>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="space-y-3 flex-1">
@@ -506,7 +468,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide" style={mutedLabelStyle}>
-                    <span>Progress</span>
+                    <span>Do odjezdu</span>
                     <span>{Math.round(progressPercent)} %</span>
                   </div>
                   <div
