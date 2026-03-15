@@ -136,7 +136,7 @@ const fetchBoard = async ({
     }
   }
 
-  const response = await api.get<BoardApiResponse>('/departureboards', {
+  const response = await api.get<BoardApiResponse>('/pid/departureboards', {
     params: {
       'ids[]': stopPlaceId,
       limit: 50,

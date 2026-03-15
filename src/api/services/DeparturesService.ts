@@ -111,7 +111,7 @@ export class DeparturesService extends BaseAPIService {
       console.log(`🔍 Načítám příjezdy pro zastávku ${stopPlaceId}, linku ${lineId}, směr: ${direction}`);
       
       const response = await this.get<any>(
-        '/departureboards',
+        '/pid/departureboards',
         {
           params: {
             'ids[]': stopPlaceId,
