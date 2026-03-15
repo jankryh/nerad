@@ -54,7 +54,7 @@ export class DeparturesService extends BaseAPIService {
       console.log(`🔍 Načítám odjezdy pro zastávku ${stopPlaceId}, linku ${lineId}, směr: ${direction}`);
       
       const response = await this.get<any>(
-        '/pid/departureboards',
+        '/departureboards',
         {
           params: {
             'ids[]': stopPlaceId,
@@ -111,7 +111,7 @@ export class DeparturesService extends BaseAPIService {
       console.log(`🔍 Načítám příjezdy pro zastávku ${stopPlaceId}, linku ${lineId}, směr: ${direction}`);
       
       const response = await this.get<any>(
-        '/pid/departureboards',
+        '/departureboards',
         {
           params: {
             'ids[]': stopPlaceId,
