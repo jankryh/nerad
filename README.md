@@ -16,11 +16,14 @@ Jednoduchá React/Vite aplikace pro zobrazení nejbližších odjezdů vlaků **
 
 ## Stav projektu
 
+**Aktuální release: `v2.0.0`**
+
 - frontend: React 18 + TypeScript + Vite
 - build: `npm run build`
 - lint: `npm run lint`
 - API vrstva je zjednodušená do jednoho čitelného modulu `src/api/pidApi.ts`
 - starší servisní abstrakce v `src/api/services/` je už překonaná a aplikace ji nepoužívá
+- aplikace je ve stavu normálně použitelného major releasu, ne jen prototypu
 
 ## Rychlý start
 
