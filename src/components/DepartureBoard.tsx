@@ -137,27 +137,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
     }
   };
 
-  const calculateScheduledArrivalTime = (departure: Departure): string => {
-    try {
-      const scheduledTime = new Date(departure.scheduledTime);
-      const originalDeparture = { ...departure, delay: null };
-      const travelMinutes = getTravelTime(originalDeparture);
-
-      if (departure.mode === 'bus' && travelMinutes === 0) {
-        return 'N/A';
-      }
-
-      const arrivalTime = new Date(scheduledTime.getTime() + travelMinutes * 60 * 1000);
-      return arrivalTime.toLocaleTimeString('cs-CZ', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      });
-    } catch {
-      return '--:--';
-    }
-  };
-
   const getMinutesUntilDeparture = (departure: Departure): number | null => {
     try {
       const now = new Date();
@@ -182,13 +161,22 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   };
 
   const formatMinutesUntilDeparture = (minutes: number): string => {
+    if (minutes <= 0) {
+      return 'teď';
+    }
+
     if (minutes < 60) {
       return `${minutes} min`;
     }
 
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
-    return `${hours}h ${remainingMinutes} min`;
+
+    if (remainingMinutes === 0) {
+      return `${hours} h`;
+    }
+
+    return `${hours} h ${remainingMinutes} min`;
   };
 
   const formatTravelDuration = (departure: Departure): string => {
@@ -447,19 +435,13 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 
                     <div className="flex items-end gap-4">
                       <div>
-                        {hasDelay && (
-                          <time className="mb-1 block text-xs font-medium font-mono tracking-tight line-through" style={mutedLabelStyle}>
-                            {formatTime(departure.scheduledTime)}
-                          </time>
-                        )}
-                        <time
+                        <div
                           className={`block text-2xl sm:text-3xl lg:text-4xl font-bold font-mono tracking-tight ${hasDelay ? 'text-red-400' : 'text-white'}`}
-                          dateTime={hasDelay ? calculateActualDepartureTime(departure).toISOString() : departure.scheduledTime}
                         >
                           {hasDelay
                             ? formatTime(calculateActualDepartureTime(departure).toISOString())
                             : formatTime(departure.scheduledTime)}
-                        </time>
+                        </div>
                         <div className="mt-1 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide" style={mutedLabelStyle}>
                           <span>Odjezd</span>
                           {hasDelay && <span className="text-red-400">(+{departure.delay}m)</span>}
@@ -469,14 +451,9 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                       <div className="h-12 w-px" style={dividerStyle}></div>
 
                       <div>
-                        {hasDelay && (
-                          <time className="mb-1 block text-xs font-medium font-mono tracking-tight line-through" style={mutedLabelStyle}>
-                            {calculateScheduledArrivalTime(departure)}
-                          </time>
-                        )}
-                        <time className={`block text-2xl sm:text-3xl lg:text-4xl font-bold font-mono tracking-tight ${hasDelay ? 'text-red-400' : 'text-primary-300'}`}>
+                        <div className={`block text-2xl sm:text-3xl lg:text-4xl font-bold font-mono tracking-tight ${hasDelay ? 'text-red-400' : 'text-primary-300'}`}>
                           {calculateArrivalTimeWithDelay(departure)}
-                        </time>
+                        </div>
                         <div className="mt-1 text-[11px] font-semibold uppercase tracking-wide" style={mutedLabelStyle}>Příjezd</div>
                       </div>
                     </div>
@@ -499,6 +476,34 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                       <div className="text-[11px] font-semibold uppercase tracking-wide" style={mutedLabelStyle}>Cesta</div>
                       <div className="mt-1 text-sm sm:text-base font-semibold" style={valueTextStyle}>{formatTravelDuration(departure)}</div>
                     </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide" style={mutedLabelStyle}>
+                    <span>Progress</span>
+                    <span>{Math.round(progressPercent)} %</span>
+                  </div>
+                  <div
+                    className="h-2.5 overflow-hidden rounded-full border"
+                    style={{
+                      borderColor: 'var(--glass-border)',
+                      background: 'color-mix(in srgb, var(--color-backgroundSecondary) 65%, transparent)',
+                    }}
+                    aria-hidden="true"
+                  >
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        urgency === 'leave-now'
+                          ? 'bg-gradient-to-r from-red-500 to-rose-400'
+                          : urgency === 'soon'
+                            ? 'bg-gradient-to-r from-yellow-500 to-amber-300'
+                            : urgency === 'missed'
+                              ? 'bg-slate-400/40'
+                              : 'bg-gradient-to-r from-emerald-500 to-teal-300'
+                      }`}
+                      style={{ width: `${progressPercent}%` }}
+                    ></div>
                   </div>
                 </div>
               </div>
