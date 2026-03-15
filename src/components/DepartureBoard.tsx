@@ -4,13 +4,8 @@ import {
   Clock,
   AlertCircle,
   Timer,
-  Sparkles,
-  Footprints,
   CheckCircle2,
-  ArrowRight,
   TrendingUp,
-  Gauge,
-  Siren,
 } from 'lucide-react';
 import { TRAVEL_TIMES, TRAVEL_TIME_CONFIG } from '../constants';
 import {
@@ -247,82 +242,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
     }
   };
 
-  const getUrgencyLabel = (departure: Departure): string => {
-    const minutesUntilLeave = getMinutesUntilLeave(departure);
-    const urgency = getUrgency(departure);
-
-    if (minutesUntilLeave === null) {
-      return 'Bez odhadu';
-    }
-
-    if (urgency === 'missed') {
-      return 'Tohle už nejspíš nestihneš';
-    }
-
-    if (urgency === 'leave-now') {
-      return 'Vyjdi teď';
-    }
-
-    if (urgency === 'soon') {
-      return `Vyjdi za ${Math.max(1, minutesUntilLeave)} min`;
-    }
-
-    return `Máš čas, vyjdi za ${minutesUntilLeave} min`;
-  };
-
-  const getStatusReason = (departure: Departure): string => {
-    const minutesUntilLeave = getMinutesUntilLeave(departure);
-    const delay = departure.delay ?? 0;
-    const walkMinutes = getWalkMinutes(departure);
-
-    if (minutesUntilLeave === null) {
-      return 'Čas odchodu teď neumím přesně spočítat';
-    }
-
-    if (delay > 0 && minutesUntilLeave >= 0) {
-      return `Zpoždění +${delay} min ti tady vlastně pomáhá`;
-    }
-
-    if (departure.mode === 'bus') {
-      return minutesUntilLeave <= 1
-        ? 'Bus je blízko — tohle je na rychlé rozhodnutí'
-        : 'Bus neřeší docházku, takže je to hlavně o správném načasování';
-    }
-
-    if (minutesUntilLeave <= 1) {
-      return `Počítám s docházkou ${walkMinutes} min a rezervou ${LEAVE_BUFFER_MINUTES} min`;
-    }
-
-    if (minutesUntilLeave <= 5) {
-      return `Ještě chvíli máš, ale už je dobré se chystat`;
-    }
-
-    return `Pohodový spoj s rozumnou rezervou`;
-  };
-
-  const getPrimaryDepartureReason = (departure: Departure): string => {
-    const urgency = getUrgency(departure);
-    const delay = departure.delay ?? 0;
-
-    if (delay > 0 && urgency !== 'missed') {
-      return 'Nejbližší spoj je aktuálně se zpožděním';
-    }
-
-    if (urgency === 'missed') {
-      return 'Tohle je sice nejbližší spoj, ale nejspíš už ho nestihneš';
-    }
-
-    if (urgency === 'leave-now') {
-      return 'Tohle je nejbližší spoj — jestli chceš jet, vyjdi teď';
-    }
-
-    if (urgency === 'soon') {
-      return 'Tohle je nejbližší spoj a pořád se dá v pohodě stihnout';
-    }
-
-    return 'Tohle je nejbližší následující spoj';
-  };
-
   const getProgressPercent = (departure: Departure): number => {
     const minutesUntilLeave = getMinutesUntilLeave(departure);
 
@@ -344,11 +263,32 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
     const leave = getMinutesUntilLeave(departure);
     return leave !== null && leave >= 0;
   }).length;
-  const secondaryDepartures = debugDepartures.filter((departure) => !(
-    nearestDeparture
-    && nearestDeparture.tripId === departure.tripId
-    && nearestDeparture.scheduledTime === departure.scheduledTime
-  ));
+
+  const subtlePanelStyle = {
+    borderColor: 'var(--glass-border)',
+    background: 'color-mix(in srgb, var(--color-backgroundSecondary) 70%, transparent)',
+  } as const;
+
+  const mutedLabelStyle = {
+    color: 'color-mix(in srgb, var(--color-text) 55%, transparent)',
+  } as const;
+
+  const valueTextStyle = {
+    color: 'color-mix(in srgb, var(--color-text) 88%, transparent)',
+  } as const;
+
+  const dividerStyle = {
+    backgroundColor: 'color-mix(in srgb, var(--color-text) 12%, transparent)',
+  } as const;
+
+  const progressTrackStyle = {
+    backgroundColor: 'color-mix(in srgb, var(--color-text) 8%, transparent)',
+  } as const;
+
+  const cardHeaderStyle = {
+    borderColor: 'var(--glass-border)',
+    background: 'linear-gradient(to right, color-mix(in srgb, var(--color-text) 3%, transparent), transparent)',
+  } as const;
 
   if (isLoading) {
     return (
@@ -413,7 +353,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 
   return (
     <article className="glass glass-hover rounded-2xl sm:rounded-4xl border border-white/10 shadow-card hover:shadow-hover transition-all duration-400 group" role="region">
-      <div className="p-3 sm:p-6 border-b border-white/10 bg-gradient-to-r from-white/[0.02] to-transparent">
+      <div className="p-3 sm:p-6 border-b border-white/10" style={cardHeaderStyle}>
         <div className="flex items-center relative">
           {typeof title === 'object' && 'icon' in title && <div className="flex-shrink-0">{title.icon}</div>}
 
@@ -434,82 +374,17 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
       </div>
 
       <div className="p-3 sm:p-6 space-y-3 sm:space-y-4">
-        {nearestDeparture && (
-          <div className="rounded-2xl sm:rounded-3xl border border-primary-400/25 bg-gradient-to-br from-primary-500/12 via-white/[0.04] to-transparent p-4 sm:p-5 shadow-lg shadow-primary-500/10">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-3">
-                <div className="inline-flex items-center gap-2 rounded-full border border-primary-400/20 bg-primary-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary-200">
-                  <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-                  Nejbližší spoj
-                </div>
-
-                <div>
-                  <div className="text-white text-2xl sm:text-3xl font-bold font-mono tracking-tight">
-                    {formatTime(nearestDeparture.delay && nearestDeparture.delay > 0
-                      ? calculateActualDepartureTime(nearestDeparture).toISOString()
-                      : nearestDeparture.scheduledTime)}
-                  </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-white/70">
-                    <span>Odjezd</span>
-                    {nearestDeparture.delay && nearestDeparture.delay > 0 && (
-                      <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-red-300 font-semibold">
-                        +{nearestDeparture.delay} min
-                      </span>
-                    )}
-                    <ArrowRight className="w-3.5 h-3.5 text-white/40" aria-hidden="true" />
-                    <span>Příjezd {calculateArrivalTimeWithDelay(nearestDeparture)}</span>
-                  </div>
-                </div>
-
-                <p className="text-sm text-white/75 max-w-xl">{getPrimaryDepartureReason(nearestDeparture)}</p>
-              </div>
-
-              <div className="sm:text-right space-y-2">
-                <div className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-white/85">
-                  <Footprints className="w-4 h-4 text-primary-300" aria-hidden="true" />
-                  {getUrgencyLabel(nearestDeparture)}
-                </div>
-                <div className="text-xs text-white/55">
-                  cesta {formatTravelDuration(nearestDeparture)} • rezerva {LEAVE_BUFFER_MINUTES} min
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-white/50">Stihnutelné</div>
-                <div className="mt-1 text-sm font-semibold text-white/85">{viableCount} z {debugDepartures.length} spojů</div>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-white/50">Odjíždí za</div>
-                <div className="mt-1 text-sm font-semibold text-white/85">
-                  {(() => {
-                    const minutes = getMinutesUntilDeparture(nearestDeparture);
-                    return minutes !== null ? formatMinutesUntilDeparture(Math.max(0, minutes)) : '--';
-                  })()}
-                </div>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-white/50">Vyjít</div>
-                <div className="mt-1 text-sm font-semibold text-primary-200">
-                  {(() => {
-                    const leave = getMinutesUntilLeave(nearestDeparture);
-                    if (leave === null) return '--';
-                    if (leave < 0) return 'pozdě';
-                    if (leave <= 1) return 'teď';
-                    return `za ${leave} min`;
-                  })()}
-                </div>
-              </div>
-            </div>
+        <div className="grid grid-cols-1 gap-2">
+          <div className="rounded-2xl border px-3 py-2.5" style={subtlePanelStyle}>
+            <div className="text-[11px] font-semibold uppercase tracking-wide" style={mutedLabelStyle}>Stihnutelné</div>
+            <div className="mt-1 text-sm font-semibold" style={valueTextStyle}>{viableCount} z {debugDepartures.length} spojů</div>
           </div>
-        )}
+        </div>
 
-        {secondaryDepartures.map((departure, index) => {
+        {debugDepartures.map((departure, index) => {
           const isRecommended = nearestDeparture?.tripId === departure.tripId
             && nearestDeparture?.scheduledTime === departure.scheduledTime;
           const minutesUntil = getMinutesUntilDeparture(departure);
-          const minutesUntilLeave = getMinutesUntilLeave(departure);
           const hasDelay = departure.delay && departure.delay > 0;
           const urgency = getUrgency(departure);
           const progressPercent = getProgressPercent(departure);
@@ -525,7 +400,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
               aria-label={`Odjezd ${departure.line} v ${formatTime(departure.scheduledTime)}, ${hasDelay ? `zpoždění ${departure.delay} minut` : 'včas'}`}
               aria-describedby={`departure-${index}-details`}
             >
-              <div className="absolute inset-x-0 top-0 h-1 bg-white/5 overflow-hidden">
+              <div className="absolute inset-x-0 top-0 h-1 overflow-hidden" style={progressTrackStyle}>
                 <div
                   className={`h-full transition-all duration-500 ${
                     urgency === 'leave-now'
@@ -550,22 +425,17 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                           Nejbližší spoj
                         </span>
                       ) : (
-                        <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/65">
+                        <span
+                          className="inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide"
+                          style={{
+                            borderColor: 'var(--glass-border)',
+                            background: 'color-mix(in srgb, var(--color-backgroundSecondary) 55%, transparent)',
+                            color: 'color-mix(in srgb, var(--color-text) 68%, transparent)',
+                          }}
+                        >
                           Další spoj
                         </span>
                       )}
-
-                      <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
-                        urgency === 'leave-now'
-                          ? 'border-red-400/20 bg-red-500/10 text-red-200'
-                          : urgency === 'soon'
-                            ? 'border-yellow-400/20 bg-yellow-500/10 text-yellow-100'
-                            : urgency === 'missed'
-                              ? 'border-white/10 bg-white/5 text-white/45'
-                              : 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100'
-                      }`}>
-                        {getUrgencyLabel(departure)}
-                      </span>
 
                       {hasDelay && (
                         <span className="inline-flex items-center rounded-full border border-red-400/20 bg-red-500/10 px-2.5 py-1 text-[11px] font-semibold text-red-200">
@@ -578,7 +448,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                     <div className="flex items-end gap-4">
                       <div>
                         {hasDelay && (
-                          <time className="mb-1 block text-xs font-medium text-white/40 font-mono tracking-tight line-through">
+                          <time className="mb-1 block text-xs font-medium font-mono tracking-tight line-through" style={mutedLabelStyle}>
                             {formatTime(departure.scheduledTime)}
                           </time>
                         )}
@@ -590,67 +460,44 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                             ? formatTime(calculateActualDepartureTime(departure).toISOString())
                             : formatTime(departure.scheduledTime)}
                         </time>
-                        <div className="mt-1 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-white/65">
+                        <div className="mt-1 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide" style={mutedLabelStyle}>
                           <span>Odjezd</span>
                           {hasDelay && <span className="text-red-400">(+{departure.delay}m)</span>}
                         </div>
                       </div>
 
-                      <div className="h-12 w-px bg-white/10"></div>
+                      <div className="h-12 w-px" style={dividerStyle}></div>
 
                       <div>
                         {hasDelay && (
-                          <time className="mb-1 block text-xs font-medium text-white/40 font-mono tracking-tight line-through">
+                          <time className="mb-1 block text-xs font-medium font-mono tracking-tight line-through" style={mutedLabelStyle}>
                             {calculateScheduledArrivalTime(departure)}
                           </time>
                         )}
                         <time className={`block text-2xl sm:text-3xl lg:text-4xl font-bold font-mono tracking-tight ${hasDelay ? 'text-red-400' : 'text-primary-300'}`}>
                           {calculateArrivalTimeWithDelay(departure)}
                         </time>
-                        <div className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-white/65">Příjezd</div>
+                        <div className="mt-1 text-[11px] font-semibold uppercase tracking-wide" style={mutedLabelStyle}>Příjezd</div>
                       </div>
                     </div>
 
-                    <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/75 flex items-start gap-2">
-                      {urgency === 'leave-now' ? (
-                        <Siren className="w-4 h-4 mt-0.5 text-red-300" aria-hidden="true" />
-                      ) : (
-                        <Gauge className="w-4 h-4 mt-0.5 text-primary-300" aria-hidden="true" />
-                      )}
-                      <span>{getStatusReason(departure)}</span>
-                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 sm:min-w-[220px]">
-                    <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
-                      <div className="text-[11px] font-semibold uppercase tracking-wide text-white/50">Odjíždí za</div>
-                      <div className={`mt-1 text-sm sm:text-base font-semibold ${urgency === 'missed' ? 'text-white/45' : 'text-white/85'}`}>
-                        {minutesUntil !== null ? formatMinutesUntilDeparture(Math.max(0, minutesUntil)) : '--'}
+                    <div className="rounded-2xl border px-3 py-2.5" style={subtlePanelStyle}>
+                      <div className="text-[11px] font-semibold uppercase tracking-wide" style={mutedLabelStyle}>Odjíždí za</div>
+                      <div
+                        className="mt-1 text-sm sm:text-base font-semibold"
+                        style={urgency === 'missed'
+                          ? { color: 'color-mix(in srgb, var(--color-text) 45%, transparent)' }
+                          : valueTextStyle}
+                      >
+                        {minutesUntil !== null ? formatMinutesUntilDeparture(minutesUntil) : '--'}
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
-                      <div className="text-[11px] font-semibold uppercase tracking-wide text-white/50">Vyjít</div>
-                      <div className={`mt-1 text-sm sm:text-base font-semibold ${
-                        urgency === 'leave-now'
-                          ? 'text-red-300'
-                          : urgency === 'soon'
-                            ? 'text-yellow-200'
-                            : urgency === 'missed'
-                              ? 'text-white/45'
-                              : 'text-emerald-200'
-                      }`}>
-                        {minutesUntilLeave === null
-                          ? '--'
-                          : minutesUntilLeave < 0
-                            ? 'pozdě'
-                            : minutesUntilLeave <= 1
-                              ? 'teď'
-                              : `za ${minutesUntilLeave} min`}
-                      </div>
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5 col-span-2">
-                      <div className="text-[11px] font-semibold uppercase tracking-wide text-white/50">Cesta</div>
-                      <div className="mt-1 text-sm sm:text-base font-semibold text-white/85">{formatTravelDuration(departure)}</div>
+                    <div className="rounded-2xl border px-3 py-2.5" style={subtlePanelStyle}>
+                      <div className="text-[11px] font-semibold uppercase tracking-wide" style={mutedLabelStyle}>Cesta</div>
+                      <div className="mt-1 text-sm sm:text-base font-semibold" style={valueTextStyle}>{formatTravelDuration(departure)}</div>
                     </div>
                   </div>
                 </div>
