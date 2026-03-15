@@ -25,7 +25,6 @@ interface DepartureBoardProps {
 const DEBUG_ADD_DELAY = false;
 const DEBUG_DELAY_MINUTES = 3;
 const LEAVE_BUFFER_MINUTES = 2;
-const PROGRESS_WINDOW_MINUTES = 30;
 
 type Urgency = 'missed' | 'leave-now' | 'soon' | 'relaxed';
 
@@ -230,18 +229,44 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
     }
   };
 
-  const getProgressPercent = (departure: Departure): number => {
-    const minutesUntilLeave = getMinutesUntilLeave(departure);
+  const debugDepartures = departures.map(getDebugDeparture);
 
-    if (minutesUntilLeave === null) {
+  const getProgressPercent = (departure: Departure): number => {
+    const futureDepartures = debugDepartures
+      .map((item) => ({
+        departure: item,
+        minutesUntilDeparture: getMinutesUntilDeparture(item),
+      }))
+      .filter((item) => item.minutesUntilDeparture !== null && item.minutesUntilDeparture! >= 0);
+
+    const currentMinutes = getMinutesUntilDeparture(departure);
+    if (currentMinutes === null) {
       return 0;
     }
 
-    const normalized = ((PROGRESS_WINDOW_MINUTES - minutesUntilLeave) / PROGRESS_WINDOW_MINUTES) * 100;
-    return Math.max(0, Math.min(100, normalized));
+    if (currentMinutes < 0) {
+      return 100;
+    }
+
+    if (futureDepartures.length <= 1) {
+      return 100;
+    }
+
+    const minuteValues = futureDepartures
+      .map((item) => item.minutesUntilDeparture as number)
+      .sort((a, b) => a - b);
+
+    const minMinutes = minuteValues[0];
+    const maxMinutes = minuteValues[minuteValues.length - 1];
+
+    if (maxMinutes === minMinutes) {
+      return 100;
+    }
+
+    const normalized = ((maxMinutes - currentMinutes) / (maxMinutes - minMinutes)) * 100;
+    return Math.max(8, Math.min(100, normalized));
   };
 
-  const debugDepartures = departures.map(getDebugDeparture);
   const nearestDeparture = [...debugDepartures].sort((a, b) => {
     const aTime = calculateActualDepartureTime(a).getTime();
     const bTime = calculateActualDepartureTime(b).getTime();
