@@ -1,7 +1,7 @@
 import React from 'react';
 import { DepartureBoard } from './DepartureBoard';
 import { Departure } from '../types';
-import { Train, Bus, ArrowRightLeft, AlertTriangle, Loader } from 'lucide-react';
+import { Train, Bus, AlertTriangle, Loader } from 'lucide-react';
 
 interface DepartureGridProps {
   trainToPrague: Departure[];
@@ -78,18 +78,6 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
 
   return (
     <main id="main-content" className="w-full space-y-8" role="main" aria-label="Odjezdy mezi Řeží a Prahou">
-      <section className="glass rounded-3xl sm:rounded-4xl border border-white/10 shadow-card p-4 sm:p-6 lg:p-8" aria-label="Přehled všech směrů">
-        <div className="flex items-center justify-center gap-3 sm:gap-4 text-center">
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-2 sm:p-3">
-            <ArrowRightLeft className="w-5 h-5 sm:w-6 sm:h-6 text-primary-300" aria-hidden="true" />
-          </div>
-          <div>
-            <h2 className="text-white text-xl sm:text-2xl font-bold">Oba směry přehledně</h2>
-            <p className="text-white/70 text-sm sm:text-base">Vlak i bus tam i zpátky na jedné obrazovce</p>
-          </div>
-        </div>
-      </section>
-
       <section className="space-y-6 sm:space-y-8" aria-label="Spoje do Prahy a z Prahy">
         <div className="space-y-4">
           <div className="flex items-center gap-3 px-1">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Train, Clock, RefreshCw, Sparkles, Zap } from 'lucide-react';
+import { Train, Clock, RefreshCw } from 'lucide-react';
 import { ThemeSelector } from './ThemeSelector';
 
 interface HeaderProps {
@@ -27,42 +27,6 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh, isRefreshing }) => {
     });
   };
 
-  const getContextBadge = () => {
-    const hour = currentTime.getHours();
-
-    if (hour >= 5 && hour < 10) {
-      return {
-        icon: <Zap className="w-3.5 h-3.5" aria-hidden="true" />,
-        text: 'Ranní režim',
-        className: 'border-amber-400/20 bg-amber-500/10 text-amber-100',
-      };
-    }
-
-    if (hour >= 10 && hour < 16) {
-      return {
-        icon: <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />,
-        text: 'Přes den',
-        className: 'border-sky-400/20 bg-sky-500/10 text-sky-100',
-      };
-    }
-
-    if (hour >= 16 && hour < 21) {
-      return {
-        icon: <Zap className="w-3.5 h-3.5" aria-hidden="true" />,
-        text: 'Odpolední špička',
-        className: 'border-fuchsia-400/20 bg-fuchsia-500/10 text-fuchsia-100',
-      };
-    }
-
-    return {
-      icon: <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />,
-      text: 'Večerní klid',
-      className: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100',
-    };
-  };
-
-  const contextBadge = getContextBadge();
-
   return (
     <header className="mb-4 sm:mb-6" role="banner">
       <div className="glass rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-card">
@@ -77,17 +41,10 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh, isRefreshing }) => {
                   <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-white/70">
                     Live PID
                   </span>
-                  <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] sm:text-xs font-semibold ${contextBadge.className}`}>
-                    {contextBadge.icon}
-                    {contextBadge.text}
-                  </span>
                 </div>
                 <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-white leading-tight truncate">
                   Řež ↔ Praha
                 </h1>
-                <p className="text-white/70 text-xs sm:text-sm truncate">
-                  Chytřejší odjezdová tabule: kdy vyjít, co stíháš a co dává největší smysl
-                </p>
               </div>
             </div>
 
@@ -119,16 +76,6 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh, isRefreshing }) => {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <div className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs sm:text-sm text-white/75">
-              <Sparkles className="w-4 h-4 text-primary-300" aria-hidden="true" />
-              Doporučený spoj nahoře, alternativy pod ním
-            </div>
-            <div className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs sm:text-sm text-white/75">
-              <Zap className="w-4 h-4 text-amber-300" aria-hidden="true" />
-              Urgence + odhad, kdy má smysl vyrazit
-            </div>
-          </div>
         </div>
       </div>
     </header>
