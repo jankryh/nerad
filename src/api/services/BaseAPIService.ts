@@ -1,9 +1,10 @@
 // 🏗️ Základní API služba pro modulární architekturu
 
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { apiCache } from '../../utils/cache';
+import { API_BASE_URL, API_KEY } from '../../constants';
 
-export interface APIResponse<T = any> {
+export interface APIResponse<T = unknown> {
   data: T;
   status: number;
   message?: string;
@@ -24,7 +25,7 @@ export abstract class BaseAPIService {
 
   constructor(config: Partial<APIConfig> = {}) {
     this.config = {
-      baseURL: 'https://api.golemio.cz/v2',
+      baseURL: API_BASE_URL,
       timeout: 10000,
       retries: 3,
       cacheTTL: 30000,
@@ -50,11 +51,10 @@ export abstract class BaseAPIService {
   private setupInterceptors(): void {
     // Request interceptor
     this.api.interceptors.request.use(
-      (config) => {
-        // Přidání API klíče
-        const apiKey = import.meta.env.VITE_PID_API_KEY;
-        if (apiKey) {
-          config.headers['X-Access-Token'] = apiKey;
+      (config: InternalAxiosRequestConfig) => {
+        // Přidání API klíče jen v legacy režimu bez proxy.
+        if (API_KEY) {
+          config.headers.set('X-Access-Token', API_KEY);
         }
         
         // Logování requestů

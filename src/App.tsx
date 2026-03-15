@@ -39,7 +39,7 @@ function App() {
       
       {/* Main content */}
       <div className="relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-12 max-w-7xl">
-        <Header />
+        <Header onRefresh={refreshData} isRefreshing={isLoading} />
         
         <div className="space-y-6 sm:space-y-12 lg:space-y-16">
           <DepartureGrid
@@ -52,7 +52,7 @@ function App() {
           />
           
           {lastUpdate && !isLoading && !error && (
-            <section className="text-center animate-slide-in" aria-label="Informace o automatické aktualizaci dat">
+            <section className="text-center animate-slide-in" aria-label="Informace o poslední aktualizaci dat">
               <div className="inline-block glass glass-hover rounded-2xl sm:rounded-4xl p-4 sm:p-8 lg:p-12 border border-white/10 shadow-card hover:shadow-hover transition-all duration-400 max-w-2xl">
                 <div className="flex items-center justify-center mb-4 sm:mb-6 flex-wrap gap-2">
                   <div className="flex items-center gap-2 sm:gap-3">
@@ -61,7 +61,7 @@ function App() {
                       <div className="absolute inset-0 w-2 h-2 sm:w-3 sm:h-3 bg-emerald-400 rounded-full animate-ping opacity-20"></div>
                     </div>
                     <p className="text-white/90 text-sm sm:text-lg font-semibold">
-                      Data se automaticky obnovují každých 30 sekund pro všechny 4 směry
+                      Data se obnovují ručně tlačítkem Obnovit nahoře
                     </p>
                   </div>
                 </div>
@@ -77,30 +77,6 @@ function App() {
                       })}
                     </time>
                   </p>
-                  
-                  <button 
-                    className="bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 focus:from-primary-700 focus:to-purple-700 text-white font-semibold py-3 px-6 sm:py-4 sm:px-8 rounded-2xl sm:rounded-3xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl focus:shadow-xl transform hover:-translate-y-1 focus:-translate-y-1 focus-ring active:scale-95"
-                    onClick={refreshData}
-                    disabled={isLoading}
-                    aria-label={isLoading ? 'Načítání dat...' : 'Obnovit data o odjezdech'}
-                  >
-                    {isLoading ? (
-                      <span className="flex items-center gap-3">
-                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span>Načítání...</span>
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-3">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        <span>Obnovit data</span>
-                      </span>
-                    )}
-                  </button>
                 </div>
               </div>
             </section>

@@ -1,12 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Departure, DepartureBoardTitle } from '../types';
-import { Clock, AlertCircle, ArrowRight, Timer } from 'lucide-react';
+import {
+  Clock,
+  AlertCircle,
+  Timer,
+  Sparkles,
+  Footprints,
+  CheckCircle2,
+  ArrowRight,
+  TrendingUp,
+  Gauge,
+  Siren,
+} from 'lucide-react';
 import { TRAVEL_TIMES, TRAVEL_TIME_CONFIG } from '../constants';
 import {
   formatTime,
   getEnhancedTravelTime,
-  calculateActualDepartureTime
+  calculateActualDepartureTime,
 } from '../utils/timeCalculations';
+import { logger } from '../utils/logger';
 
 interface DepartureBoardProps {
   title: DepartureBoardTitle;
@@ -15,214 +27,344 @@ interface DepartureBoardProps {
   error?: string;
 }
 
+const DEBUG_ADD_DELAY = false;
+const DEBUG_DELAY_MINUTES = 3;
+const LEAVE_BUFFER_MINUTES = 2;
+const PROGRESS_WINDOW_MINUTES = 30;
+
+type Urgency = 'missed' | 'leave-now' | 'soon' | 'relaxed';
+
 export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   title,
   departures,
   isLoading = false,
-  error
+  error,
 }) => {
-  // Debug variable - set to true to add fake delay to first departure
-  const DEBUG_ADD_DELAY = false;
-  const DEBUG_DELAY_MINUTES = 3;
-
-  // State for enhanced travel times
   const [enhancedTravelTimes, setEnhancedTravelTimes] = useState<Map<string, number>>(new Map());
   const [isCalculatingTimes, setIsCalculatingTimes] = useState(false);
 
-  // Helper function to get debug departure with delay applied
   const getDebugDeparture = (departure: Departure, index: number): Departure => {
-    return DEBUG_ADD_DELAY && index === 0 
+    return DEBUG_ADD_DELAY && index === 0
       ? { ...departure, delay: DEBUG_DELAY_MINUTES }
       : departure;
   };
 
-  // Enhanced travel time calculation
-  const calculateEnhancedTimes = async (departures: Departure[]) => {
-    if (!TRAVEL_TIME_CONFIG.enableRealTimeInUI || !departures.length) {
+  useEffect(() => {
+    if (!TRAVEL_TIME_CONFIG.enableRealTimeInUI || departures.length === 0) {
+      setEnhancedTravelTimes(new Map());
       return;
     }
 
-    setIsCalculatingTimes(true);
-    const newTravelTimes = new Map<string, number>();
+    let cancelled = false;
 
-    try {
-      // Calculate enhanced times for each departure
-      const promises = departures.map(async (departure, index) => {
-        const key = `${departure.tripId}-${departure.scheduledTime}`;
-        
-        try {
-          // Get enhanced travel time for original departure
-          console.log(`🔍 Calculating enhanced travel time for ${departure.line} (${departure.direction})`);
-          const travelTime = await getEnhancedTravelTime(departure, true);
-          console.log(`✅ Enhanced travel time calculated: ${travelTime} minutes for ${departure.line}`);
-          newTravelTimes.set(key, travelTime);
-          
-          // If this is the first departure and debug delay is enabled, also calculate for delayed departure
-          if (DEBUG_ADD_DELAY && index === 0) {
-            const delayedDeparture = { ...departure, delay: DEBUG_DELAY_MINUTES };
-            const delayedKey = `${departure.tripId}-${departure.scheduledTime}-delayed`;
-            try {
+    const calculateEnhancedTimes = async () => {
+      setIsCalculatingTimes(true);
+      const newTravelTimes = new Map<string, number>();
+
+      await Promise.allSettled(
+        departures.map(async (departure, index) => {
+          const key = `${departure.tripId}-${departure.scheduledTime}`;
+
+          try {
+            const travelTime = await getEnhancedTravelTime(departure, true);
+            newTravelTimes.set(key, travelTime);
+
+            if (DEBUG_ADD_DELAY && index === 0) {
+              const delayedDeparture = { ...departure, delay: DEBUG_DELAY_MINUTES };
+              const delayedKey = `${departure.tripId}-${departure.scheduledTime}-delayed`;
               const delayedTravelTime = await getEnhancedTravelTime(delayedDeparture, true);
               newTravelTimes.set(delayedKey, delayedTravelTime);
-              console.log(`🔄 Calculated delayed travel time: ${delayedTravelTime} minutes for ${departure.line}`);
-            } catch (error) {
-              console.warn(`Failed to calculate delayed travel time for ${delayedKey}:`, error);
-              newTravelTimes.set(delayedKey, TRAVEL_TIMES[departure.mode]);
             }
+          } catch (calculationError) {
+            logger.warn('Failed to calculate travel time for departure', calculationError);
+            newTravelTimes.set(key, TRAVEL_TIMES[departure.mode]);
           }
-        } catch (error) {
-          console.warn(`Failed to calculate enhanced times for ${key}:`, error);
-          // Fallback to hardcoded values
-          newTravelTimes.set(key, TRAVEL_TIMES[departure.mode]);
-        }
-      });
+        }),
+      );
 
-      await Promise.allSettled(promises);
-      
-      setEnhancedTravelTimes(newTravelTimes);
-    } catch (error) {
-      console.error('Error calculating enhanced times:', error);
-    } finally {
-      setIsCalculatingTimes(false);
-    }
-  };
+      if (!cancelled) {
+        setEnhancedTravelTimes(newTravelTimes);
+        setIsCalculatingTimes(false);
+      }
+    };
 
-  // Calculate enhanced times when departures change
-  useEffect(() => {
-    if (departures && departures.length > 0) {
-      calculateEnhancedTimes(departures);
-    }
+    calculateEnhancedTimes().catch((calculationError) => {
+      logger.warn('Failed to calculate enhanced times', calculationError);
+      if (!cancelled) {
+        setIsCalculatingTimes(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [departures]);
 
-  // Helper function to get travel time (enhanced or hardcoded)
   const getTravelTime = (departure: Departure): number => {
-    if (TRAVEL_TIME_CONFIG.enableRealTimeInUI) {
-      // Check if this is a delayed departure and we have delayed travel time
-      if (departure.delay && departure.delay > 0) {
-        const delayedKey = `${departure.tripId}-${departure.scheduledTime}-delayed`;
-        const delayedTravelTime = enhancedTravelTimes.get(delayedKey);
-        if (delayedTravelTime && delayedTravelTime > 0) {
-          console.log(`🚀 Using delayed travel time: ${delayedTravelTime} minutes for ${departure.line}`);
-          return delayedTravelTime;
-        }
-      }
-      
-      // Fallback to regular enhanced travel time
-      const key = `${departure.tripId}-${departure.scheduledTime}`;
-      const enhancedTime = enhancedTravelTimes.get(key);
-      if (enhancedTime && enhancedTime > 0) {
-        console.log(`📊 Using enhanced travel time: ${enhancedTime} minutes for ${departure.line} (${departure.direction})`);
-        return enhancedTime;
-      } else {
-        // For buses, never use hardcoded fallback - return 0 to indicate no data
-        if (departure.mode === 'bus') {
-          console.warn(`⚠️ Bus ${departure.line}: No real-time travel time available, no travel time shown`);
-          return 0;
-        } else {
-          // For trains, use hardcoded fallback
-          console.warn(`⚠️ Train ${departure.line}: No enhanced travel time found, using fallback: ${TRAVEL_TIMES[departure.mode]} minutes`);
-          return TRAVEL_TIMES[departure.mode];
-        }
+    if (!TRAVEL_TIME_CONFIG.enableRealTimeInUI) {
+      return departure.mode === 'bus' ? 0 : TRAVEL_TIMES[departure.mode];
+    }
+
+    if (departure.delay && departure.delay > 0) {
+      const delayedKey = `${departure.tripId}-${departure.scheduledTime}-delayed`;
+      const delayedTravelTime = enhancedTravelTimes.get(delayedKey);
+      if (delayedTravelTime && delayedTravelTime > 0) {
+        return delayedTravelTime;
       }
     }
-    
-    // For buses, never use hardcoded values even when real-time is disabled
-    if (departure.mode === 'bus') {
-      console.log(`🚌 Bus ${departure.line}: Real-time disabled, no travel time shown`);
-      return 0;
+
+    const key = `${departure.tripId}-${departure.scheduledTime}`;
+    const enhancedTime = enhancedTravelTimes.get(key);
+    if (enhancedTime && enhancedTime > 0) {
+      return enhancedTime;
     }
-    
-    // For trains, use hardcoded values when real-time is disabled
-    console.log(`🚂 Train ${departure.line}: Using hardcoded travel time: ${TRAVEL_TIMES[departure.mode]} minutes`);
-    return TRAVEL_TIMES[departure.mode];
+
+    return departure.mode === 'bus' ? 0 : TRAVEL_TIMES[departure.mode];
   };
 
-  // Helper function to calculate arrival time with enhanced travel time and delay
   const calculateArrivalTimeWithDelay = (departure: Departure): string => {
     try {
-      // Get the actual departure time (with delay)
-      const scheduledTime = new Date(departure.scheduledTime);
-      const actualDepartureTime = departure.delay && departure.delay > 0
-        ? new Date(scheduledTime.getTime() + departure.delay * 60 * 1000)
-        : scheduledTime;
-      
-      // Get travel time (enhanced or hardcoded)
+      const actualDepartureTime = calculateActualDepartureTime(departure);
       const travelMinutes = getTravelTime(departure);
-      
-      // For buses with no travel time data, show "N/A"
+
       if (departure.mode === 'bus' && travelMinutes === 0) {
         return 'N/A';
       }
-      
-      // Calculate arrival time
+
       const arrivalTime = new Date(actualDepartureTime.getTime() + travelMinutes * 60 * 1000);
-      
       return arrivalTime.toLocaleTimeString('cs-CZ', {
         hour: '2-digit',
         minute: '2-digit',
-        hour12: false
+        hour12: false,
       });
     } catch {
       return '--:--';
     }
   };
 
-  // Helper function to calculate scheduled arrival time with enhanced travel time (no delay)
   const calculateScheduledArrivalTime = (departure: Departure): string => {
     try {
-      // Use scheduled time (no delay)
       const scheduledTime = new Date(departure.scheduledTime);
-      
-      // Get travel time (enhanced or hardcoded) - use original departure for scheduled time
       const originalDeparture = { ...departure, delay: null };
       const travelMinutes = getTravelTime(originalDeparture);
-      
-      // For buses with no travel time data, show "N/A"
+
       if (departure.mode === 'bus' && travelMinutes === 0) {
         return 'N/A';
       }
-      
-      // Calculate scheduled arrival time
+
       const arrivalTime = new Date(scheduledTime.getTime() + travelMinutes * 60 * 1000);
-      
       return arrivalTime.toLocaleTimeString('cs-CZ', {
         hour: '2-digit',
         minute: '2-digit',
-        hour12: false
+        hour12: false,
       });
     } catch {
       return '--:--';
     }
   };
 
-  // Helper function to calculate minutes until departure
   const getMinutesUntilDeparture = (departure: Departure): number | null => {
     try {
       const now = new Date();
       const actualDepartureTime = calculateActualDepartureTime(departure);
-      const minutesUntil = Math.round((actualDepartureTime.getTime() - now.getTime()) / (1000 * 60));
-      
-      return minutesUntil > 0 ? minutesUntil : null;
+      return Math.round((actualDepartureTime.getTime() - now.getTime()) / (1000 * 60));
     } catch {
       return null;
     }
   };
 
-  // Helper function to format minutes until departure
+  const getWalkMinutes = (departure: Departure): number => {
+    return departure.mode === 'bus' ? 0 : TRAVEL_TIMES[departure.mode];
+  };
+
+  const getMinutesUntilLeave = (departure: Departure): number | null => {
+    const minutesUntilDeparture = getMinutesUntilDeparture(departure);
+    if (minutesUntilDeparture === null) {
+      return null;
+    }
+
+    return minutesUntilDeparture - getWalkMinutes(departure) - LEAVE_BUFFER_MINUTES;
+  };
+
   const formatMinutesUntilDeparture = (minutes: number): string => {
     if (minutes < 60) {
       return `${minutes} min`;
-    } else {
-      const hours = Math.floor(minutes / 60);
-      const remainingMinutes = minutes % 60;
-      return `${hours}h ${remainingMinutes} min`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return `${hours}h ${remainingMinutes} min`;
+  };
+
+  const formatTravelDuration = (departure: Departure): string => {
+    const travelMinutes = getTravelTime(departure);
+
+    if (departure.mode === 'bus' && travelMinutes === 0) {
+      return 'N/A';
+    }
+
+    if (travelMinutes < 60) {
+      return `${travelMinutes} min`;
+    }
+
+    const hours = Math.floor(travelMinutes / 60);
+    const remainingMinutes = travelMinutes % 60;
+    return remainingMinutes === 0 ? `${hours} h` : `${hours} h ${remainingMinutes} min`;
+  };
+
+  const getUrgency = (departure: Departure): Urgency => {
+    const minutesUntilLeave = getMinutesUntilLeave(departure);
+
+    if (minutesUntilLeave === null || minutesUntilLeave < 0) {
+      return 'missed';
+    }
+
+    if (minutesUntilLeave <= 1) {
+      return 'leave-now';
+    }
+
+    if (minutesUntilLeave <= 5) {
+      return 'soon';
+    }
+
+    return 'relaxed';
+  };
+
+  const getUrgencyClasses = (urgency: Urgency, highlighted: boolean) => {
+    if (highlighted) {
+      return 'border-amber-400/40 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-yellow-500/10 shadow-lg shadow-amber-500/10';
+    }
+
+    switch (urgency) {
+      case 'leave-now':
+        return 'border-red-400/30 bg-gradient-to-br from-red-500/10 via-rose-500/5 to-transparent';
+      case 'soon':
+        return 'border-yellow-400/30 bg-gradient-to-br from-yellow-500/10 via-amber-500/5 to-transparent';
+      case 'missed':
+        return 'border-white/10 bg-white/[0.03] opacity-75';
+      default:
+        return 'border-emerald-400/20 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent';
     }
   };
 
+  const getUrgencyLabel = (departure: Departure): string => {
+    const minutesUntilLeave = getMinutesUntilLeave(departure);
+    const urgency = getUrgency(departure);
 
+    if (minutesUntilLeave === null) {
+      return 'Bez odhadu';
+    }
 
+    if (urgency === 'missed') {
+      return 'Tohle už nejspíš nestihneš';
+    }
 
+    if (urgency === 'leave-now') {
+      return 'Vyjdi teď';
+    }
 
+    if (urgency === 'soon') {
+      return `Vyjdi za ${Math.max(1, minutesUntilLeave)} min`;
+    }
+
+    return `Máš čas, vyjdi za ${minutesUntilLeave} min`;
+  };
+
+  const getStatusReason = (departure: Departure): string => {
+    const minutesUntilLeave = getMinutesUntilLeave(departure);
+    const delay = departure.delay ?? 0;
+    const walkMinutes = getWalkMinutes(departure);
+
+    if (minutesUntilLeave === null) {
+      return 'Čas odchodu teď neumím přesně spočítat';
+    }
+
+    if (delay > 0 && minutesUntilLeave >= 0) {
+      return `Zpoždění +${delay} min ti tady vlastně pomáhá`;
+    }
+
+    if (departure.mode === 'bus') {
+      return minutesUntilLeave <= 1
+        ? 'Bus je blízko — tohle je na rychlé rozhodnutí'
+        : 'Bus neřeší docházku, takže je to hlavně o správném načasování';
+    }
+
+    if (minutesUntilLeave <= 1) {
+      return `Počítám s docházkou ${walkMinutes} min a rezervou ${LEAVE_BUFFER_MINUTES} min`;
+    }
+
+    if (minutesUntilLeave <= 5) {
+      return `Ještě chvíli máš, ale už je dobré se chystat`;
+    }
+
+    return `Pohodový spoj s rozumnou rezervou`;
+  };
+
+  const getRecommendationReason = (departure: Departure): string => {
+    const urgency = getUrgency(departure);
+    const delay = departure.delay ?? 0;
+
+    if (delay > 0 && urgency !== 'missed') {
+      return 'Nejlepší kompromis teď vychází díky zpoždění';
+    }
+
+    if (urgency === 'relaxed') {
+      return 'Rozumný odjezd bez zbytečného stresu';
+    }
+
+    if (urgency === 'soon') {
+      return 'Je blízko, ale ještě v pohodě stihnutelný';
+    }
+
+    if (urgency === 'leave-now') {
+      return 'Nejrychlejší použitelná varianta právě teď';
+    }
+
+    return 'Nejbližší další použitelný spoj';
+  };
+
+  const getProgressPercent = (departure: Departure): number => {
+    const minutesUntilLeave = getMinutesUntilLeave(departure);
+
+    if (minutesUntilLeave === null) {
+      return 0;
+    }
+
+    const normalized = ((PROGRESS_WINDOW_MINUTES - minutesUntilLeave) / PROGRESS_WINDOW_MINUTES) * 100;
+    return Math.max(0, Math.min(100, normalized));
+  };
+
+  const getRecommendationScore = (departure: Departure): number => {
+    const minutesUntilLeave = getMinutesUntilLeave(departure);
+    const minutesUntilDeparture = getMinutesUntilDeparture(departure);
+    const delay = departure.delay ?? 0;
+
+    if (minutesUntilLeave === null || minutesUntilDeparture === null) {
+      return Number.POSITIVE_INFINITY;
+    }
+
+    if (minutesUntilLeave < 0) {
+      return 10000 + Math.abs(minutesUntilLeave);
+    }
+
+    const arrivalDate = new Date(calculateActualDepartureTime(departure).getTime() + getTravelTime(departure) * 60 * 1000);
+    const arrivalMinutes = arrivalDate.getHours() * 60 + arrivalDate.getMinutes();
+
+    const urgencyPenalty = minutesUntilLeave <= 1 ? 40 : minutesUntilLeave <= 5 ? 12 : 0;
+    const tooEarlyPenalty = minutesUntilLeave > 18 ? (minutesUntilLeave - 18) * 1.2 : 0;
+    const idealWindowPenalty = Math.abs(minutesUntilLeave - 7) * 1.8;
+    const delayBonus = delay > 0 ? Math.min(delay * 2, 10) : 0;
+
+    return arrivalMinutes + urgencyPenalty + tooEarlyPenalty + idealWindowPenalty + minutesUntilDeparture * 0.15 - delayBonus;
+  };
+
+  const debugDepartures = departures.map(getDebugDeparture);
+  const sortedDepartures = [...debugDepartures].sort((a, b) => getRecommendationScore(a) - getRecommendationScore(b));
+  const recommendedDeparture = sortedDepartures[0];
+  const viableCount = debugDepartures.filter((departure) => {
+    const leave = getMinutesUntilLeave(departure);
+    return leave !== null && leave >= 0;
+  }).length;
 
   if (isLoading) {
     return (
@@ -264,7 +406,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
     );
   }
 
-  if (!departures || departures.length === 0) {
+  if (!departures.length) {
     return (
       <article className="glass rounded-4xl border border-white/10 shadow-card" role="region" aria-label="Žádné odjezdy">
         <div className="p-6 border-b border-white/10">
@@ -286,26 +428,18 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   }
 
   return (
-    <article className="glass glass-hover rounded-2xl sm:rounded-4xl border border-white/10 shadow-card hover:shadow-hover transition-all duration-400 group" role="region" aria-labelledby="departure-board-title">
-      {/* Header */}
+    <article className="glass glass-hover rounded-2xl sm:rounded-4xl border border-white/10 shadow-card hover:shadow-hover transition-all duration-400 group" role="region">
       <div className="p-3 sm:p-6 border-b border-white/10 bg-gradient-to-r from-white/[0.02] to-transparent">
         <div className="flex items-center relative">
-          {/* Icon - left positioned */}
-          {typeof title === 'object' && 'icon' in title && (
-            <div className="flex-shrink-0">
-              {title.icon}
-            </div>
-          )}
-          
-          {/* Title - absolutely centered */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <h3 id="departure-board-title" className="text-white text-sm sm:text-xl font-bold tracking-wide">
+          {typeof title === 'object' && 'icon' in title && <div className="flex-shrink-0">{title.icon}</div>}
+
+          <div className="absolute inset-0 flex items-center justify-center px-12 sm:px-16">
+            <h3 className="text-white text-sm sm:text-xl font-bold tracking-wide text-center">
               {typeof title === 'object' && 'content' in title ? title.content : title}
             </h3>
           </div>
-          
-          {/* Real-time calculation indicator - positioned absolutely */}
-          {!isLoading && !error && departures && departures.length > 0 && TRAVEL_TIME_CONFIG.enableRealTimeInUI && isCalculatingTimes && (
+
+          {!isLoading && !error && departures.length > 0 && TRAVEL_TIME_CONFIG.enableRealTimeInUI && isCalculatingTimes && (
             <div className="absolute right-0 flex items-center gap-2">
               <span className="text-primary-400 text-xs animate-pulse" title="Calculating real-time travel duration">
                 ⏳
@@ -314,257 +448,241 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
           )}
         </div>
       </div>
-      
-      {/* Departure cards */}
-      <div className="p-3 sm:p-6 space-y-3 sm:space-y-4">
-        {departures.map((departure, index) => {
-          // Apply debug delay to first departure only
-          const debugDeparture = getDebugDeparture(departure, index);
-          
-          return (
-                      <div
-            key={`${departure.line}-${departure.scheduledTime}-${index}`}
-            className={`
-              relative glass rounded-xl sm:rounded-3xl p-3 sm:p-6 border transition-all duration-300 group/card overflow-hidden
-              ${index === 0 
-                ? 'border-amber-400/40 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-yellow-500/10 shadow-lg shadow-amber-500/10' 
-                : 'border-white/15 hover:border-white/25'
-              }
-            `}
-            role="article"
-            aria-label={`Odjezd ${debugDeparture.line} v ${formatTime(debugDeparture.scheduledTime)}, ${debugDeparture.delay && debugDeparture.delay > 0 ? `zpoždění ${debugDeparture.delay} minut` : 'včas'}`}
-            aria-describedby={`departure-${index}-details`}
-          >
 
-            {/* Minutes until departure - top left */}
-            {(() => {
-              const minutesUntil = getMinutesUntilDeparture(debugDeparture);
-              const hasDelay = debugDeparture.delay && debugDeparture.delay > 0;
-              
-              return minutesUntil !== null ? (
-                <div className="absolute top-2 left-2 z-10">
-                  <span className={`text-[10px] font-medium bg-black/30 backdrop-blur-sm px-2 py-1 rounded-lg border border-white/10 ${
-                    hasDelay 
-                      ? 'text-red-400' 
-                      : 'text-white/70'
-                  }`}>
-                    za {formatMinutesUntilDeparture(minutesUntil)}
-                  </span>
+      <div className="p-3 sm:p-6 space-y-3 sm:space-y-4">
+        {recommendedDeparture && (
+          <div className="rounded-2xl sm:rounded-3xl border border-primary-400/25 bg-gradient-to-br from-primary-500/12 via-white/[0.04] to-transparent p-4 sm:p-5 shadow-lg shadow-primary-500/10">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="space-y-3">
+                <div className="inline-flex items-center gap-2 rounded-full border border-primary-400/20 bg-primary-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary-200">
+                  <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                  Doporučeno
                 </div>
-              ) : null;
-            })()}
-            
-            <div 
-              id={`departure-${index}-details`}
-              className="flex flex-col sm:grid sm:grid-cols-3 gap-3 sm:gap-6 sm:items-center pt-8 sm:pt-0"
-              role="group"
-              aria-label={`Detaily odjezdu ${debugDeparture.line}`}
+
+                <div>
+                  <div className="text-white text-2xl sm:text-3xl font-bold font-mono tracking-tight">
+                    {formatTime(recommendedDeparture.delay && recommendedDeparture.delay > 0
+                      ? calculateActualDepartureTime(recommendedDeparture).toISOString()
+                      : recommendedDeparture.scheduledTime)}
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-white/70">
+                    <span>Odjezd</span>
+                    {recommendedDeparture.delay && recommendedDeparture.delay > 0 && (
+                      <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-red-300 font-semibold">
+                        +{recommendedDeparture.delay} min
+                      </span>
+                    )}
+                    <ArrowRight className="w-3.5 h-3.5 text-white/40" aria-hidden="true" />
+                    <span>Příjezd {calculateArrivalTimeWithDelay(recommendedDeparture)}</span>
+                  </div>
+                </div>
+
+                <p className="text-sm text-white/75 max-w-xl">{getRecommendationReason(recommendedDeparture)}</p>
+              </div>
+
+              <div className="sm:text-right space-y-2">
+                <div className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-white/85">
+                  <Footprints className="w-4 h-4 text-primary-300" aria-hidden="true" />
+                  {getUrgencyLabel(recommendedDeparture)}
+                </div>
+                <div className="text-xs text-white/55">
+                  cesta {formatTravelDuration(recommendedDeparture)} • docházka {getWalkMinutes(recommendedDeparture)} min • rezerva {LEAVE_BUFFER_MINUTES} min
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-white/50">Stihnutelné</div>
+                <div className="mt-1 text-sm font-semibold text-white/85">{viableCount} z {debugDepartures.length} spojů</div>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-white/50">Odjíždí za</div>
+                <div className="mt-1 text-sm font-semibold text-white/85">
+                  {(() => {
+                    const minutes = getMinutesUntilDeparture(recommendedDeparture);
+                    return minutes !== null ? formatMinutesUntilDeparture(Math.max(0, minutes)) : '--';
+                  })()}
+                </div>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-white/50">Vyjít</div>
+                <div className="mt-1 text-sm font-semibold text-primary-200">
+                  {(() => {
+                    const leave = getMinutesUntilLeave(recommendedDeparture);
+                    if (leave === null) return '--';
+                    if (leave < 0) return 'pozdě';
+                    if (leave <= 1) return 'teď';
+                    return `za ${leave} min`;
+                  })()}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {debugDepartures.map((departure, index) => {
+          const isRecommended = recommendedDeparture?.tripId === departure.tripId
+            && recommendedDeparture?.scheduledTime === departure.scheduledTime;
+          const minutesUntil = getMinutesUntilDeparture(departure);
+          const minutesUntilLeave = getMinutesUntilLeave(departure);
+          const hasDelay = departure.delay && departure.delay > 0;
+          const urgency = getUrgency(departure);
+          const progressPercent = getProgressPercent(departure);
+
+          return (
+            <div
+              key={`${departure.line}-${departure.scheduledTime}-${index}`}
+              className={`
+                relative glass rounded-xl sm:rounded-3xl p-3 sm:p-6 border transition-all duration-300 group/card overflow-hidden
+                ${getUrgencyClasses(urgency, isRecommended)}
+              `}
+              role="article"
+              aria-label={`Odjezd ${departure.line} v ${formatTime(departure.scheduledTime)}, ${hasDelay ? `zpoždění ${departure.delay} minut` : 'včas'}`}
+              aria-describedby={`departure-${index}-details`}
             >
-              {/* Mobile: Both times on same line */}
-              <div className="sm:hidden">
-                <div className="flex justify-between items-center">
-                  {/* Departure time */}
-                  <div className="text-left flex-1">
-                    <div className="space-y-1">
-                      {debugDeparture.delay !== null && debugDeparture.delay > 0 ? (
-                        <>
-                          <time className="block text-xs font-medium text-white/40 font-mono tracking-tight line-through">
-                            {formatTime(debugDeparture.scheduledTime)}
-                          </time>
-                          <time 
-                            className="block text-xl font-bold text-red-400 font-mono tracking-tight"
-                            dateTime={new Date(new Date(debugDeparture.scheduledTime).getTime() + debugDeparture.delay * 60 * 1000).toISOString()}
-                            aria-label={`Skutečný čas odjezdu: ${formatTime(new Date(new Date(debugDeparture.scheduledTime).getTime() + debugDeparture.delay * 60 * 1000).toISOString())}`}
-                          >
-                            {formatTime(new Date(new Date(debugDeparture.scheduledTime).getTime() + debugDeparture.delay * 60 * 1000).toISOString())}
-                          </time>
-                        </>
+              <div className="absolute inset-x-0 top-0 h-1 bg-white/5 overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-500 ${
+                    urgency === 'leave-now'
+                      ? 'bg-gradient-to-r from-red-500 to-rose-400'
+                      : urgency === 'soon'
+                        ? 'bg-gradient-to-r from-yellow-500 to-amber-300'
+                        : urgency === 'missed'
+                          ? 'bg-white/10'
+                          : 'bg-gradient-to-r from-emerald-500 to-teal-300'
+                  }`}
+                  style={{ width: `${progressPercent}%` }}
+                ></div>
+              </div>
+
+              <div id={`departure-${index}-details`} className="space-y-4" role="group" aria-label={`Detaily odjezdu ${departure.line}`}>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="space-y-3 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {isRecommended ? (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/20 bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-200">
+                          <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+                          Doporučený spoj
+                        </span>
                       ) : (
-                        <>
-                          <div className="h-[16px]"></div>
-                          <time 
-                            className="block text-xl font-bold text-white font-mono tracking-tight"
-                            dateTime={debugDeparture.scheduledTime}
-                            aria-label={`Naplánovaný čas odjezdu: ${formatTime(debugDeparture.scheduledTime)}`}
-                          >
-                            {formatTime(debugDeparture.scheduledTime)}
-                          </time>
-                        </>
+                        <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/65">
+                          Alternativa
+                        </span>
                       )}
-                    </div>
-                    <div className="flex items-center gap-1 justify-start mt-1">
-                      <div className="text-white/70 text-xs font-semibold uppercase tracking-wide">Odjezd</div>
-                      {debugDeparture.delay !== null && debugDeparture.delay > 0 && (
-                        <span className="text-red-400 text-xs font-semibold">
-                          (+{debugDeparture.delay}m)
+
+                      <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
+                        urgency === 'leave-now'
+                          ? 'border-red-400/20 bg-red-500/10 text-red-200'
+                          : urgency === 'soon'
+                            ? 'border-yellow-400/20 bg-yellow-500/10 text-yellow-100'
+                            : urgency === 'missed'
+                              ? 'border-white/10 bg-white/5 text-white/45'
+                              : 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100'
+                      }`}>
+                        {getUrgencyLabel(departure)}
+                      </span>
+
+                      {hasDelay && (
+                        <span className="inline-flex items-center rounded-full border border-red-400/20 bg-red-500/10 px-2.5 py-1 text-[11px] font-semibold text-red-200">
+                          <TrendingUp className="w-3 h-3 mr-1" aria-hidden="true" />
+                          +{departure.delay} min
                         </span>
                       )}
                     </div>
-                  </div>
 
-                  {/* Arrival time */}
-                  <div className="text-right flex-1">
-                    <div className="space-y-1">
-                      {debugDeparture.delay !== null && debugDeparture.delay > 0 ? (
-                        <>
-                          <time className="block text-xs font-medium text-white/40 font-mono tracking-tight line-through">
-                            {calculateScheduledArrivalTime(departure)}
-                          </time>
-                          <time 
-                            className="block text-xl font-bold text-red-400 font-mono tracking-tight"
-                            aria-label={`Skutečný čas příjezdu: ${calculateArrivalTimeWithDelay(debugDeparture)}`}
-                          >
-                            {calculateArrivalTimeWithDelay(debugDeparture)}
-                          </time>
-                        </>
-                      ) : (
-                        <>
-                          <div className="h-[16px]"></div>
-                          <time 
-                            className="block text-xl font-bold text-white/90 font-mono tracking-tight"
-                            aria-label={`Naplánovaný čas příjezdu: ${calculateArrivalTimeWithDelay(debugDeparture)}`}
-                          >
-                            {calculateArrivalTimeWithDelay(debugDeparture)}
-                          </time>
-                        </>
-                      )}
+                    <div className="flex items-end gap-4">
+                      <div>
+                        <div className="min-h-[16px]">
+                          {hasDelay && (
+                            <time className="block text-xs font-medium text-white/40 font-mono tracking-tight line-through">
+                              {formatTime(departure.scheduledTime)}
+                            </time>
+                          )}
+                        </div>
+                        <time
+                          className={`block text-2xl sm:text-3xl lg:text-4xl font-bold font-mono tracking-tight ${hasDelay ? 'text-red-400' : 'text-white'}`}
+                          dateTime={hasDelay ? calculateActualDepartureTime(departure).toISOString() : departure.scheduledTime}
+                        >
+                          {hasDelay
+                            ? formatTime(calculateActualDepartureTime(departure).toISOString())
+                            : formatTime(departure.scheduledTime)}
+                        </time>
+                        <div className="mt-1 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-white/65">
+                          <span>Odjezd</span>
+                          {hasDelay && <span className="text-red-400">(+{departure.delay}m)</span>}
+                        </div>
+                      </div>
+
+                      <div className="h-12 w-px bg-white/10"></div>
+
+                      <div>
+                        <div className="min-h-[16px]">
+                          {hasDelay && (
+                            <time className="block text-xs font-medium text-white/40 font-mono tracking-tight line-through">
+                              {calculateScheduledArrivalTime(departure)}
+                            </time>
+                          )}
+                        </div>
+                        <time className={`block text-2xl sm:text-3xl lg:text-4xl font-bold font-mono tracking-tight ${hasDelay ? 'text-red-400' : 'text-primary-300'}`}>
+                          {calculateArrivalTimeWithDelay(departure)}
+                        </time>
+                        <div className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-white/65">Příjezd</div>
+                      </div>
                     </div>
-                    <div className="text-white/70 text-xs font-semibold uppercase tracking-wide mt-1">Příjezd</div>
-                  </div>
-                </div>
-              </div>
 
-              {/* Desktop: Departure time only */}
-              <div className="hidden sm:flex items-center justify-center space-x-4">
-                <div className="text-center flex-1 min-h-[80px] flex flex-col justify-center">
-                  <div className="space-y-1">
-                    {debugDeparture.delay !== null && debugDeparture.delay > 0 ? (
-                      <>
-                        <time className="block text-lg font-medium text-white/40 font-mono tracking-tight line-through">
-                          {formatTime(debugDeparture.scheduledTime)}
-                        </time>
-                        <time 
-                          className="block text-3xl font-bold text-red-400 font-mono tracking-tight"
-                          dateTime={new Date(new Date(debugDeparture.scheduledTime).getTime() + debugDeparture.delay * 60 * 1000).toISOString()}
-                          aria-label={`Skutečný čas odjezdu: ${formatTime(new Date(new Date(debugDeparture.scheduledTime).getTime() + debugDeparture.delay * 60 * 1000).toISOString())}`}
-                        >
-                          {formatTime(new Date(new Date(debugDeparture.scheduledTime).getTime() + debugDeparture.delay * 60 * 1000).toISOString())}
-                        </time>
-                      </>
-                    ) : (
-                      <>
-                        <div className="h-[28px]"></div>
-                        <time 
-                          className="block text-3xl font-bold text-white font-mono tracking-tight"
-                          dateTime={debugDeparture.scheduledTime}
-                          aria-label={`Naplánovaný čas odjezdu: ${formatTime(debugDeparture.scheduledTime)}`}
-                        >
-                          {formatTime(debugDeparture.scheduledTime)}
-                        </time>
-                      </>
-                    )}
+                    <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/75 flex items-start gap-2">
+                      {urgency === 'leave-now' ? (
+                        <Siren className="w-4 h-4 mt-0.5 text-red-300" aria-hidden="true" />
+                      ) : (
+                        <Gauge className="w-4 h-4 mt-0.5 text-primary-300" aria-hidden="true" />
+                      )}
+                      <span>{getStatusReason(departure)}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 justify-center mt-2">
-                    <div className="text-white/70 text-sm font-semibold uppercase tracking-wide">Odjezd</div>
-                    {debugDeparture.delay !== null && debugDeparture.delay > 0 && (
-                      <span className="text-red-400 text-sm font-semibold">
-                        (+{debugDeparture.delay}m)
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Desktop: Arrow and travel info */}
-              <div className="hidden sm:flex relative items-center justify-center min-h-[80px]">
-                {/* Arrow centered with main times */}
-                <div className="flex items-center space-x-2">
-                  <div className="w-16 h-0.5 bg-gradient-to-r from-primary-400/60 to-transparent"></div>
-                  <ArrowRight className="w-5 h-5 text-primary-400 animate-pulse" aria-hidden="true" />
-                  <div className="w-16 h-0.5 bg-gradient-to-l from-primary-400/60 to-transparent"></div>
-                </div>
-                {/* Travel time positioned below */}
-                <div className="absolute bottom-2 text-center">
-                  <div className="text-white/60 text-xs font-medium uppercase tracking-wider">
-                    {(() => {
-                      const travelTime = getTravelTime(debugDeparture);
-                      if (travelTime > 0) {
-                        return `~${travelTime} min`;
-                      } else if (debugDeparture.mode === 'bus') {
-                        return 'API data only';
-                      } else {
-                        return `~${travelTime} min`;
-                      }
-                    })()}
-                    {TRAVEL_TIME_CONFIG.enableRealTimeInUI && isCalculatingTimes && (
-                      <span className="ml-1 text-primary-400">⏳</span>
-                    )}
+
+                  <div className="grid grid-cols-2 gap-2 sm:min-w-[220px]">
+                    <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-white/50">Odjíždí za</div>
+                      <div className={`mt-1 text-sm sm:text-base font-semibold ${urgency === 'missed' ? 'text-white/45' : 'text-white/85'}`}>
+                        {minutesUntil !== null ? formatMinutesUntilDeparture(Math.max(0, minutesUntil)) : '--'}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-white/50">Vyjít</div>
+                      <div className={`mt-1 text-sm sm:text-base font-semibold ${
+                        urgency === 'leave-now'
+                          ? 'text-red-300'
+                          : urgency === 'soon'
+                            ? 'text-yellow-200'
+                            : urgency === 'missed'
+                              ? 'text-white/45'
+                              : 'text-emerald-200'
+                      }`}>
+                        {minutesUntilLeave === null
+                          ? '--'
+                          : minutesUntilLeave < 0
+                            ? 'pozdě'
+                            : minutesUntilLeave <= 1
+                              ? 'teď'
+                              : `za ${minutesUntilLeave} min`}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-white/50">Cesta</div>
+                      <div className="mt-1 text-sm sm:text-base font-semibold text-white/85">{formatTravelDuration(departure)}</div>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-white/50">Docházka</div>
+                      <div className="mt-1 text-sm sm:text-base font-semibold text-white/85">{getWalkMinutes(departure)} min</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-              
-              {/* Desktop: Arrival time */}
-              <div className="hidden sm:flex items-center space-x-4 justify-center sm:justify-end">
-                <div className="text-center sm:text-right order-2 sm:order-1 min-h-[80px] flex flex-col justify-center">
-                  <div className="space-y-1">
-                    {debugDeparture.delay !== null && debugDeparture.delay > 0 ? (
-                      <>
-                        <time className="block text-lg font-medium text-white/40 font-mono tracking-tight line-through">
-                          {calculateScheduledArrivalTime(departure)}
-                        </time>
-                        <time 
-                          className="block text-3xl font-bold text-red-400 font-mono tracking-tight"
-                          aria-label={`Skutečný čas příjezdu: ${calculateArrivalTimeWithDelay(debugDeparture)}`}
-                        >
-                          {calculateArrivalTimeWithDelay(debugDeparture)}
-                        </time>
-                      </>
-                    ) : (
-                      <>
-                        <div className="h-[28px]"></div>
-                        <time 
-                          className="block text-3xl font-bold text-white/90 font-mono tracking-tight"
-                          aria-label={`Naplánovaný čas příjezdu: ${calculateArrivalTimeWithDelay(debugDeparture)}`}
-                        >
-                          {calculateArrivalTimeWithDelay(debugDeparture)}
-                        </time>
-                      </>
-                    )}
-                  </div>
-                  <div className="text-white/70 text-sm font-semibold uppercase tracking-wide mt-2">Příjezd</div>
-                </div>
-              </div>
-              
-              {/* Mobile: Travel time info */}
-              <div className="sm:hidden flex items-center justify-center gap-2 mt-3 pt-2 border-t border-white/10">
-                <ArrowRight className="w-3 h-3 text-primary-400" aria-hidden="true" />
-                <span className="text-white/60 text-xs font-medium uppercase tracking-wider">
-                  {(() => {
-                    const travelTime = getTravelTime(debugDeparture);
-                    if (travelTime > 0) {
-                      return `~${travelTime} min cesta`;
-                    } else if (debugDeparture.mode === 'bus') {
-                      return 'API data only';
-                    } else {
-                      return `~${travelTime} min cesta`;
-                    }
-                  })()}
-                  {TRAVEL_TIME_CONFIG.enableRealTimeInUI && isCalculatingTimes && (
-                    <span className="ml-1 text-primary-400">⏳</span>
-                  )}
-                </span>
               </div>
             </div>
-            
-
-
-
-          </div>
           );
         })}
       </div>
-      
-
     </article>
   );
 };

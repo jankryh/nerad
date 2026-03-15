@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Departure, ApiError } from '../types';
 import { getAllDepartures } from '../api/pidApi';
-import { REFRESH_INTERVAL } from '../constants';
 import { logger } from '../utils/logger';
 
 interface DeparturesState {
@@ -56,8 +55,6 @@ export const useDepartures = (): UseDeparturesReturn => {
 
   useEffect(() => {
     fetchData();
-    const interval = window.setInterval(fetchData, REFRESH_INTERVAL);
-    return () => window.clearInterval(interval);
   }, [fetchData]);
 
   return {

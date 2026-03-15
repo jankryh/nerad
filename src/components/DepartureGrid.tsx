@@ -66,7 +66,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
               <p className="text-white/90 text-lg leading-relaxed">{error}</p>
               <div className="bg-red-500/10 backdrop-blur-sm border border-red-400/20 rounded-2xl p-6">
                 <p className="text-red-200/80 text-base leading-relaxed">
-                  Zkus obnovit stránku nebo zkontrolovat API přístup k PID datům.
+                  Zkus ručně obnovit data tlačítkem nahoře nebo zkontrolovat API přístup k PID datům.
                 </p>
               </div>
             </div>
