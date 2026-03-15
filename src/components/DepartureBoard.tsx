@@ -177,6 +177,10 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
     return departure.mode === 'bus' ? 0 : TRAVEL_TIMES[departure.mode];
   };
 
+  const formatWalkDuration = (departure: Departure): string => {
+    return departure.mode === 'bus' ? 'bez přesunu' : `${getWalkMinutes(departure)} min`;
+  };
+
   const getMinutesUntilLeave = (departure: Departure): number | null => {
     const minutesUntilDeparture = getMinutesUntilDeparture(departure);
     if (minutesUntilDeparture === null) {
@@ -486,7 +490,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                   {getUrgencyLabel(recommendedDeparture)}
                 </div>
                 <div className="text-xs text-white/55">
-                  cesta {formatTravelDuration(recommendedDeparture)} • docházka {getWalkMinutes(recommendedDeparture)} min • rezerva {LEAVE_BUFFER_MINUTES} min
+                  cesta {formatTravelDuration(recommendedDeparture)} • docházka {formatWalkDuration(recommendedDeparture)} • rezerva {LEAVE_BUFFER_MINUTES} min
                 </div>
               </div>
             </div>
@@ -593,13 +597,11 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 
                     <div className="flex items-end gap-4">
                       <div>
-                        <div className="min-h-[16px]">
-                          {hasDelay && (
-                            <time className="block text-xs font-medium text-white/40 font-mono tracking-tight line-through">
-                              {formatTime(departure.scheduledTime)}
-                            </time>
-                          )}
-                        </div>
+                        {hasDelay && (
+                          <time className="mb-1 block text-xs font-medium text-white/40 font-mono tracking-tight line-through">
+                            {formatTime(departure.scheduledTime)}
+                          </time>
+                        )}
                         <time
                           className={`block text-2xl sm:text-3xl lg:text-4xl font-bold font-mono tracking-tight ${hasDelay ? 'text-red-400' : 'text-white'}`}
                           dateTime={hasDelay ? calculateActualDepartureTime(departure).toISOString() : departure.scheduledTime}
@@ -617,13 +619,11 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                       <div className="h-12 w-px bg-white/10"></div>
 
                       <div>
-                        <div className="min-h-[16px]">
-                          {hasDelay && (
-                            <time className="block text-xs font-medium text-white/40 font-mono tracking-tight line-through">
-                              {calculateScheduledArrivalTime(departure)}
-                            </time>
-                          )}
-                        </div>
+                        {hasDelay && (
+                          <time className="mb-1 block text-xs font-medium text-white/40 font-mono tracking-tight line-through">
+                            {calculateScheduledArrivalTime(departure)}
+                          </time>
+                        )}
                         <time className={`block text-2xl sm:text-3xl lg:text-4xl font-bold font-mono tracking-tight ${hasDelay ? 'text-red-400' : 'text-primary-300'}`}>
                           {calculateArrivalTimeWithDelay(departure)}
                         </time>
@@ -674,7 +674,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
                       <div className="text-[11px] font-semibold uppercase tracking-wide text-white/50">Docházka</div>
-                      <div className="mt-1 text-sm sm:text-base font-semibold text-white/85">{getWalkMinutes(departure)} min</div>
+                      <div className="mt-1 text-sm sm:text-base font-semibold text-white/85">{formatWalkDuration(departure)}</div>
                     </div>
                   </div>
                 </div>
