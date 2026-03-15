@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Departure, DepartureBoardTitle } from '../types';
-import {
-  Clock,
-  AlertCircle,
-  Timer,
-  TrendingUp,
-} from 'lucide-react';
 import { TRAVEL_TIMES, TRAVEL_TIME_CONFIG } from '../constants';
 import {
   formatTime,
@@ -290,7 +284,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
         <div className="p-12 text-center">
           <div className="flex items-center justify-center space-x-4 mb-4">
             <div className="w-8 h-8 border-3 border-white/20 border-t-primary-400 rounded-full animate-spin"></div>
-            <Timer className="w-6 h-6 text-primary-400 animate-pulse" aria-hidden="true" />
+            <span className="text-primary-400 text-xl" aria-hidden="true">⏳</span>
           </div>
           <span className="text-white/80 text-lg font-medium">Načítání odjezdů...</span>
         </div>
@@ -308,7 +302,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
         </div>
         <div className="p-6">
           <div className="bg-red-500/15 backdrop-blur-sm border border-red-400/30 rounded-3xl p-6 flex items-start space-x-4">
-            <AlertCircle className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <span className="text-red-400 text-xl leading-none flex-shrink-0 mt-0.5" aria-hidden="true">⚠️</span>
             <div className="space-y-2">
               <h4 className="text-red-300 font-semibold">Chyba při načítání</h4>
               <p className="text-red-200/90 text-sm leading-relaxed">{error}</p>
@@ -329,8 +323,8 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
         </div>
         <div className="p-12 text-center">
           <div className="space-y-4">
-            <div className="w-16 h-16 mx-auto bg-white/5 rounded-full flex items-center justify-center">
-              <Clock className="w-8 h-8 text-white/40" aria-hidden="true" />
+            <div className="w-16 h-16 mx-auto bg-white/5 rounded-full flex items-center justify-center text-2xl text-white/40" aria-hidden="true">
+              ⏱️
             </div>
             <p className="text-white/60 text-lg font-medium">Žádné odjezdy</p>
             <p className="text-white/40 text-sm">Momentálně nejsou k dispozici žádné informace o odjezdech.</p>
@@ -412,7 +406,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 
                       {hasDelay && (
                         <span className="inline-flex items-center rounded-full border border-red-400/20 bg-red-500/10 px-2.5 py-1 text-[11px] font-semibold text-red-200">
-                          <TrendingUp className="w-3 h-3 mr-1" aria-hidden="true" />
                           +{departure.delay} min
                         </span>
                       )}
