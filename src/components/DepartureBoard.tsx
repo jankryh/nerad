@@ -344,6 +344,11 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
     const leave = getMinutesUntilLeave(departure);
     return leave !== null && leave >= 0;
   }).length;
+  const secondaryDepartures = debugDepartures.filter((departure) => !(
+    nearestDeparture
+    && nearestDeparture.tripId === departure.tripId
+    && nearestDeparture.scheduledTime === departure.scheduledTime
+  ));
 
   if (isLoading) {
     return (
@@ -500,7 +505,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
           </div>
         )}
 
-        {debugDepartures.map((departure, index) => {
+        {secondaryDepartures.map((departure, index) => {
           const isRecommended = nearestDeparture?.tripId === departure.tripId
             && nearestDeparture?.scheduledTime === departure.scheduledTime;
           const minutesUntil = getMinutesUntilDeparture(departure);
