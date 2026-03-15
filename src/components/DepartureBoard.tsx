@@ -4,7 +4,6 @@ import {
   Clock,
   AlertCircle,
   Timer,
-  CheckCircle2,
   TrendingUp,
 } from 'lucide-react';
 import { TRAVEL_TIMES, TRAVEL_TIME_CONFIG } from '../constants';
@@ -395,8 +394,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                   <div className="space-y-3 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       {isRecommended ? (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/20 bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-200">
-                          <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span className="inline-flex items-center rounded-full border border-amber-400/20 bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-200">
                           Nejbližší spoj
                         </span>
                       ) : (
