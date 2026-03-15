@@ -300,27 +300,27 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
     return `Pohodový spoj s rozumnou rezervou`;
   };
 
-  const getRecommendationReason = (departure: Departure): string => {
+  const getPrimaryDepartureReason = (departure: Departure): string => {
     const urgency = getUrgency(departure);
     const delay = departure.delay ?? 0;
 
     if (delay > 0 && urgency !== 'missed') {
-      return 'Nejlepší kompromis teď vychází díky zpoždění';
+      return 'Nejbližší spoj je aktuálně se zpožděním';
     }
 
-    if (urgency === 'relaxed') {
-      return 'Rozumný odjezd bez zbytečného stresu';
-    }
-
-    if (urgency === 'soon') {
-      return 'Je blízko, ale ještě v pohodě stihnutelný';
+    if (urgency === 'missed') {
+      return 'Tohle je sice nejbližší spoj, ale nejspíš už ho nestihneš';
     }
 
     if (urgency === 'leave-now') {
-      return 'Nejrychlejší použitelná varianta právě teď';
+      return 'Tohle je nejbližší spoj — jestli chceš jet, vyjdi teď';
     }
 
-    return 'Nejbližší další použitelný spoj';
+    if (urgency === 'soon') {
+      return 'Tohle je nejbližší spoj a pořád se dá v pohodě stihnout';
+    }
+
+    return 'Tohle je nejbližší následující spoj';
   };
 
   const getProgressPercent = (departure: Departure): number => {
@@ -334,33 +334,12 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
     return Math.max(0, Math.min(100, normalized));
   };
 
-  const getRecommendationScore = (departure: Departure): number => {
-    const minutesUntilLeave = getMinutesUntilLeave(departure);
-    const minutesUntilDeparture = getMinutesUntilDeparture(departure);
-    const delay = departure.delay ?? 0;
-
-    if (minutesUntilLeave === null || minutesUntilDeparture === null) {
-      return Number.POSITIVE_INFINITY;
-    }
-
-    if (minutesUntilLeave < 0) {
-      return 10000 + Math.abs(minutesUntilLeave);
-    }
-
-    const arrivalDate = new Date(calculateActualDepartureTime(departure).getTime() + getTravelTime(departure) * 60 * 1000);
-    const arrivalMinutes = arrivalDate.getHours() * 60 + arrivalDate.getMinutes();
-
-    const urgencyPenalty = minutesUntilLeave <= 1 ? 40 : minutesUntilLeave <= 5 ? 12 : 0;
-    const tooEarlyPenalty = minutesUntilLeave > 18 ? (minutesUntilLeave - 18) * 1.2 : 0;
-    const idealWindowPenalty = Math.abs(minutesUntilLeave - 7) * 1.8;
-    const delayBonus = delay > 0 ? Math.min(delay * 2, 10) : 0;
-
-    return arrivalMinutes + urgencyPenalty + tooEarlyPenalty + idealWindowPenalty + minutesUntilDeparture * 0.15 - delayBonus;
-  };
-
   const debugDepartures = departures.map(getDebugDeparture);
-  const sortedDepartures = [...debugDepartures].sort((a, b) => getRecommendationScore(a) - getRecommendationScore(b));
-  const recommendedDeparture = sortedDepartures[0];
+  const nearestDeparture = [...debugDepartures].sort((a, b) => {
+    const aTime = calculateActualDepartureTime(a).getTime();
+    const bTime = calculateActualDepartureTime(b).getTime();
+    return aTime - bTime;
+  })[0];
   const viableCount = debugDepartures.filter((departure) => {
     const leave = getMinutesUntilLeave(departure);
     return leave !== null && leave >= 0;
@@ -450,43 +429,43 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
       </div>
 
       <div className="p-3 sm:p-6 space-y-3 sm:space-y-4">
-        {recommendedDeparture && (
+        {nearestDeparture && (
           <div className="rounded-2xl sm:rounded-3xl border border-primary-400/25 bg-gradient-to-br from-primary-500/12 via-white/[0.04] to-transparent p-4 sm:p-5 shadow-lg shadow-primary-500/10">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="space-y-3">
                 <div className="inline-flex items-center gap-2 rounded-full border border-primary-400/20 bg-primary-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary-200">
                   <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-                  Doporučeno
+                  Nejbližší spoj
                 </div>
 
                 <div>
                   <div className="text-white text-2xl sm:text-3xl font-bold font-mono tracking-tight">
-                    {formatTime(recommendedDeparture.delay && recommendedDeparture.delay > 0
-                      ? calculateActualDepartureTime(recommendedDeparture).toISOString()
-                      : recommendedDeparture.scheduledTime)}
+                    {formatTime(nearestDeparture.delay && nearestDeparture.delay > 0
+                      ? calculateActualDepartureTime(nearestDeparture).toISOString()
+                      : nearestDeparture.scheduledTime)}
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-white/70">
                     <span>Odjezd</span>
-                    {recommendedDeparture.delay && recommendedDeparture.delay > 0 && (
+                    {nearestDeparture.delay && nearestDeparture.delay > 0 && (
                       <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-red-300 font-semibold">
-                        +{recommendedDeparture.delay} min
+                        +{nearestDeparture.delay} min
                       </span>
                     )}
                     <ArrowRight className="w-3.5 h-3.5 text-white/40" aria-hidden="true" />
-                    <span>Příjezd {calculateArrivalTimeWithDelay(recommendedDeparture)}</span>
+                    <span>Příjezd {calculateArrivalTimeWithDelay(nearestDeparture)}</span>
                   </div>
                 </div>
 
-                <p className="text-sm text-white/75 max-w-xl">{getRecommendationReason(recommendedDeparture)}</p>
+                <p className="text-sm text-white/75 max-w-xl">{getPrimaryDepartureReason(nearestDeparture)}</p>
               </div>
 
               <div className="sm:text-right space-y-2">
                 <div className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-white/85">
                   <Footprints className="w-4 h-4 text-primary-300" aria-hidden="true" />
-                  {getUrgencyLabel(recommendedDeparture)}
+                  {getUrgencyLabel(nearestDeparture)}
                 </div>
                 <div className="text-xs text-white/55">
-                  cesta {formatTravelDuration(recommendedDeparture)} • rezerva {LEAVE_BUFFER_MINUTES} min
+                  cesta {formatTravelDuration(nearestDeparture)} • rezerva {LEAVE_BUFFER_MINUTES} min
                 </div>
               </div>
             </div>
@@ -500,7 +479,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-white/50">Odjíždí za</div>
                 <div className="mt-1 text-sm font-semibold text-white/85">
                   {(() => {
-                    const minutes = getMinutesUntilDeparture(recommendedDeparture);
+                    const minutes = getMinutesUntilDeparture(nearestDeparture);
                     return minutes !== null ? formatMinutesUntilDeparture(Math.max(0, minutes)) : '--';
                   })()}
                 </div>
@@ -509,7 +488,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-white/50">Vyjít</div>
                 <div className="mt-1 text-sm font-semibold text-primary-200">
                   {(() => {
-                    const leave = getMinutesUntilLeave(recommendedDeparture);
+                    const leave = getMinutesUntilLeave(nearestDeparture);
                     if (leave === null) return '--';
                     if (leave < 0) return 'pozdě';
                     if (leave <= 1) return 'teď';
@@ -522,8 +501,8 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
         )}
 
         {debugDepartures.map((departure, index) => {
-          const isRecommended = recommendedDeparture?.tripId === departure.tripId
-            && recommendedDeparture?.scheduledTime === departure.scheduledTime;
+          const isRecommended = nearestDeparture?.tripId === departure.tripId
+            && nearestDeparture?.scheduledTime === departure.scheduledTime;
           const minutesUntil = getMinutesUntilDeparture(departure);
           const minutesUntilLeave = getMinutesUntilLeave(departure);
           const hasDelay = departure.delay && departure.delay > 0;
@@ -563,11 +542,11 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                       {isRecommended ? (
                         <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/20 bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-200">
                           <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                          Doporučený spoj
+                          Nejbližší spoj
                         </span>
                       ) : (
                         <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/65">
-                          Alternativa
+                          Další spoj
                         </span>
                       )}
 
