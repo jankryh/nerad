@@ -177,10 +177,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
     return departure.mode === 'bus' ? 0 : TRAVEL_TIMES[departure.mode];
   };
 
-  const formatWalkDuration = (departure: Departure): string => {
-    return departure.mode === 'bus' ? 'bez přesunu' : `${getWalkMinutes(departure)} min`;
-  };
-
   const getMinutesUntilLeave = (departure: Departure): number | null => {
     const minutesUntilDeparture = getMinutesUntilDeparture(departure);
     if (minutesUntilDeparture === null) {
@@ -490,7 +486,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                   {getUrgencyLabel(recommendedDeparture)}
                 </div>
                 <div className="text-xs text-white/55">
-                  cesta {formatTravelDuration(recommendedDeparture)} • docházka {formatWalkDuration(recommendedDeparture)} • rezerva {LEAVE_BUFFER_MINUTES} min
+                  cesta {formatTravelDuration(recommendedDeparture)} • rezerva {LEAVE_BUFFER_MINUTES} min
                 </div>
               </div>
             </div>
@@ -668,13 +664,9 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                               : `za ${minutesUntilLeave} min`}
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
+                    <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5 col-span-2">
                       <div className="text-[11px] font-semibold uppercase tracking-wide text-white/50">Cesta</div>
                       <div className="mt-1 text-sm sm:text-base font-semibold text-white/85">{formatTravelDuration(departure)}</div>
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5">
-                      <div className="text-[11px] font-semibold uppercase tracking-wide text-white/50">Docházka</div>
-                      <div className="mt-1 text-sm sm:text-base font-semibold text-white/85">{formatWalkDuration(departure)}</div>
                     </div>
                   </div>
                 </div>
