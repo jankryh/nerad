@@ -368,7 +368,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
           const isRecommended = nearestDeparture?.tripId === departure.tripId
             && nearestDeparture?.scheduledTime === departure.scheduledTime;
           const minutesUntil = getMinutesUntilDeparture(departure);
-          const hasDelay = departure.delay && departure.delay > 0;
+          const hasDelay = Boolean(departure.delay && departure.delay > 0);
           const urgency = getUrgency(departure);
           const progressPercent = getProgressPercent(departure);
 
