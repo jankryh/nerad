@@ -481,13 +481,9 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                   >
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
-                        urgency === 'leave-now'
-                          ? 'bg-gradient-to-r from-red-500 to-rose-400'
-                          : urgency === 'soon'
-                            ? 'bg-gradient-to-r from-yellow-500 to-amber-300'
-                            : urgency === 'missed'
-                              ? 'bg-slate-400/40'
-                              : 'bg-gradient-to-r from-emerald-500 to-teal-300'
+                        urgency === 'missed'
+                          ? 'bg-slate-400/40'
+                          : 'bg-gradient-to-r from-emerald-500 to-teal-300'
                       }`}
                       style={{ width: `${progressPercent}%` }}
                     ></div>
