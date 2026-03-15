@@ -7,18 +7,9 @@ export default async function handler(req, res) {
     });
   }
 
-  const pathParts = Array.isArray(req.query.path)
-    ? req.query.path
-    : req.query.path
-      ? [req.query.path]
-      : [];
-
-  const upstreamPath = pathParts.join('/');
-  const upstreamUrl = new URL(`https://api.golemio.cz/v2/${upstreamPath}`);
+  const upstreamUrl = new URL('https://api.golemio.cz/v2/pid/departureboards');
 
   for (const [key, value] of Object.entries(req.query)) {
-    if (key === 'path') continue;
-
     if (Array.isArray(value)) {
       value.forEach((item) => upstreamUrl.searchParams.append(key, String(item)));
     } else if (value !== undefined) {
@@ -37,7 +28,9 @@ export default async function handler(req, res) {
     });
 
     const text = await upstreamResponse.text();
-    const contentType = upstreamResponse.headers.get('content-type') || 'application/json; charset=utf-8';
+    const contentType =
+      upstreamResponse.headers.get('content-type') ||
+      'application/json; charset=utf-8';
 
     res.setHeader('content-type', contentType);
     res.setHeader('cache-control', 's-maxage=15, stale-while-revalidate=45');
