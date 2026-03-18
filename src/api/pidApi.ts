@@ -65,6 +65,25 @@ const ROUTES = {
   kobylisyToHusinec: { stopPlaceId: STOPS.KOBYLISY, lineId: '371', direction: 'to-husinec' as Direction },
 } as const;
 
+const VALID_STOP_IDS: Set<string> = new Set(Object.values(STOPS));
+const VALID_LINE_IDS: Set<string> = new Set(["S4", "371"]);
+const VALID_DIRECTIONS: Set<string> = new Set(["to-masarykovo", "to-rez", "to-kobylisy", "to-husinec"]);
+
+const validateBoardQuery = (stopPlaceId: string, lineId: string, limit?: number, direction?: string): void => {
+  if (!VALID_STOP_IDS.has(stopPlaceId)) {
+    throw new Error(`Invalid stopPlaceId: ${stopPlaceId}`);
+  }
+  if (!VALID_LINE_IDS.has(lineId)) {
+    throw new Error(`Invalid lineId: ${lineId}`);
+  }
+  if (limit !== undefined && (limit < 1 || limit > 50 || !Number.isInteger(limit))) {
+    throw new Error(`Invalid limit: ${limit}`);
+  }
+  if (direction !== undefined && !VALID_DIRECTIONS.has(direction)) {
+    throw new Error(`Invalid direction: ${direction}`);
+  }
+};
+
 const getCacheKey = ({ stopPlaceId, lineId, direction, mode = 'departures' }: Required<Pick<BoardQuery, 'stopPlaceId' | 'lineId'>> & Pick<BoardQuery, 'direction' | 'mode'>) =>
   `${mode}:${stopPlaceId}:${lineId}:${direction ?? 'all'}`;
 
@@ -126,6 +145,7 @@ const fetchBoard = async ({
   mode = 'departures',
   useCache = true,
 }: BoardQuery): Promise<BoardApiItem[]> => {
+  validateBoardQuery(stopPlaceId, lineId, limit, direction);
   const cacheKey = getCacheKey({ stopPlaceId, lineId, direction, mode });
   const now = Date.now();
 
