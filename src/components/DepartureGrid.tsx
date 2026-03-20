@@ -1,7 +1,7 @@
 import React from 'react';
 import { DepartureBoard } from './DepartureBoard';
 import { Departure } from '../types';
-import { Train, Bus, AlertTriangle, Loader } from 'lucide-react';
+import { Train, Bus, AlertTriangle, Loader, RefreshCw } from 'lucide-react';
 
 interface DepartureGridProps {
   trainToPrague: Departure[];
@@ -10,6 +10,10 @@ interface DepartureGridProps {
   busFromPrague: Departure[];
   isLoading: boolean;
   error: string | null;
+  retryCount?: number;
+  isRetrying?: boolean;
+  nextRetryIn?: number | null;
+  manualRetry?: () => void;
 }
 
 export const DepartureGrid: React.FC<DepartureGridProps> = ({
@@ -18,7 +22,11 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
   busToPrague,
   busFromPrague,
   isLoading,
-  error
+  error,
+  retryCount = 0,
+  isRetrying = false,
+  nextRetryIn = null,
+  manualRetry,
 }) => {
   if (isLoading) {
     return (
@@ -68,7 +76,30 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
                 <p className="text-red-200/80 text-base leading-relaxed">
                   Zkus ručně obnovit data tlačítkem nahoře nebo zkontrolovat API přístup k PID datům.
                 </p>
+                {retryCount > 0 && (
+                  <p className="text-red-200/60 text-sm mt-2">
+                    Pokus {retryCount} z 5
+                  </p>
+                )}
               </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-4">
+              {manualRetry && (
+                <button
+                  onClick={manualRetry}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600/80 hover:bg-primary-500/80 text-white font-semibold rounded-2xl border border-primary-400/30 transition-all duration-200 hover:scale-105"
+                >
+                  <RefreshCw className="w-5 h-5" aria-hidden="true" />
+                  Zkusit znovu
+                </button>
+              )}
+
+              {isRetrying && nextRetryIn !== null && nextRetryIn > 0 && (
+                <p className="text-white/60 text-sm animate-pulse">
+                  Další pokus za {nextRetryIn}s...
+                </p>
+              )}
             </div>
           </div>
         </div>

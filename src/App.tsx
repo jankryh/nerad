@@ -16,6 +16,10 @@ function App() {
     error,
     lastUpdate,
     refreshData,
+    retryCount,
+    isRetrying,
+    nextRetryIn,
+    manualRetry,
   } = useDepartures();
 
   return (
@@ -49,6 +53,10 @@ function App() {
             busFromPrague={busFromPrague}
             isLoading={isLoading}
             error={error}
+            retryCount={retryCount}
+            isRetrying={isRetrying}
+            nextRetryIn={nextRetryIn}
+            manualRetry={manualRetry}
           />
           
           {lastUpdate && !isLoading && !error && (

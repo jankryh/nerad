@@ -4,6 +4,7 @@ import {
   API_KEY,
   API_REQUEST_TIMEOUT,
   BOARD_CACHE_TTL,
+  BOARD_CONFIG,
   STOPS,
   TRAVEL_TIMES,
 } from '../constants';
@@ -58,11 +59,12 @@ if (API_KEY && !usesProxy) {
 
 const boardCache = new Map<string, { expiresAt: number; data: BoardApiResponse }>();
 
+// ROUTES derived from BOARD_CONFIG for backward compatibility
 const ROUTES = {
-  rezToMasarykovo: { stopPlaceId: STOPS.REZ, lineId: 'S4', direction: 'to-masarykovo' as Direction },
-  masarykovoToRez: { stopPlaceId: STOPS.MASARYKOVO, lineId: 'S4', direction: 'to-rez' as Direction },
-  husinecsToKobylisy: { stopPlaceId: STOPS.HUSINEC_REZ, lineId: '371', direction: 'to-kobylisy' as Direction },
-  kobylisyToHusinec: { stopPlaceId: STOPS.KOBYLISY, lineId: '371', direction: 'to-husinec' as Direction },
+  rezToMasarykovo: { stopPlaceId: BOARD_CONFIG.trainToPrague.stopId, lineId: BOARD_CONFIG.trainToPrague.lineIds[0], direction: BOARD_CONFIG.trainToPrague.direction as Direction },
+  masarykovoToRez: { stopPlaceId: BOARD_CONFIG.trainFromPrague.stopId, lineId: BOARD_CONFIG.trainFromPrague.lineIds[0], direction: BOARD_CONFIG.trainFromPrague.direction as Direction },
+  husinecsToKobylisy: { stopPlaceId: BOARD_CONFIG.busToPrague.stopId, lineId: BOARD_CONFIG.busToPrague.lineIds[0], direction: BOARD_CONFIG.busToPrague.direction as Direction },
+  kobylisyToHusinec: { stopPlaceId: BOARD_CONFIG.busFromPrague.stopId, lineId: BOARD_CONFIG.busFromPrague.lineIds[0], direction: BOARD_CONFIG.busFromPrague.direction as Direction },
 } as const;
 
 const VALID_STOP_IDS: Set<string> = new Set(Object.values(STOPS));
@@ -115,26 +117,24 @@ const normalizeArrival = (item: BoardApiItem): Arrival => ({
   tripId: item.trip?.id ?? 'N/A',
 });
 
+/**
+ * Fallback headsign matching — používá se pokud API nefiltruje dostatečně přes routeId/lineId.
+ * Konfigurace headsign patterns je v BOARD_CONFIG (constants.ts).
+ * Pokud API začne podporovat server-side direction filtering, tuto funkci lze odstranit.
+ */
 const matchesDirection = (item: BoardApiItem, direction?: string) => {
   if (!direction) return true;
 
-  const headsign = item.trip?.headsign ?? '';
+  const boardConfig = Object.values(BOARD_CONFIG).find((cfg) => cfg.direction === direction);
+  if (!boardConfig) return true;
 
-  switch (direction) {
-    case 'to-masarykovo':
-      return headsign.includes('Masarykovo') || headsign.includes('Praha');
-    case 'to-rez':
-      return (headsign.includes('Ústí') || headsign.includes('Kralupy') || headsign.includes('Řež')) && !headsign.includes('Praha');
-    case 'to-kobylisy':
-      return headsign.includes('Kobylisy') || headsign.includes('Praha') || headsign.includes('Klecany');
-    case 'to-husinec':
-      return (headsign.includes('Husinec') || headsign.includes('Řež')) &&
-        !headsign.includes('Klecany') &&
-        !headsign.includes('Astrapark') &&
-        !headsign.includes('Klecánky');
-    default:
-      return true;
-  }
+  const headsign = item.trip?.headsign ?? '';
+  const { include, exclude } = boardConfig.headsignPatterns;
+
+  const matchesInclude = include.length === 0 || include.some((pattern) => headsign.includes(pattern));
+  const matchesExclude = exclude.length > 0 && exclude.some((pattern) => headsign.includes(pattern));
+
+  return matchesInclude && !matchesExclude;
 };
 
 const fetchBoard = async ({
@@ -166,8 +166,14 @@ const fetchBoard = async ({
     },
   });
 
+  // Filtruj přes lineIds z BOARD_CONFIG pokud existuje konfigurace pro daný direction
+  const boardConfig = direction
+    ? Object.values(BOARD_CONFIG).find((cfg) => cfg.direction === direction)
+    : undefined;
+  const allowedLineIds = boardConfig ? boardConfig.lineIds : [lineId];
+
   const filtered = (response.data.departures ?? [])
-    .filter((item) => item.route?.short_name === lineId)
+    .filter((item) => allowedLineIds.includes(item.route?.short_name ?? ''))
     .filter((item) => matchesDirection(item, direction))
     .slice(0, limit);
 

@@ -15,8 +15,6 @@ interface DepartureBoardProps {
   error?: string;
 }
 
-const DEBUG_ADD_DELAY = false;
-const DEBUG_DELAY_MINUTES = 3;
 const LEAVE_BUFFER_MINUTES = 2;
 
 type Urgency = 'missed' | 'leave-now' | 'soon' | 'relaxed';
@@ -32,12 +30,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   const [enhancedTravelTimes, setEnhancedTravelTimes] = useState<Map<string, number>>(new Map());
   const [isCalculatingTimes, setIsCalculatingTimes] = useState(false);
 
-  const getDebugDeparture = (departure: Departure, index: number): Departure => {
-    return DEBUG_ADD_DELAY && index === 0
-      ? { ...departure, delay: DEBUG_DELAY_MINUTES }
-      : departure;
-  };
-
   useEffect(() => {
     if (!TRAVEL_TIME_CONFIG.enableRealTimeInUI || departures.length === 0) {
       setEnhancedTravelTimes(new Map());
@@ -51,19 +43,12 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
       const newTravelTimes = new Map<string, number>();
 
       await Promise.allSettled(
-        departures.map(async (departure, index) => {
+        departures.map(async (departure) => {
           const key = `${departure.tripId}-${departure.scheduledTime}`;
 
           try {
             const travelTime = await getEnhancedTravelTime(departure, true);
             newTravelTimes.set(key, travelTime);
-
-            if (DEBUG_ADD_DELAY && index === 0) {
-              const delayedDeparture = { ...departure, delay: DEBUG_DELAY_MINUTES };
-              const delayedKey = `${departure.tripId}-${departure.scheduledTime}-delayed`;
-              const delayedTravelTime = await getEnhancedTravelTime(delayedDeparture, true);
-              newTravelTimes.set(delayedKey, delayedTravelTime);
-            }
           } catch (calculationError) {
             logger.warn('Failed to calculate travel time for departure', calculationError);
             newTravelTimes.set(key, TRAVEL_TIMES[departure.mode]);
@@ -90,8 +75,10 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   }, [departures]);
 
   const getTravelTime = (departure: Departure): number => {
+    const hardcodedFallback = TRAVEL_TIMES[departure.mode];
+
     if (!TRAVEL_TIME_CONFIG.enableRealTimeInUI) {
-      return departure.mode === 'bus' ? 0 : TRAVEL_TIMES[departure.mode];
+      return hardcodedFallback;
     }
 
     if (departure.delay && departure.delay > 0) {
@@ -108,17 +95,14 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
       return enhancedTime;
     }
 
-    return departure.mode === 'bus' ? 0 : TRAVEL_TIMES[departure.mode];
+    // Vždy vrať hardcoded fallback — nikdy 0
+    return hardcodedFallback;
   };
 
   const calculateArrivalTimeWithDelay = (departure: Departure): string => {
     try {
       const actualDepartureTime = calculateActualDepartureTime(departure);
       const travelMinutes = getTravelTime(departure);
-
-      if (departure.mode === 'bus' && travelMinutes === 0) {
-        return 'N/A';
-      }
 
       const arrivalTime = new Date(actualDepartureTime.getTime() + travelMinutes * 60 * 1000);
       return arrivalTime.toLocaleTimeString('cs-CZ', {
@@ -142,7 +126,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   };
 
   const getWalkMinutes = (departure: Departure): number => {
-    return departure.mode === 'bus' ? 0 : TRAVEL_TIMES[departure.mode];
+    return TRAVEL_TIMES[departure.mode];
   };
 
   const getMinutesUntilLeave = (departure: Departure): number | null => {
@@ -175,10 +159,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 
   const formatTravelDuration = (departure: Departure): string => {
     const travelMinutes = getTravelTime(departure);
-
-    if (departure.mode === 'bus' && travelMinutes === 0) {
-      return 'N/A';
-    }
 
     if (travelMinutes < 60) {
       return `${travelMinutes} min`;
@@ -224,8 +204,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
     }
   };
 
-  const debugDepartures = departures.map(getDebugDeparture);
-
   const getProgressPercent = (departure: Departure): number => {
     const minutesUntilDeparture = getMinutesUntilDeparture(departure);
 
@@ -241,12 +219,12 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
     return Math.max(0, Math.min(100, normalized));
   };
 
-  const nearestDeparture = [...debugDepartures].sort((a, b) => {
+  const nearestDeparture = [...departures].sort((a, b) => {
     const aTime = calculateActualDepartureTime(a).getTime();
     const bTime = calculateActualDepartureTime(b).getTime();
     return aTime - bTime;
   })[0];
-  const viableCount = debugDepartures.filter((departure) => {
+  const viableCount = departures.filter((departure) => {
     const leave = getMinutesUntilLeave(departure);
     return leave !== null && leave >= 0;
   }).length;
@@ -360,11 +338,11 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
         <div className="grid grid-cols-1 gap-2">
           <div className="rounded-2xl border px-3 py-2.5" style={subtlePanelStyle}>
             <div className="text-[11px] font-semibold uppercase tracking-wide" style={mutedLabelStyle}>Stihnutelné</div>
-            <div className="mt-1 text-sm font-semibold" style={valueTextStyle}>{viableCount} z {debugDepartures.length} spojů</div>
+            <div className="mt-1 text-sm font-semibold" style={valueTextStyle}>{viableCount} z {departures.length} spojů</div>
           </div>
         </div>
 
-        {debugDepartures.map((departure, index) => {
+        {departures.map((departure, index) => {
           const isRecommended = nearestDeparture?.tripId === departure.tripId
             && nearestDeparture?.scheduledTime === departure.scheduledTime;
           const minutesUntil = getMinutesUntilDeparture(departure);

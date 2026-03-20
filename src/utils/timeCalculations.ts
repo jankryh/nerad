@@ -170,15 +170,16 @@ export const getEnhancedTravelTime = async (
   departure: Departure,
   useRealTime: boolean = TRAVEL_TIME_CONFIG.useRealTimeAPI,
 ): Promise<number> => {
-  const trainFallback = TRAVEL_TIMES[departure.mode];
+  const hardcodedFallback = TRAVEL_TIMES[departure.mode];
 
-  if (departure.mode === 'train' && (!useRealTime || !TRAVEL_TIME_CONFIG.useRealTimeAPI)) {
-    return trainFallback;
+  if (!useRealTime || !TRAVEL_TIME_CONFIG.useRealTimeAPI) {
+    return hardcodedFallback;
   }
 
   const { departureStopId, arrivalStopId } = getStopIdsForTrip(departure);
   if (!departureStopId || !arrivalStopId) {
-    return departure.mode === 'train' ? trainFallback : 0;
+    // Vždy vrať hardcoded fallback — nikdy 0/N/A
+    return hardcodedFallback;
   }
 
   const cacheKey = getTravelTimeCacheKey(departureStopId, arrivalStopId, departure.line);
@@ -197,7 +198,8 @@ export const getEnhancedTravelTime = async (
 
     const selectedTravelTime = selectBestTravelTime(travelTimes);
     if (!selectedTravelTime) {
-      return departure.mode === 'train' && TRAVEL_TIME_CONFIG.fallbackToHardcoded ? trainFallback : 0;
+      // Fallback na hardcoded čas pro vlak i bus
+      return TRAVEL_TIME_CONFIG.fallbackToHardcoded ? hardcodedFallback : hardcodedFallback;
     }
 
     if (departure.mode === 'bus') {
@@ -206,21 +208,23 @@ export const getEnhancedTravelTime = async (
         return selectedTravelTime.duration;
       }
 
-      return 0;
+      // Bus: vždy hardcoded fallback místo 0
+      return hardcodedFallback;
     }
 
-    const minReasonable = Math.max(5, trainFallback * 0.5);
-    const maxReasonable = trainFallback * 2;
+    const minReasonable = Math.max(5, hardcodedFallback * 0.5);
+    const maxReasonable = hardcodedFallback * 2;
 
     if (selectedTravelTime.duration >= minReasonable && selectedTravelTime.duration <= maxReasonable) {
       cacheTravelTime(cacheKey, selectedTravelTime.duration, departure.line, departure.mode);
       return selectedTravelTime.duration;
     }
 
-    return TRAVEL_TIME_CONFIG.fallbackToHardcoded ? trainFallback : 0;
+    return TRAVEL_TIME_CONFIG.fallbackToHardcoded ? hardcodedFallback : hardcodedFallback;
   } catch (error) {
     logger.warn('Failed to get enhanced travel time', error);
-    return departure.mode === 'train' && TRAVEL_TIME_CONFIG.fallbackToHardcoded ? trainFallback : 0;
+    // Vždy vrať hardcoded fallback — nikdy 0
+    return hardcodedFallback;
   }
 };
 

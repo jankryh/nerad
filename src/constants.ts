@@ -34,6 +34,58 @@ export const TRAVEL_TIME_CONFIG = {
   maxCacheSize: 50,
 } as const;
 
+export type BoardKey = 'trainToPrague' | 'trainFromPrague' | 'busToPrague' | 'busFromPrague';
+
+export interface BoardConfig {
+  stopId: string;
+  lineIds: string[];
+  direction: string;
+  /** Fallback headsign patterns pro zpětnou kompatibilitu pokud API nefiltruje správně */
+  headsignPatterns: {
+    include: string[];
+    exclude: string[];
+  };
+}
+
+export const BOARD_CONFIG: Record<BoardKey, BoardConfig> = {
+  trainToPrague: {
+    stopId: STOPS.REZ,
+    lineIds: ['S4'],
+    direction: 'to-masarykovo',
+    headsignPatterns: {
+      include: ['Masarykovo', 'Praha'],
+      exclude: [],
+    },
+  },
+  trainFromPrague: {
+    stopId: STOPS.MASARYKOVO,
+    lineIds: ['S4'],
+    direction: 'to-rez',
+    headsignPatterns: {
+      include: ['Ústí', 'Kralupy', 'Řež'],
+      exclude: ['Praha'],
+    },
+  },
+  busToPrague: {
+    stopId: STOPS.HUSINEC_REZ,
+    lineIds: ['371'],
+    direction: 'to-kobylisy',
+    headsignPatterns: {
+      include: ['Kobylisy', 'Praha', 'Klecany'],
+      exclude: [],
+    },
+  },
+  busFromPrague: {
+    stopId: STOPS.KOBYLISY,
+    lineIds: ['371'],
+    direction: 'to-husinec',
+    headsignPatterns: {
+      include: ['Husinec', 'Řež'],
+      exclude: ['Klecany', 'Astrapark', 'Klecánky'],
+    },
+  },
+} as const;
+
 export const UI_CONFIG = {
   showPerformanceMonitor: false,
   showPerformanceInProduction: false,

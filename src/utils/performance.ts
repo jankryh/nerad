@@ -5,6 +5,7 @@ export interface PerformanceMetric {
   startTime: number;
   endTime?: number;
   duration?: number;
+  createdAt: number;
   metadata?: Record<string, any>;
 }
 
@@ -21,6 +22,14 @@ class PerformanceMonitor {
   private metrics: Map<string, PerformanceMetric[]> = new Map();
   private activeMetrics: Map<string, PerformanceMetric> = new Map();
   private stats: Map<string, PerformanceStats> = new Map();
+  private cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
+
+  constructor() {
+    // Automatický periodic cleanup každých 10 minut, maže metriky starší 60 minut
+    this.cleanupIntervalId = setInterval(() => {
+      this.cleanupOldMetrics(60);
+    }, 10 * 60 * 1000);
+  }
 
   /**
    * Začne měření performance
@@ -31,6 +40,7 @@ class PerformanceMonitor {
     const metric: PerformanceMetric = {
       name,
       startTime: performance.now(),
+      createdAt: Date.now(),
       metadata
     };
 
@@ -200,12 +210,12 @@ class PerformanceMonitor {
    */
   cleanupOldMetrics(maxAgeMinutes: number = 60): void {
     const cutoff = Date.now() - (maxAgeMinutes * 60 * 1000);
-    
+
     for (const [name, metrics] of this.metrics) {
-      const filtered = metrics.filter(metric => 
-        metric.startTime > cutoff
+      const filtered = metrics.filter(metric =>
+        metric.createdAt > cutoff
       );
-      
+
       if (filtered.length === 0) {
         this.metrics.delete(name);
         this.stats.delete(name);
@@ -222,6 +232,17 @@ class PerformanceMonitor {
     this.metrics.clear();
     this.stats.clear();
     this.activeMetrics.clear();
+  }
+
+  /**
+   * Zastaví periodic cleanup a vyčistí všechny metriky
+   */
+  destroy(): void {
+    if (this.cleanupIntervalId !== null) {
+      clearInterval(this.cleanupIntervalId);
+      this.cleanupIntervalId = null;
+    }
+    this.reset();
   }
 
   /**
