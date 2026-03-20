@@ -29,7 +29,7 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh, isRefreshing }) => {
 
   return (
     <header className="mb-4 sm:mb-6" role="banner">
-      <div className="glass rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-card">
+      <div className="liquid-glass rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-card">
         <div className="flex flex-col gap-3 sm:gap-4">
           <div className="flex justify-between items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">

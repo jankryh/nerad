@@ -253,7 +253,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 
   if (isLoading) {
     return (
-      <article className="glass glass-hover rounded-4xl border border-white/10 shadow-card transition-all duration-400" role="region" aria-label="Načítání odjezdů">
+      <article className="liquid-glass glass-hover rounded-4xl border border-white/10 shadow-card transition-all duration-400" role="region" aria-label="Načítání odjezdů">
         <div className="p-6 border-b border-white/10">
           <h3 className="text-white text-xl font-semibold flex items-center justify-center">
             {typeof title === 'object' && 'content' in title ? title.content : title}
@@ -313,7 +313,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   }
 
   return (
-    <article className="glass glass-hover rounded-2xl sm:rounded-4xl border border-white/10 shadow-card hover:shadow-hover transition-all duration-400 group" role="region">
+    <article className="liquid-glass glass-hover rounded-2xl sm:rounded-4xl border border-white/10 shadow-card hover:shadow-hover transition-all duration-400 group" role="region">
       <div className="p-3 sm:p-6 border-b border-white/10" style={cardHeaderStyle}>
         <div className="flex items-center relative">
           {typeof title === 'object' && 'icon' in title && <div className="flex-shrink-0">{title.icon}</div>}

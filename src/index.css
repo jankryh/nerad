@@ -96,15 +96,16 @@ body {
   /* Modern gradient background - using theme variable */
   background: var(--gradient-background, linear-gradient(135deg, #050d1a 0%, #0a1628 20%, #0c1e3d 40%, #0e2a4f 60%, #0a2342 80%, #0a1628 100%));
 
-  /* Enhanced background patterns — ocean mesh with cyan/teal blobs */
+  /* Enhanced background patterns — animated ocean mesh with cyan/teal blobs */
   background-image:
-    radial-gradient(ellipse at 25% 25%, rgba(6, 182, 212, 0.12) 0%, transparent 50%),
-    radial-gradient(ellipse at 75% 75%, rgba(20, 184, 166, 0.09) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 0%, rgba(14, 165, 233, 0.07) 0%, transparent 50%),
-    radial-gradient(ellipse at 0% 50%, rgba(16, 185, 129, 0.04) 0%, transparent 50%);
-  
+    radial-gradient(ellipse at 25% 25%, rgba(6, 182, 212, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 75% 75%, rgba(20, 184, 166, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 0%, rgba(14, 165, 233, 0.09) 0%, transparent 50%),
+    radial-gradient(ellipse at 0% 50%, rgba(16, 185, 129, 0.06) 0%, transparent 50%);
+
   background-attachment: fixed;
-  background-size: 100% 100%, 120% 120%, 80% 80%, 60% 60%;
+  background-size: 150% 150%, 180% 180%, 120% 120%, 100% 100%;
+  animation: floatBG 15s ease-in-out infinite;
   
   position: relative;
 }
@@ -138,6 +139,22 @@ body::before {
   }
 }
 
+/* Animated floating mesh background — liquid feel */
+@keyframes floatBG {
+  0%, 100% {
+    background-position: center center;
+  }
+  25% {
+    background-position: 30% 70%;
+  }
+  50% {
+    background-position: 70% 30%;
+  }
+  75% {
+    background-position: 40% 60%;
+  }
+}
+
 #root {
   width: 100%;
   min-height: 100vh;
@@ -168,11 +185,33 @@ body::before {
   }
 
   .liquid-glass {
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(60px) saturate(1.8);
     -webkit-backdrop-filter: blur(60px) saturate(1.8);
-    border: 0.5px solid rgba(255, 255, 255, 0.06);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 -1px 0 rgba(255, 255, 255, 0.02);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 -1px 0 rgba(255, 255, 255, 0.02);
+    position: relative;
+  }
+
+  .liquid-glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    backdrop-filter: blur(1px);
+    -webkit-backdrop-filter: blur(1px);
+    filter: url(#liquid-glass-filter-subtle);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .liquid-glass > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .liquid-distort {
+    filter: url(#liquid-glass-filter);
   }
   
   .glass-hover:hover {

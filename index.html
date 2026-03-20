@@ -9,12 +9,25 @@
     <style>
       /* Prevent white flash - simple dark background */
       html, body {
-        background-color: #0f172a;
+        background-color: #0a1628;
         color: #ffffff;
       }
     </style>
   </head>
   <body>
+    <!-- SVG Liquid Glass Filter -->
+    <svg class="hidden" aria-hidden="true" style="position:absolute;width:0;height:0">
+      <defs>
+        <filter id="liquid-glass-filter">
+          <feTurbulence type="turbulence" baseFrequency="0.015" numOctaves="3" seed="2" result="turb" />
+          <feDisplacementMap in="SourceGraphic" in2="turb" scale="6" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+        <filter id="liquid-glass-filter-subtle">
+          <feTurbulence type="turbulence" baseFrequency="0.02" numOctaves="2" seed="5" result="turb" />
+          <feDisplacementMap in="SourceGraphic" in2="turb" scale="3" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+      </defs>
+    </svg>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
