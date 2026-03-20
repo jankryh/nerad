@@ -184,34 +184,50 @@ body::before {
     box-shadow: var(--glass-shadow);
   }
 
+  /* iOS 26 Liquid Glass Effect */
   .liquid-glass {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(60px) saturate(1.8);
-    -webkit-backdrop-filter: blur(60px) saturate(1.8);
-    border: 0.5px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 -1px 0 rgba(255, 255, 255, 0.02);
     position: relative;
+    border: none;
   }
 
+  /* Inner glow layer — light edge highlights */
   .liquid-glass::before {
     content: '';
     position: absolute;
     inset: 0;
+    z-index: 1;
+    overflow: hidden;
     border-radius: inherit;
-    backdrop-filter: blur(1px);
-    -webkit-backdrop-filter: blur(1px);
-    filter: url(#liquid-glass-filter-subtle);
+    box-shadow:
+      inset 2px 2px 0px -1px rgba(255, 255, 255, 0.5),
+      inset 0 0 4px 1px rgba(255, 255, 255, 0.4);
     pointer-events: none;
-    z-index: 0;
+  }
+
+  /* Distortion layer — SVG fractalNoise refraction */
+  .liquid-glass::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    border-radius: inherit;
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+    filter: url(#liquid-glass-subtle);
+    -webkit-filter: url(#liquid-glass-subtle);
+    overflow: hidden;
+    isolation: isolate;
   }
 
   .liquid-glass > * {
     position: relative;
-    z-index: 1;
+    z-index: 2;
   }
 
-  .liquid-distort {
-    filter: url(#liquid-glass-filter);
+  /* Stronger distortion variant for larger panels */
+  .liquid-glass-strong::after {
+    filter: url(#liquid-glass);
+    -webkit-filter: url(#liquid-glass);
   }
   
   .glass-hover:hover {
