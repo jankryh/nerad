@@ -32,7 +32,7 @@ export const PerformanceMonitor: React.FC = () => {
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center space-x-3">
-          <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-2 rounded-xl">
+          <div className="bg-gradient-to-r from-cyan-500 to-teal-500 p-2 rounded-xl">
             <span className="text-white text-lg">📊</span>
           </div>
           <h3 className="text-white font-semibold text-xl">Performance Monitor</h3>
@@ -79,8 +79,8 @@ export const PerformanceMonitor: React.FC = () => {
             
             <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/10">
               <div className="flex items-center space-x-3 mb-2">
-                <div className="bg-purple-500/20 p-2 rounded-lg">
-                  <span className="text-purple-300 text-lg">🗄️</span>
+                <div className="bg-cyan-500/20 p-2 rounded-lg">
+                  <span className="text-cyan-300 text-lg">🗄️</span>
                 </div>
                 <h4 className="text-white/80 text-sm font-medium">Cache Size</h4>
               </div>
@@ -168,7 +168,7 @@ export const PerformanceMonitor: React.FC = () => {
             </button>
             
             <button 
-              className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105 shadow-lg flex items-center space-x-2"
+              className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105 shadow-lg flex items-center space-x-2"
               onClick={handleExport}
             >
               <span>📥</span>

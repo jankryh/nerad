@@ -169,8 +169,8 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
 
             <DepartureBoard
               title={{
-                icon: <div className="bg-gradient-to-br from-fuchsia-500/20 to-purple-600/20 p-3 rounded-2xl border border-fuchsia-400/20">
-                  <Bus className="w-6 h-6 text-fuchsia-300" aria-hidden="true" />
+                icon: <div className="bg-gradient-to-br from-teal-500/20 to-cyan-600/20 p-3 rounded-2xl border border-teal-400/20">
+                  <Bus className="w-6 h-6 text-teal-300" aria-hidden="true" />
                 </div>,
                 content: <div className="text-center">
                   <div className="text-lg font-bold">371</div>

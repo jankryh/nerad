@@ -33,12 +33,12 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh, isRefreshing }) => {
         <div className="flex flex-col gap-3 sm:gap-4">
           <div className="flex justify-between items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-              <div className="bg-gradient-to-br from-primary-500 to-primary-700 p-1.5 sm:p-2 rounded-lg sm:rounded-xl flex-shrink-0">
+              <div className="bg-gradient-to-br from-cyan-500 to-teal-500 p-1.5 sm:p-2 rounded-lg sm:rounded-xl flex-shrink-0 shadow-glow-cyan">
                 <Train className="w-4 h-4 sm:w-6 sm:h-6 text-white" aria-hidden="true" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-white/70">
+                  <span className="inline-flex items-center rounded-full border border-teal-400/20 bg-teal-500/10 px-2 py-0.5 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">
                     Live PID
                   </span>
                 </div>
@@ -53,7 +53,7 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh, isRefreshing }) => {
                 type="button"
                 onClick={onRefresh}
                 disabled={isRefreshing}
-                className="flex items-center gap-2 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 focus:from-primary-700 focus:to-purple-700 text-white font-semibold px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl focus:shadow-xl focus-ring active:scale-95"
+                className="flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 focus:from-cyan-700 focus:to-teal-700 text-white font-semibold px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-glow-cyan focus:shadow-glow-cyan focus-ring active:scale-95"
                 aria-label={isRefreshing ? 'Načítání dat...' : 'Ručně obnovit data o odjezdech'}
                 title={isRefreshing ? 'Načítání dat...' : 'Obnovit data'}
               >
