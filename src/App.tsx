@@ -53,34 +53,12 @@ function App() {
           />
           
           {lastUpdate && !isLoading && !error && (
-            <section className="text-center animate-slide-in" aria-label="Informace o poslední aktualizaci dat">
-              <div className="inline-block glass glass-hover rounded-2xl sm:rounded-4xl p-4 sm:p-8 lg:p-12 border border-white/10 shadow-card hover:shadow-hover transition-all duration-400 max-w-2xl">
-                <div className="flex items-center justify-center mb-4 sm:mb-6 flex-wrap gap-2">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="relative">
-                      <div className="w-2 h-2 sm:w-3 sm:h-3 bg-emerald-400 rounded-full animate-pulse"></div>
-                      <div className="absolute inset-0 w-2 h-2 sm:w-3 sm:h-3 bg-emerald-400 rounded-full animate-ping opacity-20"></div>
-                    </div>
-                    <p className="text-white/90 text-sm sm:text-lg font-semibold">
-                      Data se obnovují ručně tlačítkem Obnovit nahoře
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="space-y-4 sm:space-y-6">
-                  <p className="text-white/70 text-sm sm:text-base">
-                    Poslední aktualizace: <time className="font-mono font-medium text-white/80">
-                      {lastUpdate.toLocaleTimeString('cs-CZ', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        second: '2-digit',
-                        hour12: false
-                      })}
-                    </time>
-                  </p>
-                </div>
-              </div>
-            </section>
+            <p className="text-center text-zinc-500 text-xs" aria-label="Poslední aktualizace">
+              Aktualizováno{' '}
+              <time className="font-mono text-zinc-400">
+                {lastUpdate.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
+              </time>
+            </p>
           )}
           
           {/* Performance Monitor - configurable visibility */}
