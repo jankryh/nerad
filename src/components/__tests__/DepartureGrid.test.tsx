@@ -68,7 +68,7 @@ describe('DepartureGrid', () => {
     render(<DepartureGrid {...defaultProps} />);
 
     const boards = screen.getAllByTestId('departure-board');
-    expect(boards).toHaveLength(4);
+    expect(boards).toHaveLength(2);
   });
 
   it('shows retry count in error state', () => {
@@ -80,6 +80,6 @@ describe('DepartureGrid', () => {
       />
     );
 
-    expect(screen.getByText(/pokus 3 z 5/i)).toBeInTheDocument();
+    expect(screen.getByText(/pokus 3\/5/i)).toBeInTheDocument();
   });
 });

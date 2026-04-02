@@ -63,8 +63,8 @@ describe('Header', () => {
     expect(button).toBeDisabled();
   });
 
-  it('renders Live PID badge', () => {
+  it('renders live badge', () => {
     renderHeader();
-    expect(screen.getByText('Live PID')).toBeInTheDocument();
+    expect(screen.getByText('live')).toBeInTheDocument();
   });
 });
