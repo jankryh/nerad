@@ -15,18 +15,18 @@ const FILTER_OPTIONS: { value: DirectionFilterType; label: string; icon: React.R
 
 export const DirectionFilter: React.FC<DirectionFilterProps> = ({ filter, onChange }) => {
   return (
-    <nav className="flex justify-center" aria-label="Filtr směru">
-      <div className="inline-flex gap-1 p-1 rounded-xl glass border border-white/10">
+    <nav className="flex justify-center mb-4" aria-label="Filtr směru">
+      <div className="inline-flex gap-1 p-1 rounded-lg bg-zinc-900/50 border border-white/5">
         {FILTER_OPTIONS.map(({ value, label, icon }) => (
           <button
             key={value}
             onClick={() => onChange(value)}
             className={`
-              flex items-center gap-1.5 px-3 sm:px-5 py-2 rounded-lg text-xs sm:text-sm font-semibold
-              transition-all duration-200 font-heading uppercase tracking-wider cursor-pointer
+              flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-md text-xs sm:text-sm font-medium
+              transition-colors duration-150 cursor-pointer
               ${filter === value
-                ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-void-DEFAULT shadow-glow-gold'
-                : 'text-white/60 hover:text-white/90 hover:bg-white/5'
+                ? 'bg-primary-500 text-white'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
               }
             `}
             aria-pressed={filter === value}

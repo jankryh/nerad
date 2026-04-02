@@ -101,15 +101,10 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
     <main id="main-content" className="w-full space-y-6" role="main" aria-label="Tabule odjezdů Řež ↔ Praha">
       {showToPrague && (
         <section className="space-y-3" aria-label="Odjezdy do Prahy">
-          <div className="flex items-center gap-4 px-1">
-            <div className="h-[2px] flex-1 bg-gradient-to-r from-transparent via-primary-500/50 to-primary-500/10"></div>
-            <h2
-              className="text-primary-400 text-xs sm:text-sm font-semibold uppercase tracking-[0.25em] font-heading"
-              style={{ textShadow: '0 0 15px rgba(245, 158, 11, 0.3)' }}
-            >
-              Do Prahy
-            </h2>
-            <div className="h-[2px] flex-1 bg-gradient-to-r from-primary-500/10 via-primary-500/50 to-transparent"></div>
+          <div className="flex items-center gap-3 px-1">
+            <div className="h-px flex-1 bg-zinc-800"></div>
+            <h2 className="text-zinc-400 text-xs font-medium uppercase tracking-widest">Do Prahy</h2>
+            <div className="h-px flex-1 bg-zinc-800"></div>
           </div>
 
           <DepartureBoard departures={toPragueDepartures} />
@@ -118,15 +113,10 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
 
       {showFromPrague && (
         <section className="space-y-3" aria-label="Odjezdy z Prahy">
-          <div className="flex items-center gap-4 px-1">
-            <div className="h-[2px] flex-1 bg-gradient-to-r from-transparent via-accent-500/50 to-accent-500/10"></div>
-            <h2
-              className="text-accent-400 text-xs sm:text-sm font-semibold uppercase tracking-[0.25em] font-heading"
-              style={{ textShadow: '0 0 15px rgba(139, 92, 246, 0.3)' }}
-            >
-              Z Prahy
-            </h2>
-            <div className="h-[2px] flex-1 bg-gradient-to-r from-accent-500/10 via-accent-500/50 to-transparent"></div>
+          <div className="flex items-center gap-3 px-1">
+            <div className="h-px flex-1 bg-zinc-800"></div>
+            <h2 className="text-zinc-400 text-xs font-medium uppercase tracking-widest">Z Prahy</h2>
+            <div className="h-px flex-1 bg-zinc-800"></div>
           </div>
 
           <DepartureBoard departures={fromPragueDepartures} />

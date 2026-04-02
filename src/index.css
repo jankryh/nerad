@@ -1,28 +1,27 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* Modern Crypto Design System */
-  --font-family-primary: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
-  --font-family-heading: 'Orbitron', 'JetBrains Mono', monospace;
-  --font-family-mono: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+  /* Clean Modern Design System */
+  --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-family-mono: 'SF Mono', ui-monospace, 'Cascadia Code', 'Roboto Mono', monospace;
 
-  /* Color Tokens — Crypto: gold trust + purple tech + cyan neon */
-  --color-primary: #F59E0B;
-  --color-primaryLight: #FBBF24;
-  --color-primaryDark: #D97706;
-  --color-secondary: #8B5CF6;
-  --color-accent: #00D4FF;
-  --color-success: #22C55E;
-  --color-warning: #FBBF24;
-  --color-error: #EF4444;
-  --color-background: #0a0a0f;
-  --color-backgroundSecondary: #12121a;
-  --color-text: #F8FAFC;
-  --color-textSecondary: rgba(248, 250, 252, 0.6);
+  /* Color Tokens — neutral dark + blue accent */
+  --color-primary: #3b82f6;
+  --color-primaryLight: #60a5fa;
+  --color-primaryDark: #2563eb;
+  --color-secondary: #6366f1;
+  --color-accent: #06b6d4;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-background: #09090b;
+  --color-backgroundSecondary: #18181b;
+  --color-text: #fafafa;
+  --color-textSecondary: #a1a1aa;
   --color-glass: rgba(255, 255, 255, 0.03);
   --color-glassHover: rgba(255, 255, 255, 0.06);
   --color-glassBorder: rgba(255, 255, 255, 0.08);
@@ -31,12 +30,12 @@
   --glass-bg: var(--color-glass);
   --glass-bg-hover: var(--color-glassHover);
   --glass-border: var(--color-glassBorder);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --glass-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 
-  /* Gradient tokens — crypto void */
-  --gradient-background: linear-gradient(135deg, #050510 0%, #0a0a0f 20%, #0d0d1a 40%, #0f0a1a 60%, #0a0a14 80%, #0a0a0f 100%);
-  --gradient-card: linear-gradient(135deg, rgba(245, 158, 11, 0.06) 0%, rgba(139, 92, 246, 0.04) 100%);
-  --gradient-button: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  /* Gradient tokens — subtle */
+  --gradient-background: #09090b;
+  --gradient-card: linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, rgba(99, 102, 241, 0.02) 100%);
+  --gradient-button: #3b82f6;
 
   /* Typography */
   font-family: var(--font-family-primary);
@@ -91,8 +90,8 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   
-  /* Default dark background - fallback for mobile */
-  background-color: var(--color-background, #0a0a0f);
+  /* Clean dark background */
+  background-color: var(--color-background, #09090b);
 
   background-attachment: fixed;
   background-size: 150% 150%, 180% 180%, 120% 120%, 100% 100%, 200% 200%, 130% 130%;
@@ -101,7 +100,7 @@ body {
   position: relative;
 }
 
-/* Animated mesh gradient overlay — gold/purple neon */
+/* Subtle ambient overlay */
 body::before {
   content: '';
   position: fixed;
@@ -110,15 +109,10 @@ body::before {
   width: 100%;
   height: 100%;
   background:
-    radial-gradient(ellipse at 20% 20%, rgba(245, 158, 11, 0.15) 0%, transparent 45%),
-    radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.18) 0%, transparent 45%),
-    radial-gradient(ellipse at 60% 10%, rgba(0, 212, 255, 0.12) 0%, transparent 40%),
-    radial-gradient(ellipse at 15% 85%, rgba(245, 158, 11, 0.18) 0%, transparent 40%),
-    radial-gradient(ellipse at 85% 15%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
-    radial-gradient(ellipse at 35% 35%, rgba(0, 212, 255, 0.10) 0%, transparent 40%);
+    radial-gradient(ellipse at 50% 0%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(99, 102, 241, 0.04) 0%, transparent 50%);
   pointer-events: none;
   z-index: -1;
-  animation: float 20s ease-in-out infinite;
 }
 
 @keyframes float {
@@ -261,7 +255,7 @@ body::before {
   .focus-ring:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
-    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
   }
 
   /* Additional utility classes for compatibility */
@@ -278,27 +272,11 @@ body::before {
   }
 
   .shadow-glow {
-    box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
-  }
-
-  .shadow-glow-lg {
-    box-shadow: 0 0 40px rgba(245, 158, 11, 0.15);
-  }
-
-  .shadow-glow-cyan {
-    box-shadow: 0 0 30px rgba(245, 158, 11, 0.25), 0 0 60px rgba(245, 158, 11, 0.1);
-  }
-
-  .shadow-glow-teal {
-    box-shadow: 0 0 30px rgba(139, 92, 246, 0.25), 0 0 60px rgba(139, 92, 246, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 
   .shadow-glow-gold {
-    box-shadow: 0 0 30px rgba(245, 158, 11, 0.25), 0 0 60px rgba(245, 158, 11, 0.1);
-  }
-
-  .shadow-glow-purple {
-    box-shadow: 0 0 30px rgba(139, 92, 246, 0.25), 0 0 60px rgba(139, 92, 246, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 }
 
@@ -338,12 +316,8 @@ body::before {
 }
 
 @keyframes glow-pulse {
-  0%, 100% {
-    box-shadow: 0 0 8px rgba(245, 158, 11, 0.15), 0 0 16px rgba(245, 158, 11, 0.08);
-  }
-  50% {
-    box-shadow: 0 0 16px rgba(245, 158, 11, 0.3), 0 0 32px rgba(245, 158, 11, 0.12);
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
 }
 
 @keyframes shimmer {
@@ -384,8 +358,8 @@ body::before {
 
 /* Dark theme specific adjustments */
 [data-theme="dark"] body {
-  background-color: #0a0a0f !important;
-  color: #F8FAFC !important;
+  background-color: #09090b !important;
+  color: #fafafa !important;
 }
 
 /* Light theme specific adjustments */
@@ -397,8 +371,8 @@ body::before {
 }
 
 [data-theme="light"] body {
-  background-color: #F5F0EB !important;
-  color: #1C1917 !important;
+  background-color: #fafafa !important;
+  color: #09090b !important;
 }
 
 [data-theme="light"] .glass {
@@ -435,93 +409,22 @@ body::before {
   color: rgba(28, 25, 23, 0.45) !important;
 }
 
-/* Light theme — badge a label visibility */
+/* Light theme — badge and label visibility */
 [data-theme="light"] .text-primary-400,
-[data-theme="light"] .text-primary-300 {
-  color: #92400E !important;
+[data-theme="light"] .text-primary-300,
+[data-theme="light"] .text-primary-500 {
+  color: #2563eb !important;
 }
 
 [data-theme="light"] .text-accent-400,
 [data-theme="light"] .text-accent-300 {
-  color: #5B21B6 !important;
+  color: #4f46e5 !important;
 }
 
-[data-theme="light"] .text-neon-cyan {
-  color: #0E7490 !important;
-}
-
-/* Light theme — border colors for badges */
-[data-theme="light"] .border-primary-400\/20 {
-  border-color: rgba(180, 83, 9, 0.25) !important;
-}
-
-[data-theme="light"] .bg-primary-500\/10 {
-  background-color: rgba(180, 83, 9, 0.1) !important;
-}
-
-[data-theme="light"] .border-accent-400\/20 {
-  border-color: rgba(109, 40, 217, 0.2) !important;
-}
-
-/* Light theme — error states need contrast */
+/* Light theme — error states */
 [data-theme="light"] .text-red-300,
 [data-theme="light"] .text-red-400 {
-  color: #B91C1C !important;
-}
-
-[data-theme="light"] .text-red-200\/80,
-[data-theme="light"] .text-red-200\/90 {
-  color: #991B1B !important;
-}
-
-[data-theme="light"] .text-red-200\/60 {
-  color: rgba(153, 27, 27, 0.75) !important;
-}
-
-[data-theme="light"] .border-red-500\/20,
-[data-theme="light"] .border-red-400\/20,
-[data-theme="light"] .border-red-400\/30 {
-  border-color: rgba(185, 28, 28, 0.2) !important;
-}
-
-[data-theme="light"] .bg-red-500\/10,
-[data-theme="light"] .bg-red-500\/15 {
-  background-color: rgba(185, 28, 28, 0.08) !important;
-}
-
-/* Light theme — amber badge */
-[data-theme="light"] .text-amber-200 {
-  color: #92400E !important;
-}
-
-[data-theme="light"] .border-amber-400\/20 {
-  border-color: rgba(180, 83, 9, 0.25) !important;
-}
-
-[data-theme="light"] .bg-amber-500\/10 {
-  background-color: rgba(180, 83, 9, 0.1) !important;
-}
-
-/* Light theme — button contrast */
-[data-theme="light"] .text-void-DEFAULT {
-  color: #FFFFFF !important;
-}
-
-/* Light theme — section dividers */
-[data-theme="light"] .from-primary-500\/30 {
-  --tw-gradient-from: rgba(180, 83, 9, 0.2) !important;
-}
-
-[data-theme="light"] .via-primary-500\/30 {
-  --tw-gradient-via: rgba(180, 83, 9, 0.2) !important;
-}
-
-[data-theme="light"] .from-accent-500\/30 {
-  --tw-gradient-from: rgba(109, 40, 217, 0.15) !important;
-}
-
-[data-theme="light"] .via-accent-500\/30 {
-  --tw-gradient-via: rgba(109, 40, 217, 0.15) !important;
+  color: #dc2626 !important;
 }
 
 /* Light theme — loading states */
@@ -533,38 +436,24 @@ body::before {
   background-color: rgba(28, 25, 23, 0.05) !important;
 }
 
-/* Light theme — suppress dark mesh overlay */
+/* Light theme — no mesh overlay */
 [data-theme="light"] body::before {
-  background:
-    radial-gradient(ellipse at 15% 85%, rgba(180, 83, 9, 0.06) 0%, transparent 40%),
-    radial-gradient(ellipse at 85% 15%, rgba(109, 40, 217, 0.05) 0%, transparent 40%),
-    radial-gradient(ellipse at 35% 35%, rgba(14, 116, 144, 0.04) 0%, transparent 40%),
-    radial-gradient(ellipse at 65% 65%, rgba(180, 83, 9, 0.03) 0%, transparent 40%) !important;
+  background: none !important;
 }
 
-/* Light theme — liquid glass: clean white, no SVG distortion */
+/* Light theme — clean glass */
 [data-theme="light"] .liquid-glass::after {
-  background: rgba(255, 255, 255, 0.65) !important;
+  background: rgba(255, 255, 255, 0.7) !important;
   filter: none !important;
   -webkit-filter: none !important;
-  backdrop-filter: blur(20px) saturate(1.2) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(1.2) !important;
 }
 
 [data-theme="light"] .liquid-glass::before {
-  box-shadow:
-    inset 1px 1px 0px 0px rgba(255, 255, 255, 0.9),
-    inset 0 0 2px 1px rgba(255, 255, 255, 0.4) !important;
+  box-shadow: none !important;
 }
 
-/* Light theme — header icon bg */
-[data-theme="light"] .shadow-glow-gold {
-  box-shadow: 0 0 20px rgba(180, 83, 9, 0.15), 0 0 40px rgba(180, 83, 9, 0.05) !important;
-}
-
-/* Light theme — scrollbar */
 [data-theme="light"] {
-  scrollbar-color: rgba(28, 25, 23, 0.15) transparent;
+  scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
 }
 
 /* Theme transition animation */

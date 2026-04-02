@@ -30,25 +30,7 @@ function App() {
   return (
     <ThemeProvider>
       <div className="min-h-screen w-full" role="application" aria-label="Jízdní řád Řež - Aplikace pro sledování odjezdů vlaků a autobusů">
-      {/* Background decorative mesh blobs — cyan/teal/blue */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div
-          className="absolute top-0 left-1/4 w-72 h-72 rounded-full blur-3xl animate-float"
-          style={{ backgroundColor: 'rgba(245, 158, 11, 0.06)' }}
-        ></div>
-        <div
-          className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full blur-3xl animate-float"
-          style={{ animationDelay: '1s', backgroundColor: 'rgba(139, 92, 246, 0.05)' }}
-        ></div>
-        <div
-          className="absolute top-1/2 left-0 w-64 h-64 rounded-full blur-3xl animate-pulse-slow"
-          style={{ backgroundColor: 'rgba(0, 212, 255, 0.04)' }}
-        ></div>
-        <div
-          className="absolute top-1/4 right-0 w-80 h-80 rounded-full blur-3xl animate-float"
-          style={{ animationDelay: '2s', backgroundColor: 'rgba(245, 158, 11, 0.03)' }}
-        ></div>
-      </div>
+      {/* Clean background — no decorative blobs */}
       
       {/* Main content */}
       <div className="relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-12 max-w-7xl">

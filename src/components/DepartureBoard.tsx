@@ -138,12 +138,12 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   }).length;
 
   const urgencyAccent = (urgency: Urgency, isNearest: boolean) => {
-    if (isNearest) return 'border-l-primary-500 bg-primary-500/[0.06]';
+    if (isNearest) return 'border-l-blue-500 bg-blue-500/[0.06]';
     switch (urgency) {
       case 'leave-now': return 'border-l-red-500 bg-red-500/[0.04]';
-      case 'soon': return 'border-l-amber-400 bg-amber-400/[0.04]';
-      case 'missed': return 'border-l-white/20 opacity-50';
-      default: return 'border-l-white/10';
+      case 'soon': return 'border-l-amber-400 bg-amber-400/[0.03]';
+      case 'missed': return 'border-l-zinc-700 opacity-45';
+      default: return 'border-l-zinc-800';
     }
   };
 
@@ -155,8 +155,8 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 
   const lineBadgeColor = (mode: 'train' | 'bus') =>
     mode === 'train'
-      ? 'bg-primary-500/15 text-primary-400 border-primary-500/20'
-      : 'bg-accent-500/15 text-accent-400 border-accent-500/20';
+      ? 'bg-blue-500/10 text-blue-400 border-blue-500/15'
+      : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/15';
 
   if (isLoading) {
     return (
@@ -225,7 +225,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
             <div className="w-14 sm:w-16 flex-shrink-0">
               <span
                 className={`font-mono font-bold text-sm sm:text-base ${hasDelay ? 'text-red-400' : 'text-white'}`}
-                style={!hasDelay && isNearest ? { textShadow: '0 0 12px rgba(245, 158, 11, 0.4)' } : undefined}
+                style={undefined}
               >
                 {hasDelay
                   ? formatTime(calculateActualDepartureTime(departure).toISOString())
@@ -246,7 +246,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 
             {/* Arrival time */}
             <div className="w-14 sm:w-16 flex-shrink-0">
-              <span className="font-mono text-sm sm:text-base text-neon-cyan/80">
+              <span className="font-mono text-sm sm:text-base text-zinc-400">
                 {getArrivalTime(departure)}
               </span>
             </div>
@@ -262,8 +262,8 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                 className={`font-mono font-semibold text-sm sm:text-base ${
                   urgency === 'leave-now' ? 'text-red-400 animate-pulse' :
                   urgency === 'soon' ? 'text-amber-400' :
-                  urgency === 'missed' ? 'text-white/30' :
-                  isNearest ? 'text-primary-400' : 'text-white/70'
+                  urgency === 'missed' ? 'text-zinc-600' :
+                  isNearest ? 'text-blue-400' : 'text-zinc-400'
                 }`}
               >
                 {minutesUntil !== null ? formatCountdown(minutesUntil) : '--'}
@@ -280,7 +280,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
       >
         <span>{viableCount}/{sorted.length} stihnutelných</span>
         {nearestDeparture && (
-          <span className="text-primary-500">
+          <span className="text-blue-400">
             ● nejbližší: {nearestDeparture.line} v {formatTime(
               calculateActualDepartureTime(nearestDeparture).toISOString()
             )}
