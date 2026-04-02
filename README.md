@@ -16,10 +16,11 @@ React/Vite aplikace pro zobrazení nejbližších odjezdů vlaků **S4** a autob
 
 ## Tech stack
 
-- React 18 + TypeScript + Vite
-- Tailwind CSS
+- React 19 + TypeScript 6 + Vite 8
+- Tailwind CSS 4
 - Axios (HTTP client)
 - Vitest (testy)
+- ESLint 10 (flat config)
 - Vercel (deployment + serverless API proxy)
 
 ## Rychlý start
