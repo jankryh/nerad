@@ -10,8 +10,6 @@ export const STOPS = {
   KOBYLISY: 'U675Z12',
 } as const;
 
-export const REFRESH_INTERVAL = 30000;
-
 export const TRAVEL_TIMES = {
   train: 18,
   bus: 20,

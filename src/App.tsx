@@ -1,7 +1,8 @@
+import { lazy, Suspense } from 'react';
 import { Header} from './components/Header';
 import { DepartureGrid } from './components/DepartureGrid';
 
-import { PerformanceMonitor } from './components/PerformanceMonitor';
+const PerformanceMonitor = lazy(() => import('./components/PerformanceMonitor'));
 import { useDepartures } from './hooks/useDepartures';
 import { UI_CONFIG } from './constants';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -57,7 +58,7 @@ function App() {
           {/* Performance Monitor - configurable visibility */}
           {((import.meta.env.DEV && UI_CONFIG.showPerformanceMonitor) || 
             (import.meta.env.PROD && UI_CONFIG.showPerformanceInProduction && UI_CONFIG.showPerformanceMonitor)) && 
-            <PerformanceMonitor />}
+            <Suspense fallback={null}><PerformanceMonitor /></Suspense>}
         </div>
       </div>
       

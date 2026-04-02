@@ -19,17 +19,6 @@ export interface DepartureBoardResponse {
   message?: string;
 }
 
-export interface Route {
-  id: string;
-  name: string;
-  mode: 'train' | 'bus';
-  fromStop: string;
-  toStop: string;
-  fromStopId: string;
-  toStopId: string;
-  direction: 'from' | 'to';
-}
-
 export interface ApiError {
   message: string;
   status?: number;
@@ -66,14 +55,6 @@ export interface Arrival {
 export interface ArrivalBoardResponse {
   arrivals: Arrival[];
   message?: string;
-}
-
-export interface TripWithDuration {
-  departure: Departure;
-  arrival: Arrival;
-  duration: number; // minutes
-  isRealTime: boolean;
-  calculatedAt: Date;
 }
 
 export interface TravelTimeCalculation {

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { formatTime, calculateActualDepartureTime, getMinutesUntilNextDeparture } from '../timeCalculations';
+import { describe, it, expect } from 'vitest';
+import { formatTime, calculateActualDepartureTime } from '../timeCalculations';
 import { Departure } from '../../types';
 
 const makeDeparture = (overrides: Partial<Departure> = {}): Departure => ({
@@ -76,51 +76,3 @@ describe('calculateActualDepartureTime', () => {
   });
 });
 
-describe('getMinutesUntilNextDeparture', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it('returns null for empty departures array', () => {
-    expect(getMinutesUntilNextDeparture([])).toBeNull();
-  });
-
-  it('returns minutes until next future departure', () => {
-    vi.setSystemTime(new Date('2026-03-20T10:00:00.000Z'));
-
-    const departures = [
-      makeDeparture({ scheduledTime: '2026-03-20T10:15:00.000Z' }),
-    ];
-
-    const result = getMinutesUntilNextDeparture(departures);
-    expect(result).toBe(15);
-  });
-
-  it('skips past departures and returns next future one', () => {
-    vi.setSystemTime(new Date('2026-03-20T10:10:00.000Z'));
-
-    const departures = [
-      makeDeparture({ scheduledTime: '2026-03-20T10:05:00.000Z' }),
-      makeDeparture({ scheduledTime: '2026-03-20T10:20:00.000Z' }),
-    ];
-
-    const result = getMinutesUntilNextDeparture(departures);
-    expect(result).toBe(10);
-  });
-
-  it('accounts for delay when calculating minutes', () => {
-    vi.setSystemTime(new Date('2026-03-20T10:00:00.000Z'));
-
-    const departures = [
-      makeDeparture({ scheduledTime: '2026-03-20T10:10:00.000Z', delay: 5 }),
-    ];
-
-    // Actual departure = 10:15, now = 10:00, diff = 15 min
-    const result = getMinutesUntilNextDeparture(departures);
-    expect(result).toBe(15);
-  });
-});

@@ -1,5 +1,5 @@
 import { Departure, TravelTimeCalculation } from '../types';
-import { TRAVEL_TIMES, DEPARTURE_INTERVALS, STOPS, TRAVEL_TIME_CONFIG } from '../constants';
+import { TRAVEL_TIMES, STOPS, TRAVEL_TIME_CONFIG } from '../constants';
 import { calculateTravelTime } from '../api/pidApi';
 import { logger } from './logger';
 
@@ -67,29 +67,6 @@ export const calculateArrivalTime = (departure: Departure): Date => {
   const travelMinutes = TRAVEL_TIMES[departure.mode];
 
   return new Date(actualDepartureTime.getTime() + travelMinutes * 60 * 1000);
-};
-
-export const getMinutesUntilNextDeparture = (departures: Departure[]): number | null => {
-  if (!departures.length) return null;
-
-  const now = new Date();
-
-  for (const departure of departures) {
-    const actualDepartureTime = calculateActualDepartureTime(departure);
-    const minutesUntil = Math.round((actualDepartureTime.getTime() - now.getTime()) / (1000 * 60));
-
-    if (minutesUntil > 0) {
-      return minutesUntil;
-    }
-  }
-
-  const lastDeparture = departures[departures.length - 1];
-  const lastTime = new Date(lastDeparture.scheduledTime);
-  const intervalMinutes = DEPARTURE_INTERVALS[lastDeparture.mode];
-  const nextTime = new Date(lastTime.getTime() + intervalMinutes * 60 * 1000);
-  const minutesUntil = Math.round((nextTime.getTime() - now.getTime()) / (1000 * 60));
-
-  return Math.max(0, minutesUntil);
 };
 
 export const formatTime = (isoTime: string): string => {
