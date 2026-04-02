@@ -200,7 +200,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
       case 'missed':
         return 'border-white/10 bg-white/[0.03] opacity-75';
       default:
-        return 'border-emerald-400/20 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent';
+        return 'border-primary-400/20 bg-gradient-to-br from-primary-500/10 via-transparent to-transparent';
     }
   };
 
@@ -261,8 +261,8 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
         </div>
         <div className="p-12 text-center">
           <div className="flex items-center justify-center space-x-4 mb-4">
-            <div className="w-8 h-8 border-3 border-white/20 border-t-primary-400 rounded-full animate-spin"></div>
-            <span className="text-primary-400 text-xl" aria-hidden="true">⏳</span>
+            <div className="w-8 h-8 border-3 border-white/20 border-t-primary-500 rounded-full animate-spin"></div>
+            <span className="text-primary-500 text-xl" aria-hidden="true">⏳</span>
           </div>
           <span className="text-white/80 text-lg font-medium">Načítání odjezdů...</span>
         </div>
@@ -326,7 +326,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 
           {!isLoading && !error && departures.length > 0 && TRAVEL_TIME_CONFIG.enableRealTimeInUI && isCalculatingTimes && (
             <div className="absolute right-0 flex items-center gap-2">
-              <span className="text-primary-400 text-xs animate-pulse" title="Calculating real-time travel duration">
+              <span className="text-primary-500 text-xs animate-pulse" title="Calculating real-time travel duration">
                 ⏳
               </span>
             </div>
@@ -407,7 +407,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                       <div className="h-12 w-px" style={dividerStyle}></div>
 
                       <div>
-                        <div className={`block text-2xl sm:text-3xl lg:text-4xl font-bold font-mono tracking-tight ${hasDelay ? 'text-red-400' : 'text-primary-300'}`}>
+                        <div className={`block text-2xl sm:text-3xl lg:text-4xl font-bold font-mono tracking-tight ${hasDelay ? 'text-red-400' : 'text-neon-cyan'}`}>
                           {calculateArrivalTimeWithDelay(departure)}
                         </div>
                         <div className="mt-1 text-[11px] font-semibold uppercase tracking-wide" style={mutedLabelStyle}>Příjezd</div>
@@ -452,7 +452,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                       className={`h-full rounded-full transition-all duration-500 ${
                         urgency === 'missed'
                           ? 'bg-slate-400/40'
-                          : 'bg-gradient-to-r from-cyan-500 via-teal-400 to-emerald-400'
+                          : 'bg-gradient-to-r from-primary-500 via-primary-400 to-accent-500'
                       }`}
                       style={{ width: `${progressPercent}%` }}
                     ></div>

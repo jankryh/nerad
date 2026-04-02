@@ -29,60 +29,60 @@ export interface ColorTheme {
   };
 }
 
-// Předdefinovaná barevná témata - jen tmavé a světlé
+// Předdefinovaná barevná témata — crypto design
 export const THEMES: Record<string, ColorTheme> = {
   dark: {
     id: 'dark',
-    name: 'Tmavé',
-    description: 'Deep ocean téma s cyan/teal akcenty',
+    name: 'Crypto Dark',
+    description: 'Void black s gold/purple neon akcenty',
     colors: {
-      primary: '#06b6d4',
-      primaryLight: '#22d3ee',
-      primaryDark: '#0891b2',
-      secondary: '#0ea5e9',
-      accent: '#10b981',
-      success: '#10b981',
-      warning: '#f59e0b',
-      error: '#ef4444',
-      background: '#0a1628',
-      backgroundSecondary: '#0f1f3a',
-      text: '#ffffff',
-      textSecondary: 'rgba(255, 255, 255, 0.7)',
+      primary: '#F59E0B',
+      primaryLight: '#FBBF24',
+      primaryDark: '#D97706',
+      secondary: '#8B5CF6',
+      accent: '#00D4FF',
+      success: '#22C55E',
+      warning: '#FBBF24',
+      error: '#EF4444',
+      background: '#0a0a0f',
+      backgroundSecondary: '#12121a',
+      text: '#F8FAFC',
+      textSecondary: 'rgba(248, 250, 252, 0.6)',
       glass: 'rgba(255, 255, 255, 0.03)',
-      glassHover: 'rgba(255, 255, 255, 0.07)',
+      glassHover: 'rgba(255, 255, 255, 0.06)',
       glassBorder: 'rgba(255, 255, 255, 0.08)',
     },
     gradients: {
-      background: 'linear-gradient(135deg, #050d1a 0%, #0a1628 20%, #0c1e3d 40%, #0e2a4f 60%, #0a2342 80%, #0a1628 100%)',
-      card: 'linear-gradient(135deg, rgba(6, 182, 212, 0.08) 0%, rgba(20, 184, 166, 0.04) 100%)',
-      button: 'linear-gradient(135deg, #06b6d4 0%, #14b8a6 100%)',
+      background: 'linear-gradient(135deg, #050510 0%, #0a0a0f 20%, #0d0d1a 40%, #0f0a1a 60%, #0a0a14 80%, #0a0a0f 100%)',
+      card: 'linear-gradient(135deg, rgba(245, 158, 11, 0.06) 0%, rgba(139, 92, 246, 0.04) 100%)',
+      button: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
     },
   },
   light: {
     id: 'light',
-    name: 'Světlé',
-    description: 'Ice white téma s teal akcenty',
+    name: 'Crypto Light',
+    description: 'Warm stone s výraznými gold/purple akcenty',
     colors: {
-      primary: '#0d9488',
-      primaryLight: '#14b8a6',
-      primaryDark: '#0f766e',
-      secondary: '#0891b2',
-      accent: '#10b981',
-      success: '#059669',
-      warning: '#d97706',
-      error: '#dc2626',
-      background: '#f0f9ff',
-      backgroundSecondary: '#e0f2fe',
-      text: '#0f172a',
-      textSecondary: 'rgba(15, 23, 42, 0.8)',
-      glass: 'rgba(255, 255, 255, 0.85)',
-      glassHover: 'rgba(255, 255, 255, 0.95)',
-      glassBorder: 'rgba(0, 0, 0, 0.1)',
+      primary: '#B45309',
+      primaryLight: '#D97706',
+      primaryDark: '#92400E',
+      secondary: '#6D28D9',
+      accent: '#0E7490',
+      success: '#047857',
+      warning: '#B45309',
+      error: '#B91C1C',
+      background: '#F5F0EB',
+      backgroundSecondary: '#EDE5DB',
+      text: '#1C1917',
+      textSecondary: 'rgba(28, 25, 23, 0.65)',
+      glass: 'rgba(255, 255, 255, 0.75)',
+      glassHover: 'rgba(255, 255, 255, 0.88)',
+      glassBorder: 'rgba(28, 25, 23, 0.12)',
     },
     gradients: {
-      background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 30%, #ccfbf1 60%, #cffafe 100%)',
-      card: 'linear-gradient(135deg, rgba(13, 148, 136, 0.1) 0%, rgba(14, 165, 233, 0.06) 100%)',
-      button: 'linear-gradient(135deg, #0d9488 0%, #0891b2 100%)',
+      background: 'linear-gradient(135deg, #F5F0EB 0%, #EDE5DB 30%, #F0ECF5 60%, #F5F0EB 100%)',
+      card: 'linear-gradient(135deg, rgba(180, 83, 9, 0.06) 0%, rgba(109, 40, 217, 0.04) 100%)',
+      button: 'linear-gradient(135deg, #B45309 0%, #92400E 100%)',
     },
   },
 };
@@ -156,8 +156,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       root.style.setProperty(`--gradient-${key}`, value);
     });
 
-    // Apply theme styles
-    document.body.style.background = theme.gradients.background;
+    // Apply theme styles — only color, background handled by CSS data-theme
     document.body.style.backgroundColor = theme.colors.background;
     document.body.style.color = theme.colors.text;
     
