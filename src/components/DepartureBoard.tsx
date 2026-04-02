@@ -189,7 +189,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 
   const getUrgencyClasses = (urgency: Urgency, highlighted: boolean) => {
     if (highlighted) {
-      return 'border-amber-400/40 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-yellow-500/10 shadow-lg shadow-amber-500/10';
+      return 'border-amber-400/40 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-yellow-500/10 shadow-lg shadow-amber-500/10 animate-glow-pulse';
     }
 
     switch (urgency) {
@@ -230,20 +230,20 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   }).length;
 
   const subtlePanelStyle = {
-    borderColor: 'var(--glass-border)',
-    background: 'color-mix(in srgb, var(--color-backgroundSecondary) 70%, transparent)',
+    borderColor: 'color-mix(in srgb, var(--color-text) 12%, transparent)',
+    background: 'color-mix(in srgb, var(--color-backgroundSecondary) 80%, transparent)',
   } as const;
 
   const mutedLabelStyle = {
-    color: 'color-mix(in srgb, var(--color-text) 55%, transparent)',
+    color: 'color-mix(in srgb, var(--color-text) 68%, transparent)',
   } as const;
 
   const valueTextStyle = {
-    color: 'color-mix(in srgb, var(--color-text) 88%, transparent)',
+    color: 'color-mix(in srgb, var(--color-text) 92%, transparent)',
   } as const;
 
   const dividerStyle = {
-    backgroundColor: 'color-mix(in srgb, var(--color-text) 12%, transparent)',
+    backgroundColor: 'color-mix(in srgb, var(--color-text) 15%, transparent)',
   } as const;
 
   const cardHeaderStyle = {
@@ -313,7 +313,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   }
 
   return (
-    <article className="liquid-glass glass-hover rounded-2xl sm:rounded-4xl border border-white/10 shadow-card hover:shadow-hover transition-all duration-400 group" role="region">
+    <article className="liquid-glass glass-hover rounded-2xl sm:rounded-4xl border border-white/10 shadow-card hover:shadow-glow-gold transition-all duration-400 group" role="region">
       <div className="p-3 sm:p-6 border-b border-white/10" style={cardHeaderStyle}>
         <div className="flex items-center relative">
           {typeof title === 'object' && 'icon' in title && <div className="flex-shrink-0">{title.icon}</div>}
@@ -373,9 +373,9 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                         <span
                           className="inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide"
                           style={{
-                            borderColor: 'var(--glass-border)',
-                            background: 'color-mix(in srgb, var(--color-backgroundSecondary) 55%, transparent)',
-                            color: 'color-mix(in srgb, var(--color-text) 68%, transparent)',
+                            borderColor: 'color-mix(in srgb, var(--color-secondary) 30%, transparent)',
+                            background: 'color-mix(in srgb, var(--color-secondary) 10%, transparent)',
+                            color: 'color-mix(in srgb, var(--color-text) 78%, transparent)',
                           }}
                         >
                           Další spoj
@@ -393,6 +393,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                       <div>
                         <div
                           className={`block text-2xl sm:text-3xl lg:text-4xl font-bold font-mono tracking-tight ${hasDelay ? 'text-red-400' : 'text-white'}`}
+                          style={!hasDelay ? { textShadow: '0 0 20px rgba(245, 158, 11, 0.25)' } : undefined}
                         >
                           {hasDelay
                             ? formatTime(calculateActualDepartureTime(departure).toISOString())
@@ -407,7 +408,10 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                       <div className="h-12 w-px" style={dividerStyle}></div>
 
                       <div>
-                        <div className={`block text-2xl sm:text-3xl lg:text-4xl font-bold font-mono tracking-tight ${hasDelay ? 'text-red-400' : 'text-neon-cyan'}`}>
+                        <div
+                          className={`block text-2xl sm:text-3xl lg:text-4xl font-bold font-mono tracking-tight ${hasDelay ? 'text-red-400' : 'text-neon-cyan'}`}
+                          style={!hasDelay ? { textShadow: '0 0 20px rgba(0, 212, 255, 0.3)' } : undefined}
+                        >
                           {calculateArrivalTimeWithDelay(departure)}
                         </div>
                         <div className="mt-1 text-[11px] font-semibold uppercase tracking-wide" style={mutedLabelStyle}>Příjezd</div>
@@ -441,7 +445,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                     <span>{Math.round(progressPercent)} %</span>
                   </div>
                   <div
-                    className="h-2.5 overflow-hidden rounded-full border"
+                    className="h-3 overflow-hidden rounded-full border"
                     style={{
                       borderColor: 'var(--glass-border)',
                       background: 'color-mix(in srgb, var(--color-backgroundSecondary) 65%, transparent)',
