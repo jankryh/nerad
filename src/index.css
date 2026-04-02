@@ -421,10 +421,54 @@ body::before {
   color: #4f46e5 !important;
 }
 
-/* Light theme — error states */
+/* Light theme — contrast fixes */
 [data-theme="light"] .text-red-300,
 [data-theme="light"] .text-red-400 {
   color: #dc2626 !important;
+}
+
+[data-theme="light"] .text-zinc-300 {
+  color: #3f3f46 !important;
+}
+
+[data-theme="light"] .text-zinc-400 {
+  color: #52525b !important;
+}
+
+[data-theme="light"] .text-zinc-500 {
+  color: #71717a !important;
+}
+
+[data-theme="light"] .text-zinc-600 {
+  color: #52525b !important;
+}
+
+[data-theme="light"] .text-blue-400 {
+  color: #2563eb !important;
+}
+
+[data-theme="light"] .text-emerald-400 {
+  color: #059669 !important;
+}
+
+[data-theme="light"] .bg-zinc-900\/50 {
+  background-color: rgba(244, 244, 245, 0.8) !important;
+}
+
+[data-theme="light"] .border-white\/5 {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="light"] .border-white\/\[0\.08\] {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="light"] .bg-blue-500\/10 {
+  background-color: rgba(37, 99, 235, 0.08) !important;
+}
+
+[data-theme="light"] .bg-emerald-500\/10 {
+  background-color: rgba(5, 150, 105, 0.08) !important;
 }
 
 /* Light theme — loading states */
@@ -450,6 +494,10 @@ body::before {
 
 [data-theme="light"] .liquid-glass::before {
   box-shadow: none !important;
+}
+
+[data-theme="light"] .bg-zinc-800 {
+  background-color: #d4d4d8 !important;
 }
 
 [data-theme="light"] {

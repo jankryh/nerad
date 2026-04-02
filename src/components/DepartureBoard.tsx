@@ -190,7 +190,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
       {/* Table header */}
       <div
         className="flex items-center gap-2 px-3 py-2 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider border-b border-white/10"
-        style={{ color: 'color-mix(in srgb, var(--color-text) 50%, transparent)' }}
+        style={{ color: 'color-mix(in srgb, var(--color-text) 55%, transparent)' }}
         role="row"
       >
         <div className="w-1"></div>
@@ -216,7 +216,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
             className={`
               flex items-center gap-2 px-3 py-2.5 sm:py-3 border-l-[3px] transition-colors duration-200
               ${urgencyAccent(urgency, isNearest)}
-              ${index < sorted.length - 1 ? 'border-b border-white/[0.05]' : ''}
+              ${index < sorted.length - 1 ? 'border-b border-white/[0.08]' : ''}
             `}
             role="row"
             aria-label={`${departure.line} v ${formatTime(departure.scheduledTime)}${hasDelay ? `, zpoždění ${departure.delay} min` : ''}`}
@@ -246,14 +246,14 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 
             {/* Arrival time */}
             <div className="w-14 sm:w-16 flex-shrink-0">
-              <span className="font-mono text-sm sm:text-base text-zinc-400">
+              <span className="font-mono text-sm sm:text-base text-zinc-300">
                 {getArrivalTime(departure)}
               </span>
             </div>
 
             {/* Travel duration — hidden on mobile */}
             <div className="hidden sm:block w-14 flex-shrink-0">
-              <span className="text-xs text-white/40">{travelMin}min</span>
+              <span className="text-xs text-zinc-500">{travelMin}min</span>
             </div>
 
             {/* Countdown */}
@@ -263,7 +263,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                   urgency === 'leave-now' ? 'text-red-400 animate-pulse' :
                   urgency === 'soon' ? 'text-amber-400' :
                   urgency === 'missed' ? 'text-zinc-600' :
-                  isNearest ? 'text-blue-400' : 'text-zinc-400'
+                  isNearest ? 'text-blue-400' : 'text-zinc-300'
                 }`}
               >
                 {minutesUntil !== null ? formatCountdown(minutesUntil) : '--'}
@@ -276,7 +276,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
       {/* Footer — viable count */}
       <div
         className="flex items-center justify-between px-3 py-2 border-t border-white/10 text-[10px] sm:text-[11px] uppercase tracking-wider"
-        style={{ color: 'color-mix(in srgb, var(--color-text) 45%, transparent)' }}
+        style={{ color: 'color-mix(in srgb, var(--color-text) 55%, transparent)' }}
       >
         <span>{viableCount}/{sorted.length} stihnutelných</span>
         {nearestDeparture && (
