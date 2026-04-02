@@ -14,7 +14,7 @@ ENV VITE_PID_API_BASE_URL=$VITE_PID_API_BASE_URL
 
 RUN npm run build
 
-FROM docker.io/library/nginx:alpine
+FROM docker.io/library/nginxinc/nginx-unprivileged:alpine
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/templates/default.conf.template

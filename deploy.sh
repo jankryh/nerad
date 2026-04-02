@@ -78,29 +78,13 @@ git_pull() {
 docker_build() {
     log_info "Sestavuji Docker image..."
     
-    # Načtení API klíče z .env souboru nebo environment
-    local api_key="${VITE_PID_API_KEY:-$(grep VITE_PID_API_KEY .env 2>/dev/null | cut -d'=' -f2 || echo '')}"
-    local api_base_url="${VITE_PID_API_BASE_URL:-$(grep VITE_PID_API_BASE_URL .env 2>/dev/null | cut -d'=' -f2 || echo 'https://api.golemio.cz/v2')}"
-    
-    if [ -n "$api_key" ]; then
-        log_info "API klíč nalezen, build s environment proměnnými"
-        if docker build \
-            --build-arg VITE_PID_API_KEY="$api_key" \
-            --build-arg VITE_PID_API_BASE_URL="$api_base_url" \
-            -t ${IMAGE_NAME}:${TAG} .; then
-            log_success "Docker build úspěšný s API klíčem"
-        else
-            log_error "Docker build selhal"
-            exit 1
-        fi
+    # Build bez API klíče — klíč se předává jako runtime env pro nginx proxy
+    # NIKDY nepředávat VITE_PID_API_KEY jako --build-arg (leakne do JS bundlu)
+    if docker build -t ${IMAGE_NAME}:${TAG} .; then
+        log_success "Docker build úspěšný"
     else
-        log_warning "API klíč nenalezen, build bez environment proměnných"
-        if docker build -t ${IMAGE_NAME}:${TAG} .; then
-            log_success "Docker build úspěšný (bez API klíče)"
-        else
-            log_error "Docker build selhal"
-            exit 1
-        fi
+        log_error "Docker build selhal"
+        exit 1
     fi
 }
 
@@ -146,36 +130,24 @@ remove_old_container() {
 docker_run() {
     log_info "Spouštím nový kontejner..."
     
-    # Načtení API klíče z .env souboru nebo environment
-    local api_key="${VITE_PID_API_KEY:-$(grep VITE_PID_API_KEY .env 2>/dev/null | cut -d'=' -f2 || echo '')}"
-    
-    if [ -n "$api_key" ]; then
-        log_info "API klíč nalezen, spouštím s environment proměnnými"
-        if docker run -d \
-            --name ${CONTAINER_NAME} \
-            -p ${LOCAL_PORT}:${CONTAINER_PORT} \
-            --restart unless-stopped \
-            -e TZ=Europe/Prague \
-            -e VITE_PID_API_KEY="${api_key}" \
-            ${IMAGE_NAME}:${TAG}; then
-            log_success "Kontejner úspěšně spuštěn s API klíčem"
-        else
-            log_error "Spuštění kontejneru selhalo"
-            exit 1
-        fi
+    # PID_API_KEY se předává jako runtime env pro nginx proxy (ne VITE_ prefix)
+    local api_key="${PID_API_KEY:-$(grep PID_API_KEY .env 2>/dev/null | grep -v VITE_ | cut -d'=' -f2 || echo '')}"
+
+    if [ -z "$api_key" ]; then
+        log_warning "PID_API_KEY nenalezen — nginx proxy nebude fungovat"
+    fi
+
+    if docker run -d \
+        --name ${CONTAINER_NAME} \
+        -p ${LOCAL_PORT}:${CONTAINER_PORT} \
+        --restart unless-stopped \
+        -e TZ=Europe/Prague \
+        -e PID_API_KEY="${api_key}" \
+        ${IMAGE_NAME}:${TAG}; then
+        log_success "Kontejner úspěšně spuštěn"
     else
-        log_warning "API klíč nenalezen, spouštím bez environment proměnných"
-        if docker run -d \
-            --name ${CONTAINER_NAME} \
-            -p ${LOCAL_PORT}:${CONTAINER_PORT} \
-            --restart unless-stopped \
-            -e TZ=Europe/Prague \
-            ${IMAGE_NAME}:${TAG}; then
-            log_success "Kontejner úspěšně spuštěn (bez API klíče)"
-        else
-            log_error "Spuštění kontejneru selhalo"
-            exit 1
-        fi
+        log_error "Spuštění kontejneru selhalo"
+        exit 1
     fi
 }
 
