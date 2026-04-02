@@ -1,13 +1,10 @@
-
-import { useState } from 'react';
-import { Header } from './components/Header';
+import { Header} from './components/Header';
 import { DepartureGrid } from './components/DepartureGrid';
-import { DirectionFilter } from './components/DirectionFilter';
+
 import { PerformanceMonitor } from './components/PerformanceMonitor';
 import { useDepartures } from './hooks/useDepartures';
 import { UI_CONFIG } from './constants';
 import { ThemeProvider } from './contexts/ThemeContext';
-import type { DirectionFilter as DirectionFilterType } from './components/DepartureGrid';
 
 function App() {
   const {
@@ -25,8 +22,6 @@ function App() {
     manualRetry,
   } = useDepartures();
 
-  const [directionFilter, setDirectionFilter] = useState<DirectionFilterType>('all');
-
   return (
     <ThemeProvider>
       <div className="min-h-screen w-full" role="application" aria-label="Jízdní řád Řež - Aplikace pro sledování odjezdů vlaků a autobusů">
@@ -35,8 +30,6 @@ function App() {
       {/* Main content */}
       <div className="relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-12 max-w-7xl">
         <Header onRefresh={refreshData} isRefreshing={isLoading} />
-        <DirectionFilter filter={directionFilter} onChange={setDirectionFilter} />
-
         <div className="space-y-6 sm:space-y-12 lg:space-y-16">
           <DepartureGrid
             trainToPrague={trainToPrague}
@@ -49,7 +42,7 @@ function App() {
             isRetrying={isRetrying}
             nextRetryIn={nextRetryIn}
             manualRetry={manualRetry}
-            filter={directionFilter}
+
           />
           
           {lastUpdate && !isLoading && !error && (

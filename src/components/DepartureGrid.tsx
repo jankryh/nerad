@@ -3,8 +3,6 @@ import { DepartureBoard } from './DepartureBoard';
 import { Departure } from '../types';
 import { AlertTriangle, Loader, RefreshCw } from 'lucide-react';
 
-export type DirectionFilter = 'all' | 'to-prague' | 'from-prague';
-
 interface DepartureGridProps {
   trainToPrague: Departure[];
   trainFromPrague: Departure[];
@@ -16,7 +14,6 @@ interface DepartureGridProps {
   isRetrying?: boolean;
   nextRetryIn?: number | null;
   manualRetry?: () => void;
-  filter?: DirectionFilter;
 }
 
 export const DepartureGrid: React.FC<DepartureGridProps> = ({
@@ -30,11 +27,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
   isRetrying = false,
   nextRetryIn = null,
   manualRetry,
-  filter = 'all',
 }) => {
-  const showToPrague = filter === 'all' || filter === 'to-prague';
-  const showFromPrague = filter === 'all' || filter === 'from-prague';
-
   // Merge train + bus departures for each direction
   const toPragueDepartures = [...trainToPrague, ...busToPrague];
   const fromPragueDepartures = [...trainFromPrague, ...busFromPrague];
@@ -99,8 +92,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
 
   return (
     <main id="main-content" className="w-full space-y-6" role="main" aria-label="Tabule odjezdů Řež ↔ Praha">
-      {showToPrague && (
-        <section className="space-y-3" aria-label="Odjezdy do Prahy">
+      <section className="space-y-3" aria-label="Odjezdy do Prahy">
           <div className="flex items-center gap-3 px-1">
             <div className="h-px flex-1 bg-zinc-800"></div>
             <h2 className="text-zinc-400 text-xs font-medium uppercase tracking-widest">Do Prahy</h2>
@@ -109,10 +101,8 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
 
           <DepartureBoard departures={toPragueDepartures} />
         </section>
-      )}
 
-      {showFromPrague && (
-        <section className="space-y-3" aria-label="Odjezdy z Prahy">
+      <section className="space-y-3" aria-label="Odjezdy z Prahy">
           <div className="flex items-center gap-3 px-1">
             <div className="h-px flex-1 bg-zinc-800"></div>
             <h2 className="text-zinc-400 text-xs font-medium uppercase tracking-widest">Z Prahy</h2>
@@ -121,7 +111,6 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
 
           <DepartureBoard departures={fromPragueDepartures} />
         </section>
-      )}
     </main>
   );
 };
