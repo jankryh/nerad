@@ -3,6 +3,8 @@ import { DepartureBoard } from './DepartureBoard';
 import { Departure } from '../types';
 import { Train, Bus, AlertTriangle, Loader, RefreshCw } from 'lucide-react';
 
+export type DirectionFilter = 'all' | 'to-prague' | 'from-prague';
+
 interface DepartureGridProps {
   trainToPrague: Departure[];
   trainFromPrague: Departure[];
@@ -14,6 +16,7 @@ interface DepartureGridProps {
   isRetrying?: boolean;
   nextRetryIn?: number | null;
   manualRetry?: () => void;
+  filter?: DirectionFilter;
 }
 
 export const DepartureGrid: React.FC<DepartureGridProps> = ({
@@ -27,6 +30,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
   isRetrying = false,
   nextRetryIn = null,
   manualRetry,
+  filter = 'all',
 }) => {
   if (isLoading) {
     return (
@@ -107,10 +111,13 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
     );
   }
 
+  const showToPrague = filter === 'all' || filter === 'to-prague';
+  const showFromPrague = filter === 'all' || filter === 'from-prague';
+
   return (
-    <main id="main-content" className="w-full space-y-8" role="main" aria-label="Odjezdy mezi Řeží a Prahou">
+    <main id="main-content" className="w-full space-y-6 sm:space-y-8" role="main" aria-label="Odjezdy mezi Řeží a Prahou">
       <section className="space-y-6 sm:space-y-8" aria-label="Spoje do Prahy a z Prahy">
-        <div className="space-y-4">
+        {showToPrague && <div className="space-y-4">
           <div className="flex items-center gap-4 px-1">
             <div className="h-[2px] flex-1 bg-gradient-to-r from-transparent via-primary-500/50 to-primary-500/10"></div>
             <h2 className="text-primary-400 text-sm sm:text-base font-semibold uppercase tracking-[0.25em] font-heading" style={{ textShadow: '0 0 15px rgba(245, 158, 11, 0.3)' }}>Do Prahy</h2>
@@ -144,9 +151,9 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
               departures={busToPrague}
             />
           </div>
-        </div>
+        </div>}
 
-        <div className="space-y-4">
+        {showFromPrague && <div className="space-y-4">
           <div className="flex items-center gap-4 px-1">
             <div className="h-[2px] flex-1 bg-gradient-to-r from-transparent via-accent-500/50 to-accent-500/10"></div>
             <h2 className="text-accent-400 text-sm sm:text-base font-semibold uppercase tracking-[0.25em] font-heading" style={{ textShadow: '0 0 15px rgba(139, 92, 246, 0.3)' }}>Z Prahy</h2>
@@ -180,7 +187,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
               departures={busFromPrague}
             />
           </div>
-        </div>
+        </div>}
       </section>
     </main>
   );
