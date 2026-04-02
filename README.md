@@ -1,156 +1,122 @@
-# 🚆 Jízdní řád z a do Řeže
+# Jízdní řád z a do Řeže
 
-Jednoduchá React/Vite aplikace pro zobrazení nejbližších odjezdů vlaků **S4** a autobusů **371** z a do Řeže přes **Golemio PID API**.
+React/Vite aplikace pro zobrazení nejbližších odjezdů vlaků **S4** a autobusů **371** z a do Řeže přes **Golemio PID API**.
 
-## Co aplikace dnes opravdu dělá
+## Co to dělá
 
 - 4 tabule na jedné stránce:
-  - Řež → Praha Masarykovo
-  - Praha Masarykovo → Řež
+  - Řež → Praha Masarykovo nádraží
+  - Praha Masarykovo nádraží → Řež
   - Husinec, Řež rozc. → Kobylisy
   - Kobylisy → Husinec, Řež rozc.
-- ukazuje nejbližší 3 odjezdy pro každý směr
-- zobrazuje zpoždění a dopočtený čas příjezdu
-- obnovuje data každých 30 sekund
-- preferuje bezpečnější **proxy režim**, aby API klíč nebyl ve frontendu
+- 3 nejbližší odjezdy pro každý směr
+- zpoždění a dopočtený čas příjezdu
+- auto-refresh každých 30 sekund
+- dark/light theme
 
-## Stav projektu
+## Tech stack
 
-**Aktuální release: `v2.0.0`**
-
-- frontend: React 18 + TypeScript + Vite
-- build: `npm run build`
-- lint: `npm run lint`
-- API vrstva je zjednodušená do jednoho čitelného modulu `src/api/pidApi.ts`
-- starší servisní abstrakce v `src/api/services/` je už překonaná a aplikace ji nepoužívá
-- aplikace je ve stavu normálně použitelného major releasu, ne jen prototypu
+- React 18 + TypeScript + Vite
+- Tailwind CSS
+- Axios (HTTP client)
+- Vitest (testy)
+- Vercel (deployment + serverless API proxy)
 
 ## Rychlý start
 
 ```bash
 git clone https://github.com/jankryh/nerad.git
 cd nerad
-cp .env.example .env
+cp .env.example .env   # doplň PID_API_KEY
 npm install
 npm run dev
 ```
 
-Dev server běží na <http://localhost:3000>.
+Dev server běží na `http://localhost:3000`.
 
-## Konfigurace API
+## Konfigurace
 
-### Doporučený režim: proxy
-
-Do `.env` dej:
+### Proxy režim (doporučený)
 
 ```bash
-PID_API_KEY=your_actual_api_key_here
+PID_API_KEY=your_api_key
 VITE_PID_API_BASE_URL=/api
 ```
 
-Co se děje:
 - frontend volá `/api/*`
-- Vite dev proxy přepošle požadavek na `https://api.golemio.cz/v2/*`
-- `X-Access-Token` se přidává na serverové straně
-- klíč se nedostane do browser bundlu
+- Vite dev proxy (lokálně) / Vercel serverless function (produkce) přidá `X-Access-Token` server-side
+- API klíč se nedostane do browser bundlu
 
-### Legacy režim: přímé volání z browseru
-
-Funguje, ale klíč je pak veřejně dostupný klientovi.
+### Přímý režim (jen lokální test)
 
 ```bash
-VITE_PID_API_KEY=your_actual_api_key_here
+VITE_PID_API_KEY=your_api_key
 VITE_PID_API_BASE_URL=https://api.golemio.cz/v2
 ```
 
-Používej jen na lokální test nebo neveřejné demo.
+Klíč je veřejně dostupný klientovi — jen pro neveřejné demo.
 
-## Produkční nasazení
+## Deployment
 
-### Vercel
+Projekt je nasazený na **Vercel** s automatickým deployem přes GitHub.
 
-Tenhle projekt je teď připravený i pro **Vercel** v doporučeném proxy režimu:
-- frontend běží jako statický build
-- `/api/*` obsluhuje Vercel Serverless Function v `api/[...path].js`
-- `PID_API_KEY` zůstává na serveru a neleze do browseru
+### Vercel setup
 
-#### Co nastavit na Vercelu
+1. Propoj repo na Vercelu
+2. Framework: Vite (auto-detect)
+3. Environment variables:
+   - `PID_API_KEY` — PID Golemio API klíč
+   - `VITE_PID_API_BASE_URL` = `/api`
+4. Push na `main` → automatický deploy
 
-V projektu ve Vercelu nastav:
+Serverless function `api/departureboards.js` proxuje requesty na `https://api.golemio.cz/v2/*`.
 
-```bash
-PID_API_KEY=your_actual_api_key_here
-VITE_PID_API_BASE_URL=/api
+### CI
+
+GitHub Actions (`.github/workflows/ci.yml`) — lint, build, testy na každém push/PR.
+
+## Struktura
+
 ```
-
-#### Doporučený deploy flow
-
-1. pushni repo na GitHub
-2. ve Vercelu dej **Add New Project**
-3. vyber repo
-4. framework nech rozpoznat automaticky jako **Vite**
-5. přidej env vars výše
-6. deploy
-
-Po deployi bude frontend volat:
-- `/api/pid/departureboards`
-
-A Vercel function to bezpečně přepošle na:
-- `https://api.golemio.cz/v2/pid/departureboards`
-
-#### Poznámky k Vercelu
-
-- lokálně dál funguje `npm run dev` přes Vite proxy
-- na Vercelu už Vite proxy neběží, tu roli přebírá `api/[...path].js`
-- `vercel.json` přidává SPA rewrite, takže refresh na routách nespadne
-
-### Docker
-
-```bash
-docker build -t rez-jizdni-rad .
-docker run -d \
-  -p 8080:80 \
-  -e PID_API_KEY=your_actual_api_key_here \
-  --name rez-jizdni-rad \
-  rez-jizdni-rad
-```
-
-Frontend dál volá `/api/*`; reverse proxy na serveru musí přidat `X-Access-Token`.
-
-### Docker Compose
-
-```bash
-cp .env.example .env
-# doplň PID_API_KEY
-
-docker compose up -d --build
+src/
+├── api/pidApi.ts              API vrstva (PID volání, cache, filtrování)
+├── components/
+│   ├── DepartureBoard.tsx     Tabule odjezdů
+│   ├── DepartureGrid.tsx      Grid layout
+│   ├── Header.tsx             Hlavička + status
+│   ├── PerformanceMonitor.tsx  Dev metriky
+│   └── ThemeSelector.tsx      Přepínač theme
+├── contexts/ThemeContext.tsx   Dark/light theme
+├── hooks/
+│   ├── useDepartures.ts       Polling 4 tabulí
+│   ├── useEnhancedTravelTime.ts  Výpočet cestovního času
+│   └── usePerformance.ts      Performance metriky
+├── utils/
+│   ├── cache.ts               In-memory cache
+│   ├── timeCalculations.ts    Časy příjezdů, fallbacky
+│   ├── performance.ts         Tracking
+│   └── logger.ts              Debug logger
+├── constants.ts               Konfigurace (refresh, TTL, timeouty)
+├── types.ts                   TypeScript typy
+└── App.tsx                    Root komponenta
 ```
 
 ## Skripty
 
 ```bash
-npm run dev
-npm run build
-npm run preview
-npm run lint
+npm run dev       # dev server
+npm run build     # tsc + vite build
+npm run lint      # ESLint
+npm run test      # Vitest
+npm run preview   # preview produkčního buildu
 ```
 
-## Debug logging
-
-Ve výchozím stavu je aplikace tichá. Pokud chceš víc detailů ve vývoji:
+## Debug
 
 ```bash
-VITE_DEBUG=true
+VITE_DEBUG=true   # verbose logování do konzole
 ```
 
-## Důležité soubory
+## Licence
 
-- `src/api/pidApi.ts` – hlavní API vrstva
-- `src/hooks/useDepartures.ts` – načítání 4 tabulí
-- `src/utils/timeCalculations.ts` – výpočet cestovních časů a cache
-- `vite.config.ts` – dev proxy pro bezpečnější práci s API klíčem
-- `COMPREHENSIVE_DOCUMENTATION.md` – stručnější technická dokumentace
-
-## Poznámka
-
-Projekt je schválně praktičtější než „enterprise“. Když se změní chování aplikace, drž dokumentaci v souladu s realitou repa.
+MIT

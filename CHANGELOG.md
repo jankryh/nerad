@@ -1,18 +1,23 @@
 # Changelog
 
+## v2.1.0 - 2026-04-02
+
+### Cleanup
+- smazány Docker soubory (Dockerfile, docker-compose.yml, nginx.conf) — deployment pouze přes Vercel
+- smazány deploy skripty (deploy.sh, deploy-simple.sh)
+- smazány manuální testovací soubory (test-arrival-browser.html, test-arrival-console.js)
+- smazána UBUNTU_DEPLOYMENT.md, COMPREHENSIVE_DOCUMENTATION.md, todo.md
+- README.md přepsán — stručnější, sloučená technická dokumentace
+- AGENTS.md aktualizován
+
 ## v2.0.0 - 2026-03-15
 
-Major release projektu **Řež ↔ Praha**.
+Major release projektu Řež <-> Praha.
 
 ### Added / Improved
-- výrazně vylepšené UI tabule odjezdů
-- přehlednější rozdělení spojů do 4 směrů na jedné stránce
-- zobrazení zpoždění u spojů
-- přepočet relevantních časů podle aktuálních dat
-- lepší použitelnost pro rychlé rozhodnutí, jestli se spoj dá stihnout
-- stabilnější načítání dat z PID API
-- produkčně použitelnější Vercel/proxy deployment flow
-
-### Notes
-- dočasný debug test `+3 min` byl po ověření odstraněn
-- release označuje přechod z funkčního prototypu do výrazně dotaženější verze
+- vylepšené UI tabule odjezdů
+- 4 směry na jedné stránce
+- zobrazení zpoždění
+- přepočet relevantních časů
+- stabilnější načítání z PID API
+- Vercel/proxy deployment flow
