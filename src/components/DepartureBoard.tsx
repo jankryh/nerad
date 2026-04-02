@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Departure } from '../types';
 import { TRAVEL_TIMES, TRAVEL_TIME_CONFIG } from '../constants';
 import {
@@ -122,10 +122,10 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
     return 'relaxed';
   };
 
-  // Sort chronologically by actual departure time
-  const sorted = [...departures].sort((a, b) => {
-    return calculateActualDepartureTime(a).getTime() - calculateActualDepartureTime(b).getTime();
-  });
+  const sorted = useMemo(() =>
+    [...departures].sort((a, b) =>
+      calculateActualDepartureTime(a).getTime() - calculateActualDepartureTime(b).getTime()
+    ), [departures]);
 
   const nearestDeparture = sorted.find((d) => {
     const leave = getMinutesUntilLeave(d);
@@ -225,7 +225,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
             <div className="w-14 sm:w-16 flex-shrink-0">
               <span
                 className={`font-mono font-bold text-sm sm:text-base ${hasDelay ? 'text-red-400' : 'text-white'}`}
-                style={undefined}
               >
                 {hasDelay
                   ? formatTime(calculateActualDepartureTime(departure).toISOString())

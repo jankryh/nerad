@@ -62,30 +62,10 @@ export const calculateActualDepartureTime = (departure: Departure): Date => {
   return scheduledTime;
 };
 
-export const calculateArrivalTime = (departure: Departure): Date => {
-  const actualDepartureTime = calculateActualDepartureTime(departure);
-  const travelMinutes = TRAVEL_TIMES[departure.mode];
-
-  return new Date(actualDepartureTime.getTime() + travelMinutes * 60 * 1000);
-};
-
 export const formatTime = (isoTime: string): string => {
   try {
     const date = new Date(isoTime);
     return date.toLocaleTimeString('cs-CZ', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-  } catch {
-    return '--:--';
-  }
-};
-
-export const formatArrivalTime = (departure: Departure): string => {
-  try {
-    const arrivalTime = calculateArrivalTime(departure);
-    return arrivalTime.toLocaleTimeString('cs-CZ', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false,
@@ -176,7 +156,7 @@ export const getEnhancedTravelTime = async (
     const selectedTravelTime = selectBestTravelTime(travelTimes);
     if (!selectedTravelTime) {
       // Fallback na hardcoded čas pro vlak i bus
-      return TRAVEL_TIME_CONFIG.fallbackToHardcoded ? hardcodedFallback : hardcodedFallback;
+      return hardcodedFallback;
     }
 
     if (departure.mode === 'bus') {
@@ -197,7 +177,7 @@ export const getEnhancedTravelTime = async (
       return selectedTravelTime.duration;
     }
 
-    return TRAVEL_TIME_CONFIG.fallbackToHardcoded ? hardcodedFallback : hardcodedFallback;
+    return hardcodedFallback;
   } catch (error) {
     logger.warn('Failed to get enhanced travel time', error);
     // Vždy vrať hardcoded fallback — nikdy 0
