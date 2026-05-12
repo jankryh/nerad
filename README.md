@@ -4,15 +4,13 @@ React/Vite aplikace pro zobrazení nejbližších odjezdů vlaků **S4** a autob
 
 ## Co to dělá
 
-- 4 tabule na jedné stránce:
-  - Řež → Praha Masarykovo nádraží
-  - Praha Masarykovo nádraží → Řež
-  - Husinec, Řež rozc. → Kobylisy
-  - Kobylisy → Husinec, Řež rozc.
-- 3 nejbližší odjezdy pro každý směr
+- 2 tabule (Do Prahy / Z Prahy), vlaky S4 + autobusy 371 sloučené
+- dvousloupcový layout na desktopu, stacked na mobilu
 - zpoždění a dopočtený čas příjezdu
-- auto-refresh každých 30 sekund
+- **date/time picker** — výběr libovolného budoucího data a času (live mód + plánovaný mód)
+- auto-refresh v live módu
 - dark/light theme
+- responsivní design (mobile-first)
 
 ## Tech stack
 
@@ -80,24 +78,23 @@ GitHub Actions (`.github/workflows/ci.yml`) — lint, build, testy na každém p
 
 ```
 src/
-├── api/pidApi.ts              API vrstva (PID volání, cache, filtrování)
+├── api/pidApi.ts              API vrstva (PID volání, cache, filtrování, plánované dotazy)
 ├── components/
+│   ├── DateTimePicker.tsx     Výběr data/času (live vs plánovaný mód)
 │   ├── DepartureBoard.tsx     Tabule odjezdů
-│   ├── DepartureGrid.tsx      Grid layout
-│   ├── Header.tsx             Hlavička + status
+│   ├── DepartureGrid.tsx      Grid layout (2 sloupce na desktopu)
+│   ├── Header.tsx             Hlavička + date picker + status
 │   ├── PerformanceMonitor.tsx  Dev metriky
 │   └── ThemeSelector.tsx      Přepínač theme
 ├── contexts/ThemeContext.tsx   Dark/light theme
 ├── hooks/
-│   ├── useDepartures.ts       Polling 4 tabulí
-│   ├── useEnhancedTravelTime.ts  Výpočet cestovního času
+│   ├── useDepartures.ts       Fetch odjezdů (live + plánovaný mód)
 │   └── usePerformance.ts      Performance metriky
 ├── utils/
-│   ├── cache.ts               In-memory cache
-│   ├── timeCalculations.ts    Časy příjezdů, fallbacky
+│   ├── timeCalculations.ts    Časy příjezdů, travel time cache
 │   ├── performance.ts         Tracking
 │   └── logger.ts              Debug logger
-├── constants.ts               Konfigurace (refresh, TTL, timeouty)
+├── constants.ts               Konfigurace (zastávky, linky, TTL, timeouty)
 ├── types.ts                   TypeScript typy
 └── App.tsx                    Root komponenta
 ```
