@@ -174,7 +174,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
           <div
             key={`${departure.line}-${departure.scheduledTime}-${index}`}
             className={`
-              flex items-center gap-2 px-3 py-2.5 sm:py-3 border-l-[3px] border-l-zinc-800
+              flex items-center gap-2 px-3 py-2.5 sm:py-3
               ${index < sorted.length - 1 ? 'border-b border-white/[0.08]' : ''}
             `}
             role="row"
