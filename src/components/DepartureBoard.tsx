@@ -99,6 +99,10 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   };
 
   const formatCountdown = (minutes: number): string => {
+    if (targetDateTime) {
+      const sign = minutes > 0 ? '+' : '';
+      return `${sign}${minutes} min`;
+    }
     if (minutes <= 0) return 'teď';
     if (minutes < 60) return `${minutes} min`;
     const hours = Math.floor(minutes / 60);
