@@ -15,10 +15,6 @@ interface DepartureBoardProps {
   error?: string;
 }
 
-const LEAVE_BUFFER_MINUTES = 2;
-
-type Urgency = 'missed' | 'leave-now' | 'soon' | 'relaxed';
-
 export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   departures,
   isLoading = false,
@@ -100,12 +96,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
     }
   };
 
-  const getMinutesUntilLeave = (departure: Departure): number | null => {
-    const minutesUntilDeparture = getMinutesUntilDeparture(departure);
-    if (minutesUntilDeparture === null) return null;
-    return minutesUntilDeparture - TRAVEL_TIMES[departure.mode] - LEAVE_BUFFER_MINUTES;
-  };
-
   const formatCountdown = (minutes: number): string => {
     if (minutes <= 0) return 'teď';
     if (minutes < 60) return `${minutes} min`;
@@ -114,38 +104,11 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
     return rem === 0 ? `${hours}h` : `${hours}h ${rem}m`;
   };
 
-  const getUrgency = (departure: Departure): Urgency => {
-    const minutesUntilLeave = getMinutesUntilLeave(departure);
-    if (minutesUntilLeave === null || minutesUntilLeave < 0) return 'missed';
-    if (minutesUntilLeave <= 1) return 'leave-now';
-    if (minutesUntilLeave <= 5) return 'soon';
-    return 'relaxed';
-  };
-
   const sorted = useMemo(() =>
     [...departures].sort((a, b) =>
       calculateActualDepartureTime(a).getTime() - calculateActualDepartureTime(b).getTime()
     ), [departures]);
 
-  const nearestDeparture = sorted.find((d) => {
-    const leave = getMinutesUntilLeave(d);
-    return leave !== null && leave >= 0;
-  });
-
-  const viableCount = sorted.filter((d) => {
-    const leave = getMinutesUntilLeave(d);
-    return leave !== null && leave >= 0;
-  }).length;
-
-  const urgencyAccent = (urgency: Urgency, isNearest: boolean) => {
-    if (isNearest) return 'border-l-blue-500 bg-blue-500/[0.06]';
-    switch (urgency) {
-      case 'leave-now': return 'border-l-red-500 bg-red-500/[0.04]';
-      case 'soon': return 'border-l-amber-400 bg-amber-400/[0.03]';
-      case 'missed': return 'border-l-zinc-700 opacity-45';
-      default: return 'border-l-zinc-800';
-    }
-  };
 
   const LineIcon: React.FC<{ mode: 'train' | 'bus' }> = ({ mode }) => (
     mode === 'train'
@@ -203,19 +166,15 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 
       {/* Departure rows */}
       {sorted.map((departure, index) => {
-        const isNearest = nearestDeparture?.tripId === departure.tripId
-          && nearestDeparture?.scheduledTime === departure.scheduledTime;
         const minutesUntil = getMinutesUntilDeparture(departure);
         const hasDelay = Boolean(departure.delay && departure.delay > 0);
-        const urgency = getUrgency(departure);
         const travelMin = getTravelTime(departure);
 
         return (
           <div
             key={`${departure.line}-${departure.scheduledTime}-${index}`}
             className={`
-              flex items-center gap-2 px-3 py-2.5 sm:py-3 border-l-[3px] transition-colors duration-200
-              ${urgencyAccent(urgency, isNearest)}
+              flex items-center gap-2 px-3 py-2.5 sm:py-3 border-l-[3px] border-l-zinc-800
               ${index < sorted.length - 1 ? 'border-b border-white/[0.08]' : ''}
             `}
             role="row"
@@ -257,14 +216,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 
             {/* Countdown */}
             <div className="flex-1 text-right">
-              <span
-                className={`font-mono font-semibold text-sm sm:text-base ${
-                  urgency === 'leave-now' ? 'text-red-400 animate-pulse' :
-                  urgency === 'soon' ? 'text-amber-400' :
-                  urgency === 'missed' ? 'text-zinc-600' :
-                  isNearest ? 'text-blue-400' : 'text-zinc-300'
-                }`}
-              >
+              <span className="font-mono font-semibold text-sm sm:text-base text-zinc-300">
                 {minutesUntil !== null ? formatCountdown(minutesUntil) : '--'}
               </span>
             </div>
@@ -272,20 +224,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
         );
       })}
 
-      {/* Footer — viable count */}
-      <div
-        className="flex items-center justify-between px-3 py-2 border-t border-white/10 text-[10px] sm:text-[11px] uppercase tracking-wider"
-        style={{ color: 'color-mix(in srgb, var(--color-text) 55%, transparent)' }}
-      >
-        <span>{viableCount}/{sorted.length} stihnutelných</span>
-        {nearestDeparture && (
-          <span className="text-blue-400">
-            ● nejbližší: {nearestDeparture.line} v {formatTime(
-              calculateActualDepartureTime(nearestDeparture).toISOString()
-            )}
-          </span>
-        )}
-      </div>
     </div>
   );
 };
