@@ -367,6 +367,15 @@ body::before {
 
 [data-theme="light"] body::before { background: none !important; }
 
+[data-theme="light"] input[type="datetime-local"] {
+  color-scheme: light;
+  color: #09090b !important;
+  background-color: rgba(0, 0, 0, 0.03) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+[data-theme="light"] .text-amber-400 { color: #d97706 !important; }
+[data-theme="light"] .bg-amber-500\/10 { background-color: rgba(217, 119, 6, 0.08) !important; }
+
 [data-theme="light"] .bg-zinc-800 { background-color: #d4d4d8 !important; }
 [data-theme="light"] { scrollbar-color: rgba(0, 0, 0, 0.12) transparent; }
 

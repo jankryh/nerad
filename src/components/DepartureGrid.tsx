@@ -14,6 +14,7 @@ interface DepartureGridProps {
   isRetrying?: boolean;
   nextRetryIn?: number | null;
   manualRetry?: () => void;
+  targetDateTime?: Date | null;
 }
 
 export const DepartureGrid: React.FC<DepartureGridProps> = ({
@@ -27,6 +28,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
   isRetrying = false,
   nextRetryIn = null,
   manualRetry,
+  targetDateTime = null,
 }) => {
   // Merge train + bus departures for each direction
   const toPragueDepartures = [...trainToPrague, ...busToPrague];
@@ -97,7 +99,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
             <ArrowRight className="w-4 h-4 text-primary-400" aria-hidden="true" />
             <span>Do Prahy</span>
           </h2>
-          <DepartureBoard departures={toPragueDepartures} />
+          <DepartureBoard departures={toPragueDepartures} targetDateTime={targetDateTime} />
         </section>
 
       <section className="space-y-2" aria-label="Odjezdy z Prahy">
@@ -105,7 +107,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
             <ArrowLeft className="w-4 h-4 text-primary-400" aria-hidden="true" />
             <span>Z Prahy</span>
           </h2>
-          <DepartureBoard departures={fromPragueDepartures} />
+          <DepartureBoard departures={fromPragueDepartures} targetDateTime={targetDateTime} />
         </section>
     </main>
   );

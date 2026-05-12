@@ -1,4 +1,4 @@
-const ALLOWED_PARAMS = new Set(['ids[]', 'limit', 'minutesAfter', 'mode', 'order']);
+const ALLOWED_PARAMS = new Set(['ids[]', 'limit', 'minutesAfter', 'minutesBefore', 'mode', 'order']);
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -39,7 +39,11 @@ export default async function handler(req, res) {
       'application/json; charset=utf-8';
 
     res.setHeader('content-type', contentType);
-    res.setHeader('cache-control', 's-maxage=15, stale-while-revalidate=45');
+    const isScheduled = req.query.minutesBefore !== undefined;
+    res.setHeader('cache-control', isScheduled
+      ? 's-maxage=60, stale-while-revalidate=120'
+      : 's-maxage=15, stale-while-revalidate=45'
+    );
     return res.status(upstreamResponse.status).send(text);
   } catch {
     return res.status(502).json({ error: 'Upstream API unavailable.' });

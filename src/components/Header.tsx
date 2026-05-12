@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Train, Clock, RefreshCw } from 'lucide-react';
+import { Train, Clock, RefreshCw, Calendar } from 'lucide-react';
 import { ThemeSelector } from './ThemeSelector';
+import { DateTimePicker } from './DateTimePicker';
 
 interface HeaderProps {
   onRefresh: () => void;
   isRefreshing: boolean;
+  selectedDateTime: Date | null;
+  onDateTimeChange: (date: Date | null) => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onRefresh, isRefreshing }) => {
+export const Header: React.FC<HeaderProps> = ({ onRefresh, isRefreshing, selectedDateTime, onDateTimeChange }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -41,9 +44,15 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh, isRefreshing }) => {
                   <h1 className="text-base sm:text-lg font-semibold text-white leading-tight truncate">
                     Řež ↔ Praha
                   </h1>
-                  <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
-                    live
-                  </span>
+                  {selectedDateTime ? (
+                    <span className="inline-flex items-center rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-400">
+                      jízdní řád
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
+                      live
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -74,6 +83,27 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh, isRefreshing }) => {
                 </time>
               </div>
             </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-2 border-t border-white/5 pt-3">
+            <DateTimePicker value={selectedDateTime} onChange={onDateTimeChange} />
+            {selectedDateTime && (
+              <div className="hidden sm:flex items-center gap-1.5 text-xs text-amber-400">
+                <Calendar className="w-3 h-3" aria-hidden="true" />
+                <span className="font-medium">
+                  {selectedDateTime.toLocaleDateString('cs-CZ', {
+                    weekday: 'short',
+                    day: 'numeric',
+                    month: 'short',
+                  })}{' '}
+                  {selectedDateTime.toLocaleTimeString('cs-CZ', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false,
+                  })}
+                </span>
+              </div>
+            )}
           </div>
 
         </div>

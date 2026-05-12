@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { Header} from './components/Header';
 import { DepartureGrid } from './components/DepartureGrid';
 
@@ -8,6 +8,8 @@ import { UI_CONFIG } from './constants';
 import { ThemeProvider } from './contexts/ThemeContext';
 
 function App() {
+  const [selectedDateTime, setSelectedDateTime] = useState<Date | null>(null);
+
   const {
     trainToPrague,
     trainFromPrague,
@@ -21,7 +23,7 @@ function App() {
     isRetrying,
     nextRetryIn,
     manualRetry,
-  } = useDepartures();
+  } = useDepartures(selectedDateTime);
 
   return (
     <ThemeProvider>
@@ -30,7 +32,7 @@ function App() {
       
       {/* Main content */}
       <div className="relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-12 max-w-7xl">
-        <Header onRefresh={refreshData} isRefreshing={isLoading} />
+        <Header onRefresh={refreshData} isRefreshing={isLoading} selectedDateTime={selectedDateTime} onDateTimeChange={setSelectedDateTime} />
         <div className="space-y-6 sm:space-y-8">
           <DepartureGrid
             trainToPrague={trainToPrague}
@@ -43,14 +45,20 @@ function App() {
             isRetrying={isRetrying}
             nextRetryIn={nextRetryIn}
             manualRetry={manualRetry}
-
+            targetDateTime={selectedDateTime}
           />
           
           {lastUpdate && !isLoading && !error && (
             <p className="text-center text-zinc-500 text-xs" aria-label="Poslední aktualizace">
-              Aktualizováno{' '}
+              {selectedDateTime ? 'Jízdní řád pro ' : 'Aktualizováno '}
               <time className="font-mono text-zinc-400">
-                {lastUpdate.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
+                {selectedDateTime
+                  ? selectedDateTime.toLocaleString('cs-CZ', {
+                      weekday: 'short', day: 'numeric', month: 'short',
+                      hour: '2-digit', minute: '2-digit', hour12: false,
+                    })
+                  : lastUpdate.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+                }
               </time>
             </p>
           )}

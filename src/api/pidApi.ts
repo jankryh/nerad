@@ -28,6 +28,7 @@ interface BoardQuery {
   direction?: string;
   mode?: BoardMode;
   useCache?: boolean;
+  targetDateTime?: Date | null;
 }
 
 interface BoardApiItem {
@@ -78,7 +79,7 @@ const validateBoardQuery = (stopPlaceId: string, lineId: string, limit?: number,
   if (!VALID_LINE_IDS.has(lineId)) {
     throw new Error(`Invalid lineId: ${lineId}`);
   }
-  if (limit !== undefined && (limit < 1 || limit > 50 || !Number.isInteger(limit))) {
+  if (limit !== undefined && (limit < 1 || limit > 200 || !Number.isInteger(limit))) {
     throw new Error(`Invalid limit: ${limit}`);
   }
   if (direction !== undefined && !VALID_DIRECTIONS.has(direction)) {
@@ -144,40 +145,59 @@ const fetchBoard = async ({
   direction,
   mode = 'departures',
   useCache = true,
+  targetDateTime = null,
 }: BoardQuery): Promise<BoardApiItem[]> => {
   validateBoardQuery(stopPlaceId, lineId, limit, direction);
   const cacheKey = getCacheKey({ stopPlaceId, lineId, direction, mode });
   const now = Date.now();
+  const isScheduled = targetDateTime !== null;
 
-  if (useCache) {
+  if (useCache && !isScheduled) {
     const cached = boardCache.get(cacheKey);
     if (cached && cached.expiresAt > now) {
       return cached.data.departures ?? [];
     }
   }
 
-  const response = await api.get<BoardApiResponse>('/departureboards', {
-    params: {
-      'ids[]': stopPlaceId,
-      limit: 50,
-      minutesAfter: 240,
-      mode,
-      order: 'real',
-    },
-  });
+  const params: Record<string, string | number> = {
+    'ids[]': stopPlaceId,
+    limit: isScheduled ? 200 : 50,
+    minutesAfter: 240,
+    mode,
+    order: 'real',
+  };
 
-  // Filtruj přes lineIds z BOARD_CONFIG pokud existuje konfigurace pro daný direction
+  if (isScheduled) {
+    const offsetMinutes = Math.floor((targetDateTime.getTime() - now) / 60000);
+    params.minutesBefore = -(offsetMinutes - 30);
+    params.minutesAfter = offsetMinutes + 240;
+  }
+
+  const response = await api.get<BoardApiResponse>('/departureboards', { params });
+
   const boardConfig = direction
     ? Object.values(BOARD_CONFIG).find((cfg) => cfg.direction === direction)
     : undefined;
   const allowedLineIds = boardConfig ? boardConfig.lineIds : [lineId];
 
-  const filtered = (response.data.departures ?? [])
+  let filtered = (response.data.departures ?? [])
     .filter((item) => allowedLineIds.includes(item.route?.short_name ?? ''))
-    .filter((item) => matchesDirection(item, direction))
-    .slice(0, limit);
+    .filter((item) => matchesDirection(item, direction));
 
-  if (useCache) {
+  if (isScheduled) {
+    const windowStart = targetDateTime.getTime() - 30 * 60000;
+    const windowEnd = targetDateTime.getTime() + 4 * 60 * 60000;
+    filtered = filtered.filter((item) => {
+      const depTime = new Date(
+        item.departure_timestamp?.predicted ?? item.departure_timestamp?.scheduled ?? '',
+      ).getTime();
+      return depTime >= windowStart && depTime <= windowEnd;
+    });
+  }
+
+  filtered = filtered.slice(0, limit);
+
+  if (useCache && !isScheduled) {
     boardCache.set(cacheKey, {
       expiresAt: now + BOARD_CACHE_TTL,
       data: { departures: filtered },
@@ -216,9 +236,10 @@ export const getDepartures = async (
   lineId: string,
   limit = 3,
   direction?: string,
+  targetDateTime?: Date | null,
 ): Promise<DepartureBoardResponse> => {
   try {
-    const items = await fetchBoard({ stopPlaceId, lineId, limit, direction, mode: 'departures' });
+    const items = await fetchBoard({ stopPlaceId, lineId, limit, direction, mode: 'departures', targetDateTime });
     return { departures: items.map(normalizeDeparture) };
   } catch (error) {
     logger.error('Failed to load departures', error);
@@ -241,13 +262,14 @@ export const getArrivals = async (
   }
 };
 
-export const getAllDepartures = async () => {
+export const getAllDepartures = async (targetDateTime?: Date | null) => {
+  const perBoardLimit = targetDateTime ? 6 : 3;
   try {
     const [rezToMasarykovo, masarykovoToRez, husinecsToKobylisy, kobylisyToHusinec] = await Promise.all([
-      getDepartures(ROUTES.rezToMasarykovo.stopPlaceId, ROUTES.rezToMasarykovo.lineId, 3, ROUTES.rezToMasarykovo.direction),
-      getDepartures(ROUTES.masarykovoToRez.stopPlaceId, ROUTES.masarykovoToRez.lineId, 3, ROUTES.masarykovoToRez.direction),
-      getDepartures(ROUTES.husinecsToKobylisy.stopPlaceId, ROUTES.husinecsToKobylisy.lineId, 3, ROUTES.husinecsToKobylisy.direction),
-      getDepartures(ROUTES.kobylisyToHusinec.stopPlaceId, ROUTES.kobylisyToHusinec.lineId, 3, ROUTES.kobylisyToHusinec.direction),
+      getDepartures(ROUTES.rezToMasarykovo.stopPlaceId, ROUTES.rezToMasarykovo.lineId, perBoardLimit, ROUTES.rezToMasarykovo.direction, targetDateTime),
+      getDepartures(ROUTES.masarykovoToRez.stopPlaceId, ROUTES.masarykovoToRez.lineId, perBoardLimit, ROUTES.masarykovoToRez.direction, targetDateTime),
+      getDepartures(ROUTES.husinecsToKobylisy.stopPlaceId, ROUTES.husinecsToKobylisy.lineId, perBoardLimit, ROUTES.husinecsToKobylisy.direction, targetDateTime),
+      getDepartures(ROUTES.kobylisyToHusinec.stopPlaceId, ROUTES.kobylisyToHusinec.lineId, perBoardLimit, ROUTES.kobylisyToHusinec.direction, targetDateTime),
     ]);
 
     return {

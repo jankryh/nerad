@@ -24,12 +24,16 @@ vi.mock('lucide-react', () => ({
   RefreshCw: (props: any) => <span data-testid="refresh-icon" {...props} />,
   Sun: (props: any) => <span data-testid="sun-icon" {...props} />,
   Moon: (props: any) => <span data-testid="moon-icon" {...props} />,
+  Calendar: (props: any) => <span data-testid="calendar-icon" {...props} />,
+  Radio: (props: any) => <span data-testid="radio-icon" {...props} />,
 }));
 
 const renderHeader = (props: Partial<React.ComponentProps<typeof Header>> = {}) => {
   const defaultProps = {
     onRefresh: vi.fn(),
     isRefreshing: false,
+    selectedDateTime: null as Date | null,
+    onDateTimeChange: vi.fn(),
   };
 
   return render(

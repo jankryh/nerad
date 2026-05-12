@@ -13,12 +13,14 @@ interface DepartureBoardProps {
   departures: Departure[];
   isLoading?: boolean;
   error?: string;
+  targetDateTime?: Date | null;
 }
 
 export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   departures,
   isLoading = false,
   error,
+  targetDateTime = null,
 }) => {
   const [enhancedTravelTimes, setEnhancedTravelTimes] = useState<Map<string, number>>(new Map());
 
@@ -88,9 +90,9 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 
   const getMinutesUntilDeparture = (departure: Departure): number | null => {
     try {
-      const now = new Date();
+      const referenceTime = targetDateTime ?? new Date();
       const actualDepartureTime = calculateActualDepartureTime(departure);
-      return Math.round((actualDepartureTime.getTime() - now.getTime()) / (1000 * 60));
+      return Math.round((actualDepartureTime.getTime() - referenceTime.getTime()) / (1000 * 60));
     } catch {
       return null;
     }
@@ -143,7 +145,9 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   if (!departures.length) {
     return (
       <div className="glass rounded-xl border border-white/10 p-4 text-center">
-        <p className="text-white/50 text-sm">Žádné odjezdy</p>
+        <p className="text-white/50 text-sm">
+          {targetDateTime ? 'Žádné odjezdy v tomto čase' : 'Žádné odjezdy'}
+        </p>
       </div>
     );
   }

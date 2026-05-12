@@ -37,7 +37,7 @@ const getBackoffDelay = (retryCount: number): number => {
   return Math.min(delay, BACKOFF_MAX_MS);
 };
 
-export const useDepartures = (): UseDeparturesReturn => {
+export const useDepartures = (targetDateTime?: Date | null): UseDeparturesReturn => {
   const [departures, setDepartures] = useState<DeparturesState>(emptyState);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +101,7 @@ export const useDepartures = (): UseDeparturesReturn => {
         setError(null);
       }
 
-      const data = await getAllDepartures();
+      const data = await getAllDepartures(targetDateTime);
 
       setDepartures({
         trainToPrague: data.rezToMasarykovo.departures,
@@ -115,7 +115,10 @@ export const useDepartures = (): UseDeparturesReturn => {
       clearTimers();
     } catch (err) {
       const apiError = err as ApiError;
-      setError(apiError.message || 'Nepodařilo se načíst data');
+      const message = targetDateTime
+        ? 'Pro toto datum nejsou dostupná data. Zkuste bližší termín.'
+        : (apiError.message || 'Nepodařilo se načíst data');
+      setError(message);
       logger.error('Chyba při načítání dat', err);
 
       if (isRetryAttempt) {
@@ -131,7 +134,7 @@ export const useDepartures = (): UseDeparturesReturn => {
     } finally {
       setIsLoading(false);
     }
-  }, [clearTimers, scheduleRetry]);
+  }, [clearTimers, scheduleRetry, targetDateTime]);
 
   const manualRetry = useCallback(() => {
     clearTimers();
