@@ -169,7 +169,7 @@ const fetchBoard = async ({
 
   if (isScheduled) {
     const offsetMinutes = Math.floor((targetDateTime.getTime() - now) / 60000);
-    params.minutesBefore = -(offsetMinutes - 30);
+    params.minutesBefore = -offsetMinutes;
     params.minutesAfter = offsetMinutes + 240;
   }
 
@@ -185,7 +185,7 @@ const fetchBoard = async ({
     .filter((item) => matchesDirection(item, direction));
 
   if (isScheduled) {
-    const windowStart = targetDateTime.getTime() - 30 * 60000;
+    const windowStart = targetDateTime.getTime();
     const windowEnd = targetDateTime.getTime() + 4 * 60 * 60000;
     filtered = filtered.filter((item) => {
       const depTime = new Date(
