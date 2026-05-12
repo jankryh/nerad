@@ -156,7 +156,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
         style={{ color: 'color-mix(in srgb, var(--color-text) 55%, transparent)' }}
         role="row"
       >
-        <div className="w-1"></div>
         <div className="w-14 sm:w-16">Odjezd</div>
         <div className="w-12 sm:w-14 text-center">Linka</div>
         <div className="w-14 sm:w-16">Příjezd</div>
@@ -174,7 +173,9 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
           <div
             key={`${departure.line}-${departure.scheduledTime}-${index}`}
             className={`
-              flex items-center gap-2 px-3 py-2.5 sm:py-3
+              flex items-center gap-2 px-3 py-2.5 sm:py-3 transition-colors duration-150
+              hover:bg-white/[0.03]
+              ${index === 0 ? 'bg-white/[0.02]' : ''}
               ${index < sorted.length - 1 ? 'border-b border-white/[0.08]' : ''}
             `}
             role="row"
@@ -183,14 +184,14 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
             {/* Departure time */}
             <div className="w-14 sm:w-16 flex-shrink-0">
               <span
-                className={`font-mono font-bold text-sm sm:text-base ${hasDelay ? 'text-red-400' : 'text-white'}`}
+                className={`font-mono font-bold text-sm sm:text-base lg:text-lg ${hasDelay ? 'text-red-400' : 'text-white'}`}
               >
                 {hasDelay
                   ? formatTime(calculateActualDepartureTime(departure).toISOString())
                   : formatTime(departure.scheduledTime)}
               </span>
               {hasDelay && (
-                <span className="text-red-400 text-[10px] font-bold ml-0.5">+{departure.delay}</span>
+                <span className="text-red-400 text-xs font-bold ml-1">+{departure.delay}</span>
               )}
             </div>
 
@@ -216,7 +217,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 
             {/* Countdown */}
             <div className="flex-1 text-right">
-              <span className="font-mono font-semibold text-sm sm:text-base text-zinc-300">
+              <span className={`font-mono font-bold text-sm sm:text-base lg:text-lg ${index === 0 ? 'text-primary-400' : 'text-white'}`}>
                 {minutesUntil !== null ? formatCountdown(minutesUntil) : '--'}
               </span>
             </div>

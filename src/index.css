@@ -362,6 +362,8 @@ body::before {
 [data-theme="light"] .bg-emerald-500\/10 { background-color: rgba(5, 150, 105, 0.08) !important; }
 [data-theme="light"] .border-white\/10 { border-color: rgba(28, 25, 23, 0.1) !important; }
 [data-theme="light"] .bg-white\/5 { background-color: rgba(28, 25, 23, 0.05) !important; }
+[data-theme="light"] .hover\:bg-white\/\[0\.03\]:hover { background-color: rgba(0, 0, 0, 0.03) !important; }
+[data-theme="light"] .bg-white\/\[0\.02\] { background-color: rgba(0, 0, 0, 0.02) !important; }
 
 [data-theme="light"] body::before { background: none !important; }
 

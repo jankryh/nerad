@@ -9,6 +9,8 @@ vi.mock('lucide-react', () => ({
   AlertTriangle: (props: any) => <span data-testid="alert-icon" {...props} />,
   Loader: (props: any) => <span data-testid="loader-icon" {...props} />,
   RefreshCw: (props: any) => <span data-testid="refresh-icon" {...props} />,
+  ArrowRight: (props: any) => <span data-testid="arrow-right-icon" {...props} />,
+  ArrowLeft: (props: any) => <span data-testid="arrow-left-icon" {...props} />,
 }));
 
 // Mock DepartureBoard to avoid deep rendering

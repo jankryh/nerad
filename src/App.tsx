@@ -31,7 +31,7 @@ function App() {
       {/* Main content */}
       <div className="relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-12 max-w-7xl">
         <Header onRefresh={refreshData} isRefreshing={isLoading} />
-        <div className="space-y-6 sm:space-y-12 lg:space-y-16">
+        <div className="space-y-6 sm:space-y-8">
           <DepartureGrid
             trainToPrague={trainToPrague}
             trainFromPrague={trainFromPrague}

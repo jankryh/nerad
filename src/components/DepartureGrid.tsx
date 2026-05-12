@@ -1,7 +1,7 @@
 import React from 'react';
 import { DepartureBoard } from './DepartureBoard';
 import { Departure } from '../types';
-import { AlertTriangle, Loader, RefreshCw } from 'lucide-react';
+import { AlertTriangle, Loader, RefreshCw, ArrowRight, ArrowLeft } from 'lucide-react';
 
 interface DepartureGridProps {
   trainToPrague: Departure[];
@@ -91,24 +91,20 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
   }
 
   return (
-    <main id="main-content" className="w-full space-y-6" role="main" aria-label="Tabule odjezdů Řež ↔ Praha">
-      <section className="space-y-3" aria-label="Odjezdy do Prahy">
-          <div className="flex items-center gap-3 px-1">
-            <div className="h-px flex-1 bg-zinc-800"></div>
-            <h2 className="text-zinc-400 text-xs font-medium uppercase tracking-widest">Do Prahy</h2>
-            <div className="h-px flex-1 bg-zinc-800"></div>
-          </div>
-
+    <main id="main-content" className="w-full grid grid-cols-1 lg:grid-cols-2 gap-6" role="main" aria-label="Tabule odjezdů Řež ↔ Praha">
+      <section className="space-y-2" aria-label="Odjezdy do Prahy">
+          <h2 className="flex items-center gap-2 px-1 text-sm sm:text-base font-semibold text-zinc-300">
+            <ArrowRight className="w-4 h-4 text-primary-400" aria-hidden="true" />
+            <span>Do Prahy</span>
+          </h2>
           <DepartureBoard departures={toPragueDepartures} />
         </section>
 
-      <section className="space-y-3" aria-label="Odjezdy z Prahy">
-          <div className="flex items-center gap-3 px-1">
-            <div className="h-px flex-1 bg-zinc-800"></div>
-            <h2 className="text-zinc-400 text-xs font-medium uppercase tracking-widest">Z Prahy</h2>
-            <div className="h-px flex-1 bg-zinc-800"></div>
-          </div>
-
+      <section className="space-y-2" aria-label="Odjezdy z Prahy">
+          <h2 className="flex items-center gap-2 px-1 text-sm sm:text-base font-semibold text-zinc-300">
+            <ArrowLeft className="w-4 h-4 text-primary-400" aria-hidden="true" />
+            <span>Z Prahy</span>
+          </h2>
           <DepartureBoard departures={fromPragueDepartures} />
         </section>
     </main>
