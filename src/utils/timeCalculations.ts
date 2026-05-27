@@ -1,5 +1,5 @@
 import { Departure, TravelTimeCalculation } from '../types';
-import { TRAVEL_TIMES, STOPS, TRAVEL_TIME_CONFIG } from '../constants';
+import { TRAVEL_TIMES, STOPS, TRAVEL_TIME_CONFIG, PragueStation } from '../constants';
 import { calculateTravelTime } from '../api/pidApi';
 import { logger } from './logger';
 
@@ -97,11 +97,12 @@ const getApiDirection = (departure: Departure): string | undefined => {
   return undefined;
 };
 
-const getStopIdsForTrip = (departure: Departure): { departureStopId: string | null; arrivalStopId: string | null } => {
+const getStopIdsForTrip = (departure: Departure, pragueStation: PragueStation = 'masarykovo'): { departureStopId: string | null; arrivalStopId: string | null } => {
   if (departure.line === 'S4') {
+    const pragueStopId = pragueStation === 'bubny' ? STOPS.BUBNY : STOPS.MASARYKOVO;
     return departure.direction.includes('Masarykovo') || departure.direction.includes('Praha')
-      ? { departureStopId: STOPS.REZ, arrivalStopId: STOPS.MASARYKOVO }
-      : { departureStopId: STOPS.MASARYKOVO, arrivalStopId: STOPS.REZ };
+      ? { departureStopId: STOPS.REZ, arrivalStopId: pragueStopId }
+      : { departureStopId: pragueStopId, arrivalStopId: STOPS.REZ };
   }
 
   if (departure.line === '371') {
@@ -126,6 +127,7 @@ const selectBestTravelTime = (travelTimes: TravelTimeCalculation[]): TravelTimeC
 export const getEnhancedTravelTime = async (
   departure: Departure,
   useRealTime: boolean = TRAVEL_TIME_CONFIG.useRealTimeAPI,
+  pragueStation: PragueStation = 'masarykovo',
 ): Promise<number> => {
   const hardcodedFallback = TRAVEL_TIMES[departure.mode];
 
@@ -133,7 +135,7 @@ export const getEnhancedTravelTime = async (
     return hardcodedFallback;
   }
 
-  const { departureStopId, arrivalStopId } = getStopIdsForTrip(departure);
+  const { departureStopId, arrivalStopId } = getStopIdsForTrip(departure, pragueStation);
   if (!departureStopId || !arrivalStopId) {
     // Vždy vrať hardcoded fallback — nikdy 0/N/A
     return hardcodedFallback;

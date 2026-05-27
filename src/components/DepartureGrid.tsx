@@ -1,6 +1,7 @@
 import React from 'react';
 import { DepartureBoard } from './DepartureBoard';
 import { Departure } from '../types';
+import { PragueStation, PRAGUE_STATION_LABELS } from '../constants';
 import { AlertTriangle, Loader, RefreshCw, ArrowRight, ArrowLeft } from 'lucide-react';
 
 interface DepartureGridProps {
@@ -15,6 +16,8 @@ interface DepartureGridProps {
   nextRetryIn?: number | null;
   manualRetry?: () => void;
   targetDateTime?: Date | null;
+  pragueStation: PragueStation;
+  onPragueStationChange: (station: PragueStation) => void;
 }
 
 export const DepartureGrid: React.FC<DepartureGridProps> = ({
@@ -29,6 +32,8 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
   nextRetryIn = null,
   manualRetry,
   targetDateTime = null,
+  pragueStation,
+  onPragueStationChange,
 }) => {
   // Merge train + bus departures for each direction
   const toPragueDepartures = [...trainToPrague, ...busToPrague];
@@ -99,15 +104,32 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
             <ArrowRight className="w-4 h-4 text-primary-400" aria-hidden="true" />
             <span>Do Prahy</span>
           </h2>
-          <DepartureBoard departures={toPragueDepartures} targetDateTime={targetDateTime} />
+          <DepartureBoard departures={toPragueDepartures} targetDateTime={targetDateTime} pragueStation={pragueStation} />
         </section>
 
       <section className="space-y-2" aria-label="Odjezdy z Prahy">
           <h2 className="flex items-center gap-2 px-1 text-sm sm:text-base font-semibold text-zinc-300">
             <ArrowLeft className="w-4 h-4 text-primary-400" aria-hidden="true" />
             <span>Z Prahy</span>
+            <span className="ml-auto flex rounded-md border border-white/10 overflow-hidden text-xs" role="radiogroup" aria-label="Výběr pražské stanice">
+              {(['masarykovo', 'bubny'] as PragueStation[]).map((station) => (
+                <button
+                  key={station}
+                  role="radio"
+                  aria-checked={pragueStation === station}
+                  onClick={() => onPragueStationChange(station)}
+                  className={`px-2.5 py-1 font-medium transition-colors duration-150 ${
+                    pragueStation === station
+                      ? 'bg-primary-500/20 text-primary-400 border-primary-500/30'
+                      : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.03]'
+                  } ${station === 'masarykovo' ? 'border-r border-white/10' : ''}`}
+                >
+                  {PRAGUE_STATION_LABELS[station]}
+                </button>
+              ))}
+            </span>
           </h2>
-          <DepartureBoard departures={fromPragueDepartures} targetDateTime={targetDateTime} />
+          <DepartureBoard departures={fromPragueDepartures} targetDateTime={targetDateTime} pragueStation={pragueStation} />
         </section>
     </main>
   );

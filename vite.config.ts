@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => {
           target: 'https://api.golemio.cz/v2',
           changeOrigin: true,
           secure: true,
-          rewrite: (path) => path.replace(/^\/api/, ''),
+          rewrite: (path) => path.replace(/^\/api/, '/pid'),
           headers: pidApiKey
             ? {
                 'X-Access-Token': pidApiKey,

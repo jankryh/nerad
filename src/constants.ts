@@ -6,8 +6,16 @@ export const BOARD_CACHE_TTL = 30000;
 export const STOPS = {
   REZ: 'U2823Z301',
   MASARYKOVO: 'U480Z301',
+  BUBNY: 'U100Z301',
   HUSINEC_REZ: 'U2245Z2',
   KOBYLISY: 'U675Z12',
+} as const;
+
+export type PragueStation = 'masarykovo' | 'bubny';
+
+export const PRAGUE_STATION_LABELS: Record<PragueStation, string> = {
+  masarykovo: 'Masarykovo',
+  bubny: 'Bubny',
 } as const;
 
 export const TRAVEL_TIMES = {

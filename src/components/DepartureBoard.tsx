@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Departure } from '../types';
-import { TRAVEL_TIMES, TRAVEL_TIME_CONFIG } from '../constants';
+import { TRAVEL_TIMES, TRAVEL_TIME_CONFIG, PragueStation } from '../constants';
 import {
   formatTime,
   getEnhancedTravelTime,
@@ -14,6 +14,7 @@ interface DepartureBoardProps {
   isLoading?: boolean;
   error?: string;
   targetDateTime?: Date | null;
+  pragueStation?: PragueStation;
 }
 
 export const DepartureBoard: React.FC<DepartureBoardProps> = ({
@@ -21,6 +22,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   isLoading = false,
   error,
   targetDateTime = null,
+  pragueStation = 'masarykovo',
 }) => {
   const [enhancedTravelTimes, setEnhancedTravelTimes] = useState<Map<string, number>>(new Map());
 
@@ -39,7 +41,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
         departures.map(async (departure) => {
           const key = `${departure.tripId}-${departure.scheduledTime}`;
           try {
-            const travelTime = await getEnhancedTravelTime(departure, true);
+            const travelTime = await getEnhancedTravelTime(departure, true, pragueStation);
             newTravelTimes.set(key, travelTime);
           } catch (calculationError) {
             logger.warn('Failed to calculate travel time for departure', calculationError);
@@ -58,7 +60,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
     });
 
     return () => { cancelled = true; };
-  }, [departures]);
+  }, [departures, pragueStation]);
 
   const getTravelTime = (departure: Departure): number => {
     const hardcodedFallback = TRAVEL_TIMES[departure.mode];

@@ -7,6 +7,7 @@ import {
   BOARD_CONFIG,
   STOPS,
   TRAVEL_TIMES,
+  PragueStation,
 } from '../constants';
 import {
   Arrival,
@@ -262,12 +263,13 @@ export const getArrivals = async (
   }
 };
 
-export const getAllDepartures = async (targetDateTime?: Date | null) => {
+export const getAllDepartures = async (targetDateTime?: Date | null, pragueStation: PragueStation = 'masarykovo') => {
   const perBoardLimit = targetDateTime ? 6 : 3;
+  const fromPragueStopId = pragueStation === 'bubny' ? STOPS.BUBNY : STOPS.MASARYKOVO;
   try {
     const [rezToMasarykovo, masarykovoToRez, husinecsToKobylisy, kobylisyToHusinec] = await Promise.all([
       getDepartures(ROUTES.rezToMasarykovo.stopPlaceId, ROUTES.rezToMasarykovo.lineId, perBoardLimit, ROUTES.rezToMasarykovo.direction, targetDateTime),
-      getDepartures(ROUTES.masarykovoToRez.stopPlaceId, ROUTES.masarykovoToRez.lineId, perBoardLimit, ROUTES.masarykovoToRez.direction, targetDateTime),
+      getDepartures(fromPragueStopId, ROUTES.masarykovoToRez.lineId, perBoardLimit, ROUTES.masarykovoToRez.direction, targetDateTime),
       getDepartures(ROUTES.husinecsToKobylisy.stopPlaceId, ROUTES.husinecsToKobylisy.lineId, perBoardLimit, ROUTES.husinecsToKobylisy.direction, targetDateTime),
       getDepartures(ROUTES.kobylisyToHusinec.stopPlaceId, ROUTES.kobylisyToHusinec.lineId, perBoardLimit, ROUTES.kobylisyToHusinec.direction, targetDateTime),
     ]);

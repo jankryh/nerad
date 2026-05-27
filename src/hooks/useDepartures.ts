@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Departure, ApiError } from '../types';
 import { getAllDepartures } from '../api/pidApi';
+import { PragueStation } from '../constants';
 import { logger } from '../utils/logger';
 
 interface DeparturesState {
@@ -37,7 +38,7 @@ const getBackoffDelay = (retryCount: number): number => {
   return Math.min(delay, BACKOFF_MAX_MS);
 };
 
-export const useDepartures = (targetDateTime?: Date | null): UseDeparturesReturn => {
+export const useDepartures = (targetDateTime?: Date | null, pragueStation: PragueStation = 'masarykovo'): UseDeparturesReturn => {
   const [departures, setDepartures] = useState<DeparturesState>(emptyState);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +102,7 @@ export const useDepartures = (targetDateTime?: Date | null): UseDeparturesReturn
         setError(null);
       }
 
-      const data = await getAllDepartures(targetDateTime);
+      const data = await getAllDepartures(targetDateTime, pragueStation);
 
       setDepartures({
         trainToPrague: data.rezToMasarykovo.departures,
@@ -134,7 +135,7 @@ export const useDepartures = (targetDateTime?: Date | null): UseDeparturesReturn
     } finally {
       setIsLoading(false);
     }
-  }, [clearTimers, scheduleRetry, targetDateTime]);
+  }, [clearTimers, scheduleRetry, targetDateTime, pragueStation]);
 
   const manualRetry = useCallback(() => {
     clearTimers();

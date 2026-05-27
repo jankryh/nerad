@@ -4,11 +4,22 @@ import { DepartureGrid } from './components/DepartureGrid';
 
 const PerformanceMonitor = lazy(() => import('./components/PerformanceMonitor'));
 import { useDepartures } from './hooks/useDepartures';
-import { UI_CONFIG } from './constants';
+import { UI_CONFIG, PragueStation } from './constants';
 import { ThemeProvider } from './contexts/ThemeContext';
+
+const getStoredPragueStation = (): PragueStation => {
+  const stored = localStorage.getItem('pragueStation');
+  return stored === 'bubny' ? 'bubny' : 'masarykovo';
+};
 
 function App() {
   const [selectedDateTime, setSelectedDateTime] = useState<Date | null>(null);
+  const [pragueStation, setPragueStation] = useState<PragueStation>(getStoredPragueStation);
+
+  const handlePragueStationChange = (station: PragueStation) => {
+    setPragueStation(station);
+    localStorage.setItem('pragueStation', station);
+  };
 
   const {
     trainToPrague,
@@ -23,7 +34,7 @@ function App() {
     isRetrying,
     nextRetryIn,
     manualRetry,
-  } = useDepartures(selectedDateTime);
+  } = useDepartures(selectedDateTime, pragueStation);
 
   return (
     <ThemeProvider>
@@ -46,6 +57,8 @@ function App() {
             nextRetryIn={nextRetryIn}
             manualRetry={manualRetry}
             targetDateTime={selectedDateTime}
+            pragueStation={pragueStation}
+            onPragueStationChange={handlePragueStationChange}
           />
           
           {lastUpdate && !isLoading && !error && (

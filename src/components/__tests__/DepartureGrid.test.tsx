@@ -29,6 +29,8 @@ const defaultProps = {
   busFromPrague: [],
   isLoading: false,
   error: null,
+  pragueStation: 'masarykovo' as const,
+  onPragueStationChange: vi.fn(),
 };
 
 describe('DepartureGrid', () => {
