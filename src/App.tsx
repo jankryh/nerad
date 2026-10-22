@@ -1,10 +1,8 @@
-import { lazy, Suspense, useState } from 'react';
-import { Header} from './components/Header';
+import { useState } from 'react';
+import { Header } from './components/Header';
 import { DepartureGrid } from './components/DepartureGrid';
-
-const PerformanceMonitor = lazy(() => import('./components/PerformanceMonitor'));
 import { useDepartures } from './hooks/useDepartures';
-import { UI_CONFIG, PragueStation } from './constants';
+import { PragueStation } from './constants';
 import { ThemeProvider } from './contexts/ThemeContext';
 
 const getStoredPragueStation = (): PragueStation => {
@@ -39,9 +37,6 @@ function App() {
   return (
     <ThemeProvider>
       <div className="min-h-screen w-full" role="application" aria-label="Jízdní řád Řež - Aplikace pro sledování odjezdů vlaků a autobusů">
-      {/* Clean background — no decorative blobs */}
-      
-      {/* Main content */}
       <div className="relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-12 max-w-7xl">
         <Header onRefresh={refreshData} isRefreshing={isLoading} selectedDateTime={selectedDateTime} onDateTimeChange={setSelectedDateTime} />
         <div className="space-y-6 sm:space-y-8">
@@ -61,7 +56,7 @@ function App() {
             onPragueStationChange={handlePragueStationChange}
           />
           
-          {lastUpdate && !isLoading && !error && (
+          {lastUpdate && !error && (
             <p className="text-center text-zinc-500 text-xs" aria-label="Poslední aktualizace">
               {selectedDateTime ? 'Jízdní řád pro ' : 'Aktualizováno '}
               <time className="font-mono text-zinc-400">
@@ -75,15 +70,9 @@ function App() {
               </time>
             </p>
           )}
-          
-          {/* Performance Monitor - configurable visibility */}
-          {((import.meta.env.DEV && UI_CONFIG.showPerformanceMonitor) || 
-            (import.meta.env.PROD && UI_CONFIG.showPerformanceInProduction && UI_CONFIG.showPerformanceMonitor)) && 
-            <Suspense fallback={null}><PerformanceMonitor /></Suspense>}
         </div>
       </div>
       
-      {/* Skip to main content link for accessibility */}
       <a 
         href="#main-content" 
         className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-primary-600 text-white px-4 py-2 rounded-lg z-50 transition-all duration-200"

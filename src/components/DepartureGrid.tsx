@@ -35,11 +35,12 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
   pragueStation,
   onPragueStationChange,
 }) => {
-  // Merge train + bus departures for each direction
   const toPragueDepartures = [...trainToPrague, ...busToPrague];
   const fromPragueDepartures = [...trainFromPrague, ...busFromPrague];
 
-  if (isLoading) {
+  const hasData = toPragueDepartures.length > 0 || fromPragueDepartures.length > 0;
+
+  if (isLoading && !hasData) {
     return (
       <section className="w-full" aria-label="Načítání spojů" role="status">
         <div className="flex justify-center items-center min-h-[300px]">

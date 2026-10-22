@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Departure, ApiError } from '../types';
 import { getAllDepartures } from '../api/pidApi';
-import { PragueStation } from '../constants';
+import { PragueStation, REFRESH_INTERVAL } from '../constants';
 import { logger } from '../utils/logger';
 
 interface DeparturesState {
@@ -49,8 +49,10 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
 
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const retryCountRef = useRef(0);
+  const requestIdRef = useRef(0);
 
-  const clearTimers = useCallback(() => {
+  const stopTimers = useCallback(() => {
     if (retryTimerRef.current) {
       clearTimeout(retryTimerRef.current);
       retryTimerRef.current = null;
@@ -59,11 +61,17 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
       clearInterval(countdownRef.current);
       countdownRef.current = null;
     }
-    setNextRetryIn(null);
-    setIsRetrying(false);
   }, []);
 
+  const clearTimers = useCallback(() => {
+    stopTimers();
+    setNextRetryIn(null);
+    setIsRetrying(false);
+  }, [stopTimers]);
+
   const scheduleRetry = useCallback((currentRetryCount: number, fetchFn: () => Promise<void>) => {
+    stopTimers();
+
     if (currentRetryCount >= MAX_AUTO_RETRIES) {
       setIsRetrying(false);
       setNextRetryIn(null);
@@ -76,7 +84,6 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
     setIsRetrying(true);
     setNextRetryIn(delaySec);
 
-    // Countdown timer
     countdownRef.current = setInterval(() => {
       setNextRetryIn((prev) => {
         if (prev === null || prev <= 1) {
@@ -93,9 +100,11 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
     retryTimerRef.current = setTimeout(() => {
       fetchFn();
     }, delayMs);
-  }, []);
+  }, [stopTimers]);
 
   const fetchData = useCallback(async (isRetryAttempt = false) => {
+    // Ignore responses from requests superseded by a newer one (station/date switch, poll)
+    const requestId = ++requestIdRef.current;
     try {
       setIsLoading(true);
       if (!isRetryAttempt) {
@@ -103,6 +112,7 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
       }
 
       const data = await getAllDepartures(targetDateTime, pragueStation);
+      if (requestId !== requestIdRef.current) return;
 
       setDepartures({
         trainToPrague: data.rezToMasarykovo.departures,
@@ -112,9 +122,11 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
       });
       setLastUpdate(new Date());
       setError(null);
+      retryCountRef.current = 0;
       setRetryCount(0);
       clearTimers();
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       const apiError = err as ApiError;
       const message = targetDateTime
         ? 'Pro toto datum nejsou dostupná data. Zkuste bližší termín.'
@@ -122,24 +134,19 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
       setError(message);
       logger.error('Chyba při načítání dat', err);
 
-      if (isRetryAttempt) {
-        setRetryCount((prev) => {
-          const newCount = prev + 1;
-          scheduleRetry(newCount, () => fetchData(true));
-          return newCount;
-        });
-      } else {
-        setRetryCount(0);
-        scheduleRetry(0, () => fetchData(true));
-      }
+      const attempt = isRetryAttempt ? retryCountRef.current + 1 : 0;
+      retryCountRef.current = attempt;
+      setRetryCount(attempt);
+      scheduleRetry(attempt, () => fetchData(true));
     } finally {
-      setIsLoading(false);
+      if (requestId === requestIdRef.current) {
+        setIsLoading(false);
+      }
     }
   }, [clearTimers, scheduleRetry, targetDateTime, pragueStation]);
 
   const manualRetry = useCallback(() => {
     clearTimers();
-    setRetryCount(0);
     setError(null);
     fetchData(false);
   }, [clearTimers, fetchData]);
@@ -151,12 +158,21 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
     };
   }, [fetchData, clearTimers]);
 
+  // Live mode: poll so departures and countdowns stay current
+  useEffect(() => {
+    if (targetDateTime) return;
+    const interval = setInterval(() => {
+      if (!document.hidden) fetchData();
+    }, REFRESH_INTERVAL);
+    return () => clearInterval(interval);
+  }, [fetchData, targetDateTime]);
+
   return {
     ...departures,
     isLoading,
     error,
     lastUpdate,
-    refreshData: fetchData,
+    refreshData: () => fetchData(),
     retryCount,
     isRetrying,
     nextRetryIn,

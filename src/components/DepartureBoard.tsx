@@ -11,16 +11,12 @@ import { Train, Bus } from 'lucide-react';
 
 interface DepartureBoardProps {
   departures: Departure[];
-  isLoading?: boolean;
-  error?: string;
   targetDateTime?: Date | null;
   pragueStation?: PragueStation;
 }
 
 export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   departures,
-  isLoading = false,
-  error,
   targetDateTime = null,
   pragueStation = 'masarykovo',
 }) => {
@@ -65,12 +61,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   const getTravelTime = (departure: Departure): number => {
     const hardcodedFallback = TRAVEL_TIMES[departure.mode];
     if (!TRAVEL_TIME_CONFIG.enableRealTimeInUI) return hardcodedFallback;
-
-    if (departure.delay && departure.delay > 0) {
-      const delayedKey = `${departure.tripId}-${departure.scheduledTime}-delayed`;
-      const delayedTravelTime = enhancedTravelTimes.get(delayedKey);
-      if (delayedTravelTime && delayedTravelTime > 0) return delayedTravelTime;
-    }
 
     const key = `${departure.tripId}-${departure.scheduledTime}`;
     const enhancedTime = enhancedTravelTimes.get(key);
@@ -117,36 +107,10 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
       calculateActualDepartureTime(a).getTime() - calculateActualDepartureTime(b).getTime()
     ), [departures]);
 
-
-  const LineIcon: React.FC<{ mode: 'train' | 'bus' }> = ({ mode }) => (
-    mode === 'train'
-      ? <Train className="w-3 h-3" aria-hidden="true" />
-      : <Bus className="w-3 h-3" aria-hidden="true" />
-  );
-
   const lineBadgeColor = (mode: 'train' | 'bus') =>
     mode === 'train'
       ? 'bg-blue-500/10 text-blue-400 border-blue-500/15'
       : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/15';
-
-  if (isLoading) {
-    return (
-      <div className="glass rounded-xl border border-white/10 p-6 text-center" role="status">
-        <div className="flex items-center justify-center gap-3">
-          <div className="w-5 h-5 border-2 border-white/20 border-t-primary-500 rounded-full animate-spin"></div>
-          <span className="text-white/70 text-sm">Načítání spojů...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="glass rounded-xl border border-red-500/20 p-4" role="alert">
-        <p className="text-red-400 text-sm font-medium">Chyba: {error}</p>
-      </div>
-    );
-  }
 
   if (!departures.length) {
     return (
@@ -160,7 +124,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 
   return (
     <div className="glass rounded-xl border border-white/10 overflow-hidden" role="table" aria-label="Tabule odjezdů">
-      {/* Table header */}
       <div
         className="flex items-center gap-2 px-3 py-2 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider border-b border-white/10"
         style={{ color: 'color-mix(in srgb, var(--color-text) 55%, transparent)' }}
@@ -173,7 +136,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
         <div className="flex-1 text-right">Za</div>
       </div>
 
-      {/* Departure rows */}
       {sorted.map((departure, index) => {
         const minutesUntil = getMinutesUntilDeparture(departure);
         const hasDelay = Boolean(departure.delay && departure.delay > 0);
@@ -191,7 +153,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
             role="row"
             aria-label={`${departure.line} v ${formatTime(departure.scheduledTime)}${hasDelay ? `, zpoždění ${departure.delay} min` : ''}`}
           >
-            {/* Departure time */}
             <div className="w-14 sm:w-16 flex-shrink-0">
               <span
                 className={`font-mono font-bold text-sm sm:text-base lg:text-lg ${hasDelay ? 'text-red-400' : 'text-white'}`}
@@ -205,27 +166,25 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
               )}
             </div>
 
-            {/* Line badge */}
             <div className="w-12 sm:w-14 flex-shrink-0 flex justify-center">
               <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] sm:text-xs font-bold border ${lineBadgeColor(departure.mode)}`}>
-                <LineIcon mode={departure.mode} />
+                {departure.mode === 'train'
+                  ? <Train className="w-3 h-3" aria-hidden="true" />
+                  : <Bus className="w-3 h-3" aria-hidden="true" />}
                 {departure.line}
               </span>
             </div>
 
-            {/* Arrival time */}
             <div className="w-14 sm:w-16 flex-shrink-0">
               <span className="font-mono text-sm sm:text-base text-zinc-300">
                 {getArrivalTime(departure)}
               </span>
             </div>
 
-            {/* Travel duration — hidden on mobile */}
             <div className="hidden sm:block w-14 flex-shrink-0">
               <span className="text-xs text-zinc-500">{travelMin}min</span>
             </div>
 
-            {/* Countdown */}
             <div className="flex-1 text-right">
               <span className={`font-mono font-bold text-sm sm:text-base lg:text-lg ${index === 0 ? 'text-primary-400' : 'text-white'}`}>
                 {minutesUntil !== null ? formatCountdown(minutesUntil) : '--'}

@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-// Definice barevných témat
 export interface ColorTheme {
   id: string;
   name: string;
@@ -29,7 +28,6 @@ export interface ColorTheme {
   };
 }
 
-// Předdefinovaná barevná témata — crypto design
 export const THEMES: Record<string, ColorTheme> = {
   dark: {
     id: 'dark',
@@ -87,17 +85,14 @@ export const THEMES: Record<string, ColorTheme> = {
   },
 };
 
-// Typ pro kontext
 interface ThemeContextType {
   currentTheme: ColorTheme;
   setTheme: (themeId: string) => void;
   availableThemes: ColorTheme[];
 }
 
-// Vytvoření kontextu
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-// Hook pro použití kontextu
 export const useTheme = (): ThemeContextType => {
   const context = useContext(ThemeContext);
   if (!context) {
@@ -106,7 +101,6 @@ export const useTheme = (): ThemeContextType => {
   return context;
 };
 
-// Provider komponenta
 interface ThemeProviderProps {
   children: ReactNode;
 }
@@ -114,59 +108,47 @@ interface ThemeProviderProps {
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [currentTheme, setCurrentTheme] = useState<ColorTheme>(THEMES.dark);
 
-  // Načtení uloženého tématu při inicializaci
   useEffect(() => {
     const savedTheme = localStorage.getItem('color-theme');
     if (savedTheme && THEMES[savedTheme]) {
       setCurrentTheme(THEMES[savedTheme]);
     } else {
-      // Default to dark theme if no saved theme
       setCurrentTheme(THEMES.dark);
     }
   }, []);
 
-  // Funkce pro změnu tématu
   const setTheme = (themeId: string) => {
     if (THEMES[themeId]) {
       setCurrentTheme(THEMES[themeId]);
       localStorage.setItem('color-theme', themeId);
       
-      // Aplikování CSS proměnných
       applyThemeToDocument(THEMES[themeId]);
     }
   };
 
-  // Aplikování tématu na dokument
   const applyThemeToDocument = (theme: ColorTheme) => {
     const root = document.documentElement;
     
-    // Přidání třídy pro animaci změny tématu
     document.body.classList.add('theme-transitioning');
     
-    // Nastavení data-theme atributu pro CSS selektory
     root.setAttribute('data-theme', theme.id);
     
-    // Aplikování barev
     Object.entries(theme.colors).forEach(([key, value]) => {
       root.style.setProperty(`--color-${key}`, value);
     });
 
-    // Aplikování gradientů
     Object.entries(theme.gradients).forEach(([key, value]) => {
       root.style.setProperty(`--gradient-${key}`, value);
     });
 
-    // Apply theme styles — only color, background handled by CSS data-theme
     document.body.style.backgroundColor = theme.colors.background;
     document.body.style.color = theme.colors.text;
     
-    // Odstranění třídy po dokončení animace
     setTimeout(() => {
       document.body.classList.remove('theme-transitioning');
     }, 300);
   };
 
-  // Aplikování tématu při změně
   useEffect(() => {
     applyThemeToDocument(currentTheme);
   }, [currentTheme]);

@@ -1,5 +1,3 @@
-import React from 'react';
-
 export interface Departure {
   id: string;
   line: string;
@@ -24,21 +22,6 @@ export interface ApiError {
   status?: number;
 }
 
-// Simplified title types for DepartureBoard
-export type DepartureBoardTitle = 
-  | string 
-  | React.ReactElement 
-  | { icon: React.ReactElement; content: React.ReactElement };
-
-// More specific title variants for better type safety
-export interface TitleWithIcon {
-  icon: React.ReactElement;
-  content: React.ReactElement;
-}
-
-export type SimpleTitle = string | React.ReactElement;
-
-// Enhanced types for travel time calculation
 export interface Arrival {
   id: string;
   line: string;

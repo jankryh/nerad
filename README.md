@@ -84,15 +84,12 @@ src/
 │   ├── DepartureBoard.tsx     Tabule odjezdů
 │   ├── DepartureGrid.tsx      Grid layout (2 sloupce na desktopu)
 │   ├── Header.tsx             Hlavička + date picker + status
-│   ├── PerformanceMonitor.tsx  Dev metriky
 │   └── ThemeSelector.tsx      Přepínač theme
 ├── contexts/ThemeContext.tsx   Dark/light theme
 ├── hooks/
-│   ├── useDepartures.ts       Fetch odjezdů (live + plánovaný mód)
-│   └── usePerformance.ts      Performance metriky
+│   └── useDepartures.ts       Fetch odjezdů (live + plánovaný mód)
 ├── utils/
 │   ├── timeCalculations.ts    Časy příjezdů, travel time cache
-│   ├── performance.ts         Tracking
 │   └── logger.ts              Debug logger
 ├── constants.ts               Konfigurace (zastávky, linky, TTL, timeouty)
 ├── types.ts                   TypeScript typy

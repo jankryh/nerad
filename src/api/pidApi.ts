@@ -88,8 +88,8 @@ const validateBoardQuery = (stopPlaceId: string, lineId: string, limit?: number,
   }
 };
 
-const getCacheKey = ({ stopPlaceId, lineId, direction, mode = 'departures' }: Required<Pick<BoardQuery, 'stopPlaceId' | 'lineId'>> & Pick<BoardQuery, 'direction' | 'mode'>) =>
-  `${mode}:${stopPlaceId}:${lineId}:${direction ?? 'all'}`;
+const getCacheKey = ({ stopPlaceId, lineId, direction, mode = 'departures', limit }: Required<Pick<BoardQuery, 'stopPlaceId' | 'lineId'>> & Pick<BoardQuery, 'direction' | 'mode' | 'limit'>) =>
+  `${mode}:${stopPlaceId}:${lineId}:${direction ?? 'all'}:${limit}`;
 
 const isTrain = (item: BoardApiItem) => item.route?.type === 2;
 
@@ -149,7 +149,7 @@ const fetchBoard = async ({
   targetDateTime = null,
 }: BoardQuery): Promise<BoardApiItem[]> => {
   validateBoardQuery(stopPlaceId, lineId, limit, direction);
-  const cacheKey = getCacheKey({ stopPlaceId, lineId, direction, mode });
+  const cacheKey = getCacheKey({ stopPlaceId, lineId, direction, mode, limit });
   const now = Date.now();
   const isScheduled = targetDateTime !== null;
 
@@ -398,8 +398,4 @@ export const calculateTravelTime = async (
         }]
       : [];
   }
-};
-
-export const clearBoardCache = () => {
-  boardCache.clear();
 };
