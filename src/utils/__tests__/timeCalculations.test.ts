@@ -1,6 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { formatTime, calculateActualDepartureTime } from '../timeCalculations';
+import { describe, it, expect, vi } from 'vitest';
+import { formatTime, calculateActualDepartureTime, getEnhancedTravelTime } from '../timeCalculations';
+import { calculateTravelTime } from '../../api/pidApi';
+import { STOPS } from '../../constants';
 import { Departure } from '../../types';
+
+vi.mock('../../api/pidApi', () => ({ calculateTravelTime: vi.fn().mockResolvedValue([]) }));
 
 const makeDeparture = (overrides: Partial<Departure> = {}): Departure => ({
   id: 'test-1',
@@ -76,3 +80,12 @@ describe('calculateActualDepartureTime', () => {
   });
 });
 
+
+describe('getEnhancedTravelTime', () => {
+  it('derives stops from boardDirection, not headsign', async () => {
+    // Bus to Prague with a short-turn headsign used to be treated as Kobylisy → Husinec
+    const departure = makeDeparture({ line: '371', mode: 'bus', direction: 'Klecany', boardDirection: 'to-kobylisy' });
+    await getEnhancedTravelTime(departure, true);
+    expect(calculateTravelTime).toHaveBeenCalledWith(STOPS.HUSINEC_REZ, STOPS.KOBYLISY, '371', 'to-kobylisy');
+  });
+});

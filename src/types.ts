@@ -10,6 +10,8 @@ export interface Departure {
   platform?: string | null;
   routeId: string;
   tripId: string;
+  /** BOARD_CONFIG direction of the board this departure was fetched for */
+  boardDirection?: string;
 }
 
 export interface DepartureBoardResponse {

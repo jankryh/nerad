@@ -36,10 +36,16 @@ function App() {
 
   return (
     <ThemeProvider>
-      <div className="min-h-screen w-full" role="application" aria-label="Jízdní řád Řež - Aplikace pro sledování odjezdů vlaků a autobusů">
+      <div className="min-h-screen w-full">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-primary-600 text-white px-4 py-2 rounded-lg z-50 transition-all duration-200"
+      >
+        Přeskočit na hlavní obsah
+      </a>
       <div className="relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-12 max-w-7xl">
         <Header onRefresh={refreshData} isRefreshing={isLoading} selectedDateTime={selectedDateTime} onDateTimeChange={setSelectedDateTime} />
-        <div className="space-y-6 sm:space-y-8">
+        <main id="main-content" className="space-y-6 sm:space-y-8">
           <DepartureGrid
             trainToPrague={trainToPrague}
             trainFromPrague={trainFromPrague}
@@ -70,15 +76,8 @@ function App() {
               </time>
             </p>
           )}
-        </div>
+        </main>
       </div>
-      
-      <a 
-        href="#main-content" 
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-primary-600 text-white px-4 py-2 rounded-lg z-50 transition-all duration-200"
-      >
-        Přeskočit na hlavní obsah
-      </a>
       </div>
     </ThemeProvider>
   );

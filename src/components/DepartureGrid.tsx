@@ -99,7 +99,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
   }
 
   return (
-    <main id="main-content" className="w-full grid grid-cols-1 lg:grid-cols-2 gap-6" role="main" aria-label="Tabule odjezdů Řež ↔ Praha">
+    <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-6">
       <section className="space-y-2" aria-label="Odjezdy do Prahy">
           <h2 className="flex items-center gap-2 px-1 text-sm sm:text-base font-semibold text-zinc-300">
             <ArrowRight className="w-4 h-4 text-primary-400" aria-hidden="true" />
@@ -132,6 +132,6 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
           </h2>
           <DepartureBoard departures={fromPragueDepartures} targetDateTime={targetDateTime} pragueStation={pragueStation} />
         </section>
-    </main>
+    </div>
   );
 };

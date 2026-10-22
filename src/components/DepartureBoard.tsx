@@ -129,11 +129,11 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
         style={{ color: 'color-mix(in srgb, var(--color-text) 55%, transparent)' }}
         role="row"
       >
-        <div className="w-14 sm:w-16">Odjezd</div>
-        <div className="w-12 sm:w-14 text-center">Linka</div>
-        <div className="w-14 sm:w-16">Příjezd</div>
-        <div className="hidden sm:block w-14">Cesta</div>
-        <div className="flex-1 text-right">Za</div>
+        <div className="w-14 sm:w-16" role="columnheader">Odjezd</div>
+        <div className="w-12 sm:w-14 text-center" role="columnheader">Linka</div>
+        <div className="w-14 sm:w-16" role="columnheader">Příjezd</div>
+        <div className="hidden sm:block w-14" role="columnheader">Cesta</div>
+        <div className="flex-1 text-right" role="columnheader">Za</div>
       </div>
 
       {sorted.map((departure, index) => {
@@ -151,9 +151,8 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
               ${index < sorted.length - 1 ? 'border-b border-white/[0.08]' : ''}
             `}
             role="row"
-            aria-label={`${departure.line} v ${formatTime(departure.scheduledTime)}${hasDelay ? `, zpoždění ${departure.delay} min` : ''}`}
           >
-            <div className="w-14 sm:w-16 flex-shrink-0">
+            <div className="w-14 sm:w-16 flex-shrink-0" role="cell">
               <span
                 className={`font-mono font-bold text-sm sm:text-base lg:text-lg ${hasDelay ? 'text-red-400' : 'text-white'}`}
               >
@@ -166,7 +165,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
               )}
             </div>
 
-            <div className="w-12 sm:w-14 flex-shrink-0 flex justify-center">
+            <div className="w-12 sm:w-14 flex-shrink-0 flex justify-center" role="cell">
               <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] sm:text-xs font-bold border ${lineBadgeColor(departure.mode)}`}>
                 {departure.mode === 'train'
                   ? <Train className="w-3 h-3" aria-hidden="true" />
@@ -175,17 +174,17 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
               </span>
             </div>
 
-            <div className="w-14 sm:w-16 flex-shrink-0">
+            <div className="w-14 sm:w-16 flex-shrink-0" role="cell">
               <span className="font-mono text-sm sm:text-base text-zinc-300">
                 {getArrivalTime(departure)}
               </span>
             </div>
 
-            <div className="hidden sm:block w-14 flex-shrink-0">
+            <div className="hidden sm:block w-14 flex-shrink-0" role="cell">
               <span className="text-xs text-zinc-500">{travelMin}min</span>
             </div>
 
-            <div className="flex-1 text-right">
+            <div className="flex-1 text-right" role="cell">
               <span className={`font-mono font-bold text-sm sm:text-base lg:text-lg ${index === 0 ? 'text-primary-400' : 'text-white'}`}>
                 {minutesUntil !== null ? formatCountdown(minutesUntil) : '--'}
               </span>

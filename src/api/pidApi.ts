@@ -1,4 +1,3 @@
-import axios from 'axios';
 import {
   API_BASE_URL,
   API_KEY,
@@ -45,19 +44,36 @@ interface BoardApiResponse {
   departures?: BoardApiItem[];
 }
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: API_REQUEST_TIMEOUT,
-  headers: {
-    Accept: 'application/json',
-    'Content-Type': 'application/json',
-  },
-});
-
 const usesProxy = API_BASE_URL.startsWith('/');
-if (API_KEY && !usesProxy) {
-  api.defaults.headers.common['X-Access-Token'] = API_KEY;
-}
+const inflightRequests = new Map<string, Promise<BoardApiResponse>>();
+
+const getBoardJson = (params: Record<string, string | number>): Promise<BoardApiResponse> => {
+  const url = new URL(`${API_BASE_URL}/departureboards`, window.location.origin);
+  for (const [key, value] of Object.entries(params)) {
+    url.searchParams.append(key, String(value));
+  }
+
+  // Share identical in-flight requests (parallel travel-time lookups hit the same URL) to stay under the API rate limit
+  const key = url.toString();
+  const pending = inflightRequests.get(key);
+  if (pending) return pending;
+
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  if (API_KEY && !usesProxy) {
+    headers['X-Access-Token'] = API_KEY;
+  }
+
+  const request = fetch(url, { headers, signal: AbortSignal.timeout(API_REQUEST_TIMEOUT) })
+    .then((response) => {
+      if (!response.ok) {
+        throw Object.assign(new Error(`HTTP ${response.status}`), { status: response.status });
+      }
+      return response.json() as Promise<BoardApiResponse>;
+    })
+    .finally(() => inflightRequests.delete(key));
+  inflightRequests.set(key, request);
+  return request;
+};
 
 const boardCache = new Map<string, { expiresAt: number; data: BoardApiResponse }>();
 
@@ -93,7 +109,7 @@ const getCacheKey = ({ stopPlaceId, lineId, direction, mode = 'departures', limi
 
 const isTrain = (item: BoardApiItem) => item.route?.type === 2;
 
-const normalizeDeparture = (item: BoardApiItem): Departure => ({
+const normalizeDeparture = (item: BoardApiItem, boardDirection?: string): Departure => ({
   id: item.trip?.id ?? `dep-${item.route?.short_name ?? 'unknown'}-${item.departure_timestamp?.scheduled ?? Date.now()}`,
   scheduledTime: item.departure_timestamp?.scheduled ?? item.departure_timestamp?.predicted ?? new Date().toISOString(),
   predictedTime: item.departure_timestamp?.predicted,
@@ -104,6 +120,7 @@ const normalizeDeparture = (item: BoardApiItem): Departure => ({
   platform: item.stop?.platform_code ?? null,
   routeId: item.route?.short_name ?? 'N/A',
   tripId: item.trip?.id ?? 'N/A',
+  boardDirection,
 });
 
 const normalizeArrival = (item: BoardApiItem): Arrival => ({
@@ -174,14 +191,14 @@ const fetchBoard = async ({
     params.minutesAfter = offsetMinutes + 240;
   }
 
-  const response = await api.get<BoardApiResponse>('/departureboards', { params });
+  const data = await getBoardJson(params);
 
   const boardConfig = direction
     ? Object.values(BOARD_CONFIG).find((cfg) => cfg.direction === direction)
     : undefined;
   const allowedLineIds = boardConfig ? boardConfig.lineIds : [lineId];
 
-  let filtered = (response.data.departures ?? [])
+  let filtered = (data.departures ?? [])
     .filter((item) => allowedLineIds.includes(item.route?.short_name ?? ''))
     .filter((item) => matchesDirection(item, direction));
 
@@ -209,25 +226,19 @@ const fetchBoard = async ({
 };
 
 const toApiError = (error: unknown): ApiError => {
-  if (axios.isAxiosError(error)) {
-    const status = error.response?.status;
+  const status = (error as { status?: number } | null)?.status;
 
-    if (status === 401 || status === 403) {
-      return {
-        status,
-        message: usesProxy
-          ? 'PID API odmítlo požadavek. Zkontroluj PID_API_KEY na serveru nebo ve Vite proxy.'
-          : 'PID API odmítlo klíč. Zkontroluj VITE_PID_API_KEY.',
-      };
-    }
-
+  if (status === 401 || status === 403) {
     return {
       status,
-      message: 'Nepodařilo se načíst data z PID API.',
+      message: usesProxy
+        ? 'PID API odmítlo požadavek. Zkontroluj PID_API_KEY na serveru nebo ve Vite proxy.'
+        : 'PID API odmítlo klíč. Zkontroluj VITE_PID_API_KEY.',
     };
   }
 
   return {
+    status,
     message: 'Nepodařilo se načíst data z PID API.',
   };
 };
@@ -241,7 +252,7 @@ export const getDepartures = async (
 ): Promise<DepartureBoardResponse> => {
   try {
     const items = await fetchBoard({ stopPlaceId, lineId, limit, direction, mode: 'departures', targetDateTime });
-    return { departures: items.map(normalizeDeparture) };
+    return { departures: items.map((item) => normalizeDeparture(item, direction)) };
   } catch (error) {
     logger.error('Failed to load departures', error);
     throw toApiError(error);

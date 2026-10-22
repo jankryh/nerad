@@ -75,43 +75,15 @@ export const formatTime = (isoTime: string): string => {
   }
 };
 
-const getApiDirection = (departure: Departure): string | undefined => {
-  if (departure.line === 'S4') {
-    return departure.direction.includes('Masarykovo') || departure.direction.includes('Praha')
-      ? 'to-masarykovo'
-      : 'to-rez';
-  }
-
-  if (departure.line === '371') {
-    if (departure.direction.includes('Kobylisy')) {
-      return 'to-kobylisy';
-    }
-
-    if (departure.direction.includes('Husinec') || departure.direction.includes('Řež')) {
-      return 'to-husinec';
-    }
-
-    return 'to-kobylisy';
-  }
-
-  return undefined;
-};
-
 const getStopIdsForTrip = (departure: Departure, pragueStation: PragueStation = 'masarykovo'): { departureStopId: string | null; arrivalStopId: string | null } => {
-  if (departure.line === 'S4') {
-    const pragueStopId = pragueStation === 'bubny' ? STOPS.BUBNY : STOPS.MASARYKOVO;
-    return departure.direction.includes('Masarykovo') || departure.direction.includes('Praha')
-      ? { departureStopId: STOPS.REZ, arrivalStopId: pragueStopId }
-      : { departureStopId: pragueStopId, arrivalStopId: STOPS.REZ };
+  const pragueStopId = pragueStation === 'bubny' ? STOPS.BUBNY : STOPS.MASARYKOVO;
+  switch (departure.boardDirection) {
+    case 'to-masarykovo': return { departureStopId: STOPS.REZ, arrivalStopId: pragueStopId };
+    case 'to-rez': return { departureStopId: pragueStopId, arrivalStopId: STOPS.REZ };
+    case 'to-kobylisy': return { departureStopId: STOPS.HUSINEC_REZ, arrivalStopId: STOPS.KOBYLISY };
+    case 'to-husinec': return { departureStopId: STOPS.KOBYLISY, arrivalStopId: STOPS.HUSINEC_REZ };
+    default: return { departureStopId: null, arrivalStopId: null };
   }
-
-  if (departure.line === '371') {
-    return departure.direction.includes('Kobylisy')
-      ? { departureStopId: STOPS.HUSINEC_REZ, arrivalStopId: STOPS.KOBYLISY }
-      : { departureStopId: STOPS.KOBYLISY, arrivalStopId: STOPS.HUSINEC_REZ };
-  }
-
-  return { departureStopId: null, arrivalStopId: null };
 };
 
 const selectBestTravelTime = (travelTimes: TravelTimeCalculation[]): TravelTimeCalculation | null => {
@@ -152,7 +124,7 @@ export const getEnhancedTravelTime = async (
       departureStopId,
       arrivalStopId,
       departure.line,
-      getApiDirection(departure),
+      departure.boardDirection,
     );
 
     const selectedTravelTime = selectBestTravelTime(travelTimes);
