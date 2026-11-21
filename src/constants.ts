@@ -1,5 +1,5 @@
-export const API_BASE_URL = import.meta.env.VITE_PID_API_BASE_URL || '/api';
-export const API_KEY = import.meta.env.VITE_PID_API_KEY || '';
+export const API_BASE_URL = (import.meta.env.DEV && import.meta.env.VITE_PID_API_BASE_URL) || '/api';
+export const API_KEY = (import.meta.env.DEV && import.meta.env.VITE_PID_API_KEY) || '';
 export const API_REQUEST_TIMEOUT = 8000;
 export const BOARD_CACHE_TTL = 30000;
 export const REFRESH_INTERVAL = 30000;

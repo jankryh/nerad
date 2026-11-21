@@ -68,21 +68,22 @@ export default async function handler(req, res) {
       },
     });
 
+    const contentType = upstreamResponse.headers.get('content-type')?.split(';')[0].trim().toLowerCase();
+    if (contentType !== 'application/json') {
+      return sendError(res, 502, 'Invalid upstream response.');
+    }
+
     if (!upstreamResponse.ok) {
       return sendError(res, upstreamResponse.status, 'Upstream API request failed.');
     }
 
-    const contentType = upstreamResponse.headers.get('content-type')?.split(';')[0].trim().toLowerCase();
-    if (contentType !== 'application/json' && !/^application\/[\w.+-]+\+json$/.test(contentType)) {
-      return sendError(res, 502, 'Invalid upstream response.');
-    }
-
     const body = await upstreamResponse.text();
     res.setHeader('content-type', 'application/json');
-    res.setHeader('cache-control', minutesBefore !== undefined
-      ? 's-maxage=60, stale-while-revalidate=120'
-      : 's-maxage=15, stale-while-revalidate=45'
-    );
+    let cacheControl = 's-maxage=15, stale-while-revalidate=45';
+    if (minutesBefore !== undefined) {
+      cacheControl = Number(minutesBefore) < 0 ? 's-maxage=15' : 's-maxage=60, stale-while-revalidate=120';
+    }
+    res.setHeader('cache-control', cacheControl);
     return res.status(upstreamResponse.status).send(body);
   } catch (error) {
     if (error?.name === 'TimeoutError' || signal.reason?.name === 'TimeoutError') {
