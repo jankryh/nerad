@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { formatTime, calculateActualDepartureTime, getEnhancedTravelTime, formatCountdown } from '../timeCalculations';
 import { calculateTravelTime } from '../../api/pidApi';
 import { STOPS } from '../../constants';
-import { Departure } from '../../types';
+import { Departure, TravelTimeCalculation } from '../../types';
 
 vi.mock('../../api/pidApi', () => ({ calculateTravelTime: vi.fn().mockResolvedValue([]) }));
 
@@ -87,6 +87,37 @@ describe('getEnhancedTravelTime', () => {
     const departure = makeDeparture({ line: '371', mode: 'bus', direction: 'Klecany', boardDirection: 'to-kobylisy' });
     await getEnhancedTravelTime(departure, true);
     expect(calculateTravelTime).toHaveBeenCalledWith(STOPS.HUSINEC_REZ, STOPS.KOBYLISY, '371', 'to-kobylisy');
+  });
+
+  const calc = (tripId: string, duration: number, fallbackUsed = false): TravelTimeCalculation => ({
+    tripId, line: 'S4', mode: 'train', duration, isRealTime: !fallbackUsed, fallbackUsed, calculatedAt: new Date(),
+  });
+
+  it('prefers the arrival matched by tripId over the line average', async () => {
+    vi.mocked(calculateTravelTime).mockResolvedValueOnce([
+      calc('trip-other', 30),
+      calc('trip-match', 25),
+      calc('average_S4', 27),
+    ]);
+    const departure = makeDeparture({ tripId: 'trip-match', boardDirection: 'to-masarykovo' });
+    expect(await getEnhancedTravelTime(departure, true)).toBe(25);
+  });
+
+  it('falls back to the line average when the trip is not matched', async () => {
+    vi.mocked(calculateTravelTime).mockResolvedValueOnce([calc('trip-other', 30), calc('average_S4', 27)]);
+    const departure = makeDeparture({ tripId: 'trip-unmatched', boardDirection: 'to-masarykovo' });
+    expect(await getEnhancedTravelTime(departure, true)).toBe(27);
+  });
+
+  it('does not cache a fallback travel time', async () => {
+    const departure = makeDeparture({ tripId: 'trip-fallback', boardDirection: 'to-masarykovo' });
+    vi.mocked(calculateTravelTime).mockResolvedValueOnce([calc('fallback_S4', 18, true)]);
+    expect(await getEnhancedTravelTime(departure, true)).toBe(18);
+
+    vi.mocked(calculateTravelTime).mockClear();
+    vi.mocked(calculateTravelTime).mockResolvedValueOnce([calc('trip-fallback', 22)]);
+    expect(await getEnhancedTravelTime(departure, true)).toBe(22);
+    expect(calculateTravelTime).toHaveBeenCalledTimes(1);
   });
 });
 
