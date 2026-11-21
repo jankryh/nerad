@@ -41,15 +41,15 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh, isRefreshing, selecte
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-base sm:text-lg font-semibold text-white leading-tight truncate">
+                  <h1 className="text-sm sm:text-lg font-semibold text-white leading-tight">
                     Řež ↔ Praha
                   </h1>
                   {selectedDateTime ? (
-                    <span className="inline-flex items-center rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-400">
+                    <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-1 text-xs font-medium text-amber-400">
                       jízdní řád
                     </span>
                   ) : (
-                    <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
+                    <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-400">
                       live
                     </span>
                   )}
@@ -62,7 +62,7 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh, isRefreshing, selecte
                 type="button"
                 onClick={onRefresh}
                 disabled={isRefreshing}
-                className="flex items-center gap-1.5 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed focus-ring active:scale-95"
+                className="flex items-center gap-1.5 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium px-3 py-2.5 sm:py-1.5 rounded-lg transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed focus-ring active:scale-95"
                 aria-label={isRefreshing ? 'Načítání dat...' : 'Ručně obnovit data o odjezdech'}
                 title={isRefreshing ? 'Načítání dat...' : 'Obnovit data'}
               >

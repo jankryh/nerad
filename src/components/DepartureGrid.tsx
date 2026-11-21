@@ -62,7 +62,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
           role="radio"
           aria-checked={pragueStation === station}
           onClick={() => onPragueStationChange(station)}
-          className={`px-2.5 py-1 font-medium transition-colors duration-150 focus-ring ${
+          className={`px-3 py-2.5 font-medium transition-colors duration-150 focus-ring ${
             pragueStation === station
               ? 'bg-primary-500/20 text-primary-400 border-primary-500/30'
               : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.03]'

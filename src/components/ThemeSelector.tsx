@@ -13,7 +13,7 @@ export const ThemeSelector: React.FC = () => {
   return (
     <button
       onClick={toggleTheme}
-      className="flex items-center gap-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg px-3 py-2 hover:bg-white/10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-transparent group"
+      className="flex items-center gap-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg px-3 py-2.5 sm:py-2 hover:bg-white/10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-transparent group"
       aria-label={`Přepnout na ${currentTheme.id === 'dark' ? 'světlé' : 'tmavé'} téma`}
       title={`Přepnout na ${currentTheme.id === 'dark' ? 'světlé' : 'tmavé'} téma`}
     >
