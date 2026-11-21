@@ -52,4 +52,20 @@ describe('DepartureBoard', () => {
 
     expect(screen.getAllByRole('row')[1].lastElementChild?.textContent).toBe('+30 min');
   });
+
+  it('offers vehicle position only for the nearest departure', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-03-20T10:00:00.000Z'));
+
+    render(
+      <DepartureBoard
+        departures={[dep('b', '2026-03-20T10:20:00.000Z'), dep('a', '2026-03-20T10:05:00.000Z')]}
+        getLead={mockGetLead}
+        setAlert={mockSetAlert}
+      />,
+    );
+
+    expect(screen.getAllByRole('button', { name: /Kde je spoj/ })).toHaveLength(1);
+    expect(screen.getAllByRole('row')[1].querySelector('button[aria-controls]')).not.toBeNull();
+  });
 });

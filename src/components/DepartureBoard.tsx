@@ -209,7 +209,8 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                 </div>
               )}
 
-              {!targetDateTime && (departure.tripId !== 'N/A'
+              {/* ponytail: position only for the nearest departure; later ones haven't started their trip yet */}
+              {!targetDateTime && (index === 0 && departure.tripId !== 'N/A'
                 ? <VehiclePosition
                     line={departure.line}
                     open={isPositionOpen}
@@ -218,7 +219,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                   />
                 : <div className="w-8 flex-shrink-0" role="cell" />)}
             </div>
-            {isPositionOpen && departure.tripId !== 'N/A' && (
+            {isPositionOpen && index === 0 && departure.tripId !== 'N/A' && (
               <div className={`${index < sorted.length - 1 ? 'border-b border-white/[0.08]' : ''}`}>
                 <VehiclePositionDetail tripId={departure.tripId} detailId={detailId} />
               </div>
