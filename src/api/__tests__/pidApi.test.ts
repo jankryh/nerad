@@ -53,4 +53,45 @@ describe('pidApi', () => {
     await expect(getAllDepartures(null, 'masarykovo', false)).rejects.toMatchObject({ status: 429 });
     vi.unstubAllGlobals();
   });
+
+  it('sets bubnyHasTrains when Masarykovo is empty and Bubny has S4 trains', async () => {
+    const s4Item = {
+      route: { short_name: 'S4', type: 2 },
+      trip: { id: 't1', headsign: 'Kralupy nad Vltavou' },
+      departure_timestamp: { scheduled: new Date(Date.now() + 10 * 60_000).toISOString() },
+    };
+    const fetchMock = vi.fn((url: URL) => {
+      const stopId = url.searchParams.get('ids[]');
+      // Masarykovo returns empty, Bubny returns S4
+      const departures = stopId === STOPS.BUBNY ? [s4Item] : [];
+      return Promise.resolve(new Response(JSON.stringify({ departures })));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const data = await getAllDepartures(null, 'masarykovo', false);
+
+    expect(data.masarykovoToRez.departures).toEqual([]);
+    expect(data.masarykovoToRez.bubnyHasTrains).toBe(true);
+    vi.unstubAllGlobals();
+  });
+
+  it('does not check Bubny when Masarykovo has S4 trains', async () => {
+    const s4Item = {
+      route: { short_name: 'S4', type: 2 },
+      trip: { id: 't1', headsign: 'Kralupy nad Vltavou' },
+      departure_timestamp: { scheduled: new Date(Date.now() + 10 * 60_000).toISOString() },
+    };
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(new Response(JSON.stringify({ departures: [s4Item] }))),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const data = await getAllDepartures(null, 'masarykovo', false);
+
+    expect(data.masarykovoToRez.departures.length).toBeGreaterThan(0);
+    expect(data.masarykovoToRez.bubnyHasTrains).toBeUndefined();
+    // 4 boards in parallel, no extra Bubny check afterward
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    vi.unstubAllGlobals();
+  });
 });

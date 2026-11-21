@@ -18,6 +18,7 @@ export interface DepartureBoardResponse {
   departures: Departure[];
   message?: string;
   error?: string;
+  bubnyHasTrains?: boolean;
 }
 
 export interface ApiError {

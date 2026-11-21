@@ -33,6 +33,7 @@ function App() {
     isRetrying,
     nextRetryIn,
     manualRetry,
+    bubnyHasTrains,
   } = useDepartures(selectedDateTime, pragueStation);
 
   return (
@@ -62,6 +63,7 @@ function App() {
             targetDateTime={selectedDateTime}
             pragueStation={pragueStation}
             onPragueStationChange={handlePragueStationChange}
+            bubnyHasTrains={bubnyHasTrains}
           />
           
           {lastUpdate && !error && (

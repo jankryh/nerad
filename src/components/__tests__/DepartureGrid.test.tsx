@@ -114,3 +114,48 @@ describe('DepartureGrid partial failure', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Nepodařilo se načíst: vlaky');
   });
 });
+
+describe('DepartureGrid Bubny hint', () => {
+  it('shows hint when bubnyHasTrains is true and Masarykovo is selected', () => {
+    const onPragueStationChange = vi.fn();
+    render(
+      <DepartureGrid
+        {...defaultProps}
+        pragueStation="masarykovo"
+        bubnyHasTrains={true}
+        onPragueStationChange={onPragueStationChange}
+      />
+    );
+
+    expect(screen.getByRole('status')).toHaveTextContent('S4 teď jede z Bubnů');
+    const switchButton = screen.getByRole('button', { name: /přepnout na bubny/i });
+    expect(switchButton).toBeInTheDocument();
+
+    fireEvent.click(switchButton);
+    expect(onPragueStationChange).toHaveBeenCalledWith('bubny');
+  });
+
+  it('does not show hint when Bubny is selected', () => {
+    render(
+      <DepartureGrid
+        {...defaultProps}
+        pragueStation="bubny"
+        bubnyHasTrains={true}
+      />
+    );
+
+    expect(screen.queryByText(/s4 teď jede z bubnů/i)).not.toBeInTheDocument();
+  });
+
+  it('does not show hint when bubnyHasTrains is false', () => {
+    render(
+      <DepartureGrid
+        {...defaultProps}
+        pragueStation="masarykovo"
+        bubnyHasTrains={false}
+      />
+    );
+
+    expect(screen.queryByText(/s4 teď jede z bubnů/i)).not.toBeInTheDocument();
+  });
+});

@@ -299,6 +299,27 @@ export const getAllDepartures = async (targetDateTime?: Date | null, pragueStati
       ? r.value
       : { departures: [], error: toApiError(r.reason).message },
   );
+
+  // When Masarykovo is selected and has no S4 trains, check if Bubny has trains
+  if (pragueStation === 'masarykovo' && masarykovoToRez.departures.length === 0 && !masarykovoToRez.error) {
+    try {
+      const bubnyBoard = await getDepartures(
+        STOPS.BUBNY,
+        ROUTES.masarykovoToRez.lineId,
+        perBoardLimit,
+        ROUTES.masarykovoToRez.direction,
+        targetDateTime,
+        useCache
+      );
+      if (bubnyBoard.departures.length > 0) {
+        masarykovoToRez.bubnyHasTrains = true;
+      }
+    } catch (error) {
+      // Ignore Bubny check failures — they must not break the main result
+      logger.error('Failed to check Bubny departures', error);
+    }
+  }
+
   return {
     rezToMasarykovo,
     masarykovoToRez,

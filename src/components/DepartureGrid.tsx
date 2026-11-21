@@ -19,6 +19,7 @@ interface DepartureGridProps {
   targetDateTime?: Date | null;
   pragueStation: PragueStation;
   onPragueStationChange: (station: PragueStation) => void;
+  bubnyHasTrains?: boolean;
 }
 
 export const DepartureGrid: React.FC<DepartureGridProps> = ({
@@ -36,6 +37,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
   targetDateTime = null,
   pragueStation,
   onPragueStationChange,
+  bubnyHasTrains = false,
 }) => {
   const toPragueDepartures = [...trainToPrague, ...busToPrague];
   const fromPragueDepartures = [...trainFromPrague, ...busFromPrague];
@@ -147,6 +149,18 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
             {stationToggle}
           </h2>
           {boardError('trainFromPrague', 'busFromPrague')}
+          {bubnyHasTrains && pragueStation === 'masarykovo' && (
+            <div className="px-2 py-2 rounded-lg bg-primary-500/10 border border-primary-500/20 text-xs text-primary-300" role="status">
+              <span className="font-medium">S4 teď jede z Bubnů</span>
+              {' — '}
+              <button
+                onClick={() => onPragueStationChange('bubny')}
+                className="underline hover:text-primary-200 transition-colors"
+              >
+                Přepnout na Bubny
+              </button>
+            </div>
+          )}
           <DepartureBoard departures={fromPragueDepartures} targetDateTime={targetDateTime} pragueStation={pragueStation} />
         </section>
     </div>

@@ -11,6 +11,7 @@ interface DeparturesState {
   busFromPrague: Departure[];
   // Boards that failed while others loaded (shown inline, not as the global error)
   failedBoards: string[];
+  bubnyHasTrains: boolean;
 }
 
 interface UseDeparturesReturn extends DeparturesState {
@@ -30,6 +31,7 @@ const emptyState: DeparturesState = {
   busToPrague: [],
   busFromPrague: [],
   failedBoards: [],
+  bubnyHasTrains: false,
 };
 
 const MAX_AUTO_RETRIES = 5;
@@ -129,6 +131,7 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
         busToPrague: boards.busToPrague.departures,
         busFromPrague: boards.busFromPrague.departures,
         failedBoards: Object.keys(boards).filter((key) => boards[key as keyof typeof boards].error),
+        bubnyHasTrains: data.masarykovoToRez.bubnyHasTrains ?? false,
       });
       setLastUpdate(new Date());
       setError(null);
