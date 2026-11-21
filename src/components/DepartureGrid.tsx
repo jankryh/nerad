@@ -9,6 +9,7 @@ interface DepartureGridProps {
   trainFromPrague: Departure[];
   busToPrague: Departure[];
   busFromPrague: Departure[];
+  failedBoards?: string[];
   isLoading: boolean;
   error: string | null;
   retryCount?: number;
@@ -25,6 +26,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
   trainFromPrague,
   busToPrague,
   busFromPrague,
+  failedBoards = [],
   isLoading,
   error,
   retryCount = 0,
@@ -39,6 +41,34 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
   const fromPragueDepartures = [...trainFromPrague, ...busFromPrague];
 
   const hasData = toPragueDepartures.length > 0 || fromPragueDepartures.length > 0;
+
+  // Rendered in every state so a failing station choice (persisted in localStorage) can always be switched back
+  const stationToggle = (
+    <span className="ml-auto flex rounded-md border border-white/10 overflow-hidden text-xs" role="radiogroup" aria-label="Výběr pražské stanice">
+      {(['masarykovo', 'bubny'] as PragueStation[]).map((station) => (
+        <button
+          key={station}
+          role="radio"
+          aria-checked={pragueStation === station}
+          onClick={() => onPragueStationChange(station)}
+          className={`px-2.5 py-1 font-medium transition-colors duration-150 ${
+            pragueStation === station
+              ? 'bg-primary-500/20 text-primary-400 border-primary-500/30'
+              : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.03]'
+          } ${station === 'masarykovo' ? 'border-r border-white/10' : ''}`}
+        >
+          {PRAGUE_STATION_LABELS[station]}
+        </button>
+      ))}
+    </span>
+  );
+
+  const boardError = (train: string, bus: string) => {
+    const failed = [failedBoards.includes(train) && 'vlaky', failedBoards.includes(bus) && 'autobusy'].filter(Boolean);
+    return failed.length > 0 && (
+      <p className="px-1 text-xs text-red-300" role="alert">Nepodařilo se načíst: {failed.join(', ')}</p>
+    );
+  };
 
   if (isLoading && !hasData) {
     return (
@@ -63,8 +93,9 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
 
   if (error) {
     return (
-      <section className="w-full" aria-label="Chyba" role="alert">
-        <div className="flex justify-center items-center min-h-[300px]">
+      <section className="w-full" aria-label="Chyba">
+        <div className="flex px-1 mb-2">{stationToggle}</div>
+        <div className="flex justify-center items-center min-h-[300px]" role="alert">
           <div className="text-center glass rounded-xl p-8 border border-red-500/20 max-w-md">
             <div className="mb-4">
               <div className="w-12 h-12 bg-red-500/15 rounded-full flex items-center justify-center mx-auto border border-red-400/20">
@@ -105,6 +136,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
             <ArrowRight className="w-4 h-4 text-primary-400" aria-hidden="true" />
             <span>Do Prahy</span>
           </h2>
+          {boardError('trainToPrague', 'busToPrague')}
           <DepartureBoard departures={toPragueDepartures} targetDateTime={targetDateTime} pragueStation={pragueStation} />
         </section>
 
@@ -112,24 +144,9 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
           <h2 className="flex items-center gap-2 px-1 text-sm sm:text-base font-semibold text-zinc-300">
             <ArrowLeft className="w-4 h-4 text-primary-400" aria-hidden="true" />
             <span>Z Prahy</span>
-            <span className="ml-auto flex rounded-md border border-white/10 overflow-hidden text-xs" role="radiogroup" aria-label="Výběr pražské stanice">
-              {(['masarykovo', 'bubny'] as PragueStation[]).map((station) => (
-                <button
-                  key={station}
-                  role="radio"
-                  aria-checked={pragueStation === station}
-                  onClick={() => onPragueStationChange(station)}
-                  className={`px-2.5 py-1 font-medium transition-colors duration-150 ${
-                    pragueStation === station
-                      ? 'bg-primary-500/20 text-primary-400 border-primary-500/30'
-                      : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.03]'
-                  } ${station === 'masarykovo' ? 'border-r border-white/10' : ''}`}
-                >
-                  {PRAGUE_STATION_LABELS[station]}
-                </button>
-              ))}
-            </span>
+            {stationToggle}
           </h2>
+          {boardError('trainFromPrague', 'busFromPrague')}
           <DepartureBoard departures={fromPragueDepartures} targetDateTime={targetDateTime} pragueStation={pragueStation} />
         </section>
     </div>

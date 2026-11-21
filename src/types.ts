@@ -17,6 +17,7 @@ export interface Departure {
 export interface DepartureBoardResponse {
   departures: Departure[];
   message?: string;
+  error?: string;
 }
 
 export interface ApiError {

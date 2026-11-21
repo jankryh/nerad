@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { DepartureGrid } from '../DepartureGrid';
 
 // Mock lucide-react icons
@@ -85,5 +85,32 @@ describe('DepartureGrid', () => {
     );
 
     expect(screen.getByText(/pokus 3\/5/i)).toBeInTheDocument();
+  });
+});
+
+describe('DepartureGrid station toggle', () => {
+  it('stays available in error state so a failing station can be switched back', () => {
+    const onPragueStationChange = vi.fn();
+    render(
+      <DepartureGrid
+        {...defaultProps}
+        error="Chyba"
+        pragueStation="bubny"
+        onPragueStationChange={onPragueStationChange}
+      />
+    );
+
+    expect(screen.getByRole('radiogroup', { name: /výběr pražské stanice/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('radio', { checked: false }));
+    expect(onPragueStationChange).toHaveBeenCalledWith('masarykovo');
+  });
+});
+
+describe('DepartureGrid partial failure', () => {
+  it('shows an inline error only on the section with a failed board', () => {
+    render(<DepartureGrid {...defaultProps} failedBoards={['trainFromPrague']} />);
+
+    expect(screen.getAllByTestId('departure-board')).toHaveLength(2);
+    expect(screen.getByRole('alert')).toHaveTextContent('Nepodařilo se načíst: vlaky');
   });
 });

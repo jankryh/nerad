@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { getDepartures } from '../pidApi';
+import { getAllDepartures, getDepartures } from '../pidApi';
 import { STOPS } from '../../constants';
 
 describe('pidApi', () => {
@@ -22,6 +22,35 @@ describe('pidApi', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(small.departures).toHaveLength(3);
     expect(large.departures).toHaveLength(10);
+    vi.unstubAllGlobals();
+  });
+
+  it('keeps working boards when one board fails', async () => {
+    const fetchMock = vi.fn((url: URL) => Promise.resolve(
+      url.searchParams.get('ids[]') === STOPS.BUBNY
+        ? new Response('bad gateway', { status: 502 })
+        : new Response(JSON.stringify({ departures: [] })),
+    ));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const data = await getAllDepartures(null, 'bubny', false);
+
+    expect(data.masarykovoToRez.error).toBeTruthy();
+    expect(data.rezToMasarykovo.error).toBeUndefined();
+    expect(data.husinecsToKobylisy.departures).toEqual([]);
+    vi.unstubAllGlobals();
+  });
+
+  it('throws when all boards fail', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response('', { status: 503 }))));
+    await expect(getAllDepartures(null, 'masarykovo', false)).rejects.toMatchObject({ status: 503 });
+    vi.unstubAllGlobals();
+  });
+
+  it('reports 429 when any of the failed boards was rate limited', async () => {
+    let call = 0;
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response('', { status: ++call === 3 ? 429 : 503 }))));
+    await expect(getAllDepartures(null, 'masarykovo', false)).rejects.toMatchObject({ status: 429 });
     vi.unstubAllGlobals();
   });
 });
