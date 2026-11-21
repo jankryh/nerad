@@ -1,8 +1,11 @@
-import { describe, it, expect, vi } from 'vitest';
-import { getAllDepartures, getDepartures } from '../pidApi';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { getAllDepartures, getDepartures, __clearCacheForTesting } from '../pidApi';
 import { STOPS } from '../../constants';
 
 describe('pidApi', () => {
+  beforeEach(() => {
+    __clearCacheForTesting();
+  });
   it('shares identical in-flight requests and caches per limit', async () => {
     const item = (n: number) => ({
       route: { short_name: 'S4', type: 2 },
@@ -75,7 +78,7 @@ describe('pidApi', () => {
     vi.unstubAllGlobals();
   });
 
-  it('does not check Bubny when Masarykovo has S4 trains', async () => {
+  it('flag false even if Bubny has trains when Masarykovo has S4 trains', async () => {
     const s4Item = {
       route: { short_name: 'S4', type: 2 },
       trip: { id: 't1', headsign: 'Kralupy nad Vltavou' },
@@ -90,8 +93,8 @@ describe('pidApi', () => {
 
     expect(data.masarykovoToRez.departures.length).toBeGreaterThan(0);
     expect(data.masarykovoToRez.bubnyHasTrains).toBeUndefined();
-    // 4 boards in parallel, no extra Bubny check afterward
-    expect(fetchMock).toHaveBeenCalledTimes(4);
+    // 4 boards + 1 Bubny hint in parallel, but flag not set because Masarykovo has trains
+    expect(fetchMock).toHaveBeenCalledTimes(5);
     vi.unstubAllGlobals();
   });
 });

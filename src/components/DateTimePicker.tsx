@@ -21,12 +21,11 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({ value, onChange 
       onChange(null);
       return;
     }
-    if (!e.target.validity.valid) {
-      return;
-    }
     const date = new Date(val);
     if (!isNaN(date.getTime())) {
-      onChange(date);
+      // Clamp to valid range instead of discarding
+      const clampedDate = date < now ? now : date > maxDate ? maxDate : date;
+      onChange(clampedDate);
     }
   };
 

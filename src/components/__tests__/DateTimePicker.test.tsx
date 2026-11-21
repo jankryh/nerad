@@ -35,20 +35,18 @@ describe('DateTimePicker', () => {
     expect(onChange).toHaveBeenCalledWith(expect.any(Date));
   });
 
-  it('does not call onChange when input validity is false', () => {
+  it('clamps out-of-range input to the valid range', () => {
     const onChange = vi.fn();
     render(<DateTimePicker value={null} onChange={onChange} />);
 
     const input = screen.getByLabelText(/vybrat datum a čas/i) as HTMLInputElement;
 
-    Object.defineProperty(input, 'validity', {
-      writable: true,
-      value: { valid: false },
-    });
-
+    // Value in the past should be clamped to now
     fireEvent.change(input, { target: { value: '2020-01-01T10:00' } });
 
-    expect(onChange).not.toHaveBeenCalled();
+    expect(onChange).toHaveBeenCalledWith(expect.any(Date));
+    const clampedDate = onChange.mock.calls[0][0] as Date;
+    expect(clampedDate.getTime()).toBeGreaterThanOrEqual(Date.now() - 1000);
   });
 
   it('renders live mode button when value is set', () => {

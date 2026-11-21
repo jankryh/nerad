@@ -1,0 +1,318 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1795277452027,
+  "projectRoot": "/Users/jkryhut/Projects/nerad",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "react",
+        "version": "19.2.4",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "19.2.4",
+        "category": "frontend"
+      },
+      {
+        "name": "vite",
+        "version": "8.0.3",
+        "category": "build"
+      },
+      {
+        "name": "vitest",
+        "version": "4.1.0",
+        "category": "testing"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": "npm test",
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "vite",
+      "build": "tsc && vite build",
+      "preview": "vite preview",
+      "lint": "eslint . --max-warnings 0",
+      "test": "vitest run",
+      "test:watch": "vitest"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": "type-based"
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "src"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "api": {
+      "path": "api",
+      "purpose": "API routes",
+      "fileCount": 1,
+      "lastAccessed": 1795277451840,
+      "keyFiles": [
+        "departureboards.js"
+      ]
+    },
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 1,
+      "lastAccessed": 1795277451841,
+      "keyFiles": [
+        "index.html"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 6,
+      "lastAccessed": 1795277451842,
+      "keyFiles": [
+        "App.tsx",
+        "constants.ts",
+        "env.d.ts",
+        "index.css",
+        "main.tsx"
+      ]
+    },
+    "dist/assets": {
+      "path": "dist/assets",
+      "purpose": "Static assets",
+      "fileCount": 2,
+      "lastAccessed": 1795277451842,
+      "keyFiles": [
+        "index-BEV9eJYo.css",
+        "index-gYNoHYI0.js"
+      ]
+    },
+    "src/api": {
+      "path": "src/api",
+      "purpose": "API routes",
+      "fileCount": 1,
+      "lastAccessed": 1795277451842,
+      "keyFiles": [
+        "pidApi.ts"
+      ]
+    },
+    "src/components": {
+      "path": "src/components",
+      "purpose": "UI components",
+      "fileCount": 5,
+      "lastAccessed": 1795277451842,
+      "keyFiles": [
+        "DateTimePicker.tsx",
+        "DepartureBoard.tsx",
+        "DepartureGrid.tsx"
+      ]
+    },
+    "src/test": {
+      "path": "src/test",
+      "purpose": "Test files",
+      "fileCount": 1,
+      "lastAccessed": 1795277451842,
+      "keyFiles": [
+        "setup.ts"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "vercel.json",
+      "accessCount": 1,
+      "lastAccessed": 1795277583291,
+      "type": "file"
+    },
+    {
+      "path": "api/departureboards.js",
+      "accessCount": 2.9907135977059247,
+      "lastAccessed": 1795278188415,
+      "type": "file"
+    },
+    {
+      "path": ".env.example",
+      "accessCount": 1,
+      "lastAccessed": 1795277585122,
+      "type": "file"
+    },
+    {
+      "path": "index.html",
+      "accessCount": 1,
+      "lastAccessed": 1795277590565,
+      "type": "file"
+    },
+    {
+      "path": "vite.config.ts",
+      "accessCount": 1,
+      "lastAccessed": 1795277592448,
+      "type": "file"
+    },
+    {
+      "path": "src/App.tsx",
+      "accessCount": 8.90714105297214,
+      "lastAccessed": 1795282351427,
+      "type": "file"
+    },
+    {
+      "path": "src/constants.ts",
+      "accessCount": 2.935172664295104,
+      "lastAccessed": 1795281717116,
+      "type": "file"
+    },
+    {
+      "path": "src/api/pidApi.ts",
+      "accessCount": 11.76639542653835,
+      "lastAccessed": 1795282528063,
+      "type": "file"
+    },
+    {
+      "path": "src/hooks/useDepartures.ts",
+      "accessCount": 7.882689804790417,
+      "lastAccessed": 1795281773472,
+      "type": "file"
+    },
+    {
+      "path": "src/types.ts",
+      "accessCount": 2.9671328660553993,
+      "lastAccessed": 1795281733902,
+      "type": "file"
+    },
+    {
+      "path": "src/components/DepartureBoard.tsx",
+      "accessCount": 7.866917859480806,
+      "lastAccessed": 1795282059354,
+      "type": "file"
+    },
+    {
+      "path": "src/components/DepartureGrid.tsx",
+      "accessCount": 15.882540779692224,
+      "lastAccessed": 1795282461027,
+      "type": "file"
+    },
+    {
+      "path": "src/contexts/ThemeContext.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1795277604675,
+      "type": "file"
+    },
+    {
+      "path": "src/utils/timeCalculations.ts",
+      "accessCount": 6.9024847928576,
+      "lastAccessed": 1795282064927,
+      "type": "file"
+    },
+    {
+      "path": "src/utils/logger.ts",
+      "accessCount": 1.9997408575089677,
+      "lastAccessed": 1795277639577,
+      "type": "file"
+    },
+    {
+      "path": "src/components/Header.tsx",
+      "accessCount": 2.932928179295348,
+      "lastAccessed": 1795281907985,
+      "type": "file"
+    },
+    {
+      "path": "src/components/DateTimePicker.tsx",
+      "accessCount": 8.882579828864731,
+      "lastAccessed": 1795282332109,
+      "type": "file"
+    },
+    {
+      "path": "src/hooks/__tests__/useDepartures.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1795277614892,
+      "type": "file"
+    },
+    {
+      "path": "src/api/__tests__/pidApi.test.ts",
+      "accessCount": 7.935940196026237,
+      "lastAccessed": 1795282534108,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 1,
+      "lastAccessed": 1795277635121,
+      "type": "file"
+    },
+    {
+      "path": "src/components/ThemeSelector.tsx",
+      "accessCount": 1.9667705247774365,
+      "lastAccessed": 1795281912814,
+      "type": "file"
+    },
+    {
+      "path": "src/utils/__tests__/timeCalculations.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1795278203311,
+      "type": "file"
+    },
+    {
+      "path": "src/components/__tests__/DepartureGrid.test.tsx",
+      "accessCount": 3.994696692294175,
+      "lastAccessed": 1795282078312,
+      "type": "file"
+    },
+    {
+      "path": "AGENTS.md",
+      "accessCount": 1.9973269158194644,
+      "lastAccessed": 1795282304989,
+      "type": "file"
+    },
+    {
+      "path": "src/index.css",
+      "accessCount": 1,
+      "lastAccessed": 1795281984183,
+      "type": "file"
+    },
+    {
+      "path": "src/components/__tests__/Header.test.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1795282009381,
+      "type": "file"
+    },
+    {
+      "path": "src/components/__tests__/DateTimePicker.test.tsx",
+      "accessCount": 2.997755087373867,
+      "lastAccessed": 1795282339671,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}
