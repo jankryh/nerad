@@ -215,7 +215,8 @@ const fetchBoard = async ({
 
   filtered = filtered.slice(0, limit);
 
-  if (useCache && !isScheduled) {
+  // Always store fresh live data, also when the read bypassed the cache
+  if (!isScheduled) {
     boardCache.set(cacheKey, {
       expiresAt: now + BOARD_CACHE_TTL,
       data: { departures: filtered },
@@ -249,9 +250,10 @@ export const getDepartures = async (
   limit = 3,
   direction?: string,
   targetDateTime?: Date | null,
+  useCache = true,
 ): Promise<DepartureBoardResponse> => {
   try {
-    const items = await fetchBoard({ stopPlaceId, lineId, limit, direction, mode: 'departures', targetDateTime });
+    const items = await fetchBoard({ stopPlaceId, lineId, limit, direction, mode: 'departures', targetDateTime, useCache });
     return { departures: items.map((item) => normalizeDeparture(item, direction)) };
   } catch (error) {
     logger.error('Failed to load departures', error);
@@ -274,15 +276,15 @@ export const getArrivals = async (
   }
 };
 
-export const getAllDepartures = async (targetDateTime?: Date | null, pragueStation: PragueStation = 'masarykovo') => {
+export const getAllDepartures = async (targetDateTime?: Date | null, pragueStation: PragueStation = 'masarykovo', useCache = true) => {
   const perBoardLimit = targetDateTime ? 6 : 3;
   const fromPragueStopId = pragueStation === 'bubny' ? STOPS.BUBNY : STOPS.MASARYKOVO;
   try {
     const [rezToMasarykovo, masarykovoToRez, husinecsToKobylisy, kobylisyToHusinec] = await Promise.all([
-      getDepartures(ROUTES.rezToMasarykovo.stopPlaceId, ROUTES.rezToMasarykovo.lineId, perBoardLimit, ROUTES.rezToMasarykovo.direction, targetDateTime),
-      getDepartures(fromPragueStopId, ROUTES.masarykovoToRez.lineId, perBoardLimit, ROUTES.masarykovoToRez.direction, targetDateTime),
-      getDepartures(ROUTES.husinecsToKobylisy.stopPlaceId, ROUTES.husinecsToKobylisy.lineId, perBoardLimit, ROUTES.husinecsToKobylisy.direction, targetDateTime),
-      getDepartures(ROUTES.kobylisyToHusinec.stopPlaceId, ROUTES.kobylisyToHusinec.lineId, perBoardLimit, ROUTES.kobylisyToHusinec.direction, targetDateTime),
+      getDepartures(ROUTES.rezToMasarykovo.stopPlaceId, ROUTES.rezToMasarykovo.lineId, perBoardLimit, ROUTES.rezToMasarykovo.direction, targetDateTime, useCache),
+      getDepartures(fromPragueStopId, ROUTES.masarykovoToRez.lineId, perBoardLimit, ROUTES.masarykovoToRez.direction, targetDateTime, useCache),
+      getDepartures(ROUTES.husinecsToKobylisy.stopPlaceId, ROUTES.husinecsToKobylisy.lineId, perBoardLimit, ROUTES.husinecsToKobylisy.direction, targetDateTime, useCache),
+      getDepartures(ROUTES.kobylisyToHusinec.stopPlaceId, ROUTES.kobylisyToHusinec.lineId, perBoardLimit, ROUTES.kobylisyToHusinec.direction, targetDateTime, useCache),
     ]);
 
     return {

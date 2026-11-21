@@ -102,7 +102,7 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
     }, delayMs);
   }, [stopTimers]);
 
-  const fetchData = useCallback(async (isRetryAttempt = false) => {
+  const fetchData = useCallback(async (isRetryAttempt = false, useCache = true) => {
     // Ignore responses from requests superseded by a newer one (station/date switch, poll)
     const requestId = ++requestIdRef.current;
     try {
@@ -111,7 +111,7 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
         setError(null);
       }
 
-      const data = await getAllDepartures(targetDateTime, pragueStation);
+      const data = await getAllDepartures(targetDateTime, pragueStation, useCache);
       if (requestId !== requestIdRef.current) return;
 
       setDepartures({
@@ -128,7 +128,10 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
     } catch (err) {
       if (requestId !== requestIdRef.current) return;
       const apiError = err as ApiError;
-      const message = targetDateTime
+      // 401/403 carry their own config hint; other 4xx in scheduled mode mean no data for that date
+      const status = apiError.status ?? 0;
+      const noDataForDate = targetDateTime && status >= 400 && status < 500 && status !== 401 && status !== 403;
+      const message = noDataForDate
         ? 'Pro toto datum nejsou dostupná data. Zkuste bližší termín.'
         : (apiError.message || 'Nepodařilo se načíst data');
       setError(message);
@@ -152,19 +155,28 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
   }, [clearTimers, fetchData]);
 
   useEffect(() => {
+    // New selection (date/station): don't show the previous selection's departures meanwhile
+    setDepartures(emptyState);
     fetchData(false);
     return () => {
       clearTimers();
     };
   }, [fetchData, clearTimers]);
 
-  // Live mode: poll so departures and countdowns stay current
+  // Live mode: poll (and refetch on tab return) so departures and countdowns stay current.
+  // Skipped while a backoff retry is pending, otherwise the poll would reset the backoff.
   useEffect(() => {
     if (targetDateTime) return;
-    const interval = setInterval(() => {
-      if (!document.hidden) fetchData();
-    }, REFRESH_INTERVAL);
-    return () => clearInterval(interval);
+    const refresh = () => {
+      if (document.hidden || retryTimerRef.current) return;
+      fetchData(false, false);
+    };
+    const interval = setInterval(refresh, REFRESH_INTERVAL);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', refresh);
+    };
   }, [fetchData, targetDateTime]);
 
   return {
@@ -172,7 +184,7 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
     isLoading,
     error,
     lastUpdate,
-    refreshData: () => fetchData(),
+    refreshData: () => fetchData(false, false),
     retryCount,
     isRetrying,
     nextRetryIn,

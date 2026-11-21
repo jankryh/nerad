@@ -47,4 +47,31 @@ describe('useDepartures', () => {
     await act(async () => { (result.current.refreshData as (e: unknown) => void)({ type: 'click' }); });
     expect(result.current.retryCount).toBe(0);
   });
+
+  it('skips the live poll while a backoff retry is pending', async () => {
+    mocked.mockRejectedValue({ message: 'down', status: 503 });
+    const { result } = renderHook(() => useDepartures(null));
+    await act(async () => {});
+    expect(mocked).toHaveBeenCalledTimes(1);
+
+    // Retries fire at 5s, 10s (cumulative 15s) and 20s (35s); the poll at 30s must not add a call or reset the attempt
+    await act(async () => { await vi.advanceTimersByTimeAsync(REFRESH_INTERVAL); });
+    expect(mocked).toHaveBeenCalledTimes(3);
+    expect(result.current.retryCount).toBe(2);
+  });
+
+  it('shows the real error message for non-4xx failures in scheduled mode', async () => {
+    mocked.mockRejectedValue({ message: 'Nepodařilo se načíst data z PID API.', status: 503 });
+    const target = new Date(Date.now() + 3600_000);
+    const { result } = renderHook(() => useDepartures(target));
+    await act(async () => {});
+    expect(result.current.error).toBe('Nepodařilo se načíst data z PID API.');
+  });
+
+  it('manual refresh bypasses the board cache', async () => {
+    const { result } = renderHook(() => useDepartures(null));
+    await act(async () => {});
+    await act(async () => { result.current.refreshData(); });
+    expect(mocked).toHaveBeenLastCalledWith(null, 'masarykovo', false);
+  });
 });
