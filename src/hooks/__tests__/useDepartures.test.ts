@@ -18,6 +18,7 @@ describe('useDepartures', () => {
       masarykovoToRez: board,
       husinecsToKobylisy: board,
       kobylisyToHusinec: board,
+      offlineSince: null,
     });
   });
   afterEach(() => vi.useRealTimers());
@@ -29,6 +30,26 @@ describe('useDepartures', () => {
 
     await act(async () => { vi.advanceTimersByTime(REFRESH_INTERVAL); });
     expect(mocked).toHaveBeenCalledTimes(2);
+  });
+
+  it('offline cache: marks offline, uses the cache time and drops departed trains', async () => {
+    const dep = (minutes: number) => ({
+      id: `t${minutes}`, tripId: `t${minutes}`, scheduledTime: new Date(Date.now() + minutes * 60_000).toISOString(),
+      delay: 0, line: 'S4', direction: 'Praha', mode: 'train' as const, platform: null, routeId: 'S4',
+    });
+    const cachedAt = Date.now() - 600_000;
+    mocked.mockResolvedValue({
+      rezToMasarykovo: { departures: [dep(-5), dep(10)] },
+      masarykovoToRez: board,
+      husinecsToKobylisy: board,
+      kobylisyToHusinec: board,
+      offlineSince: cachedAt,
+    });
+    const { result } = renderHook(() => useDepartures(null));
+    await act(async () => {});
+    expect(result.current.isOffline).toBe(true);
+    expect(result.current.lastUpdate?.getTime()).toBe(cachedAt);
+    expect(result.current.trainToPrague.map((d) => d.id)).toEqual(['t10']);
   });
 
   it('does not poll in scheduled mode', async () => {
