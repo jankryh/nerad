@@ -92,9 +92,10 @@ describe('getEnhancedTravelTime', () => {
 
 describe('formatCountdown (via DepartureBoard)', () => {
   // Integration test to verify the countdown format matches design requirements
-  it('formats countdown with consistent spacing: "29 min", "1 h", "1 h 20 m"', () => {
+  it('formats countdown consistently: "29 min", "1 h", "1 h 15 min"', () => {
     // This verifies the design fix: D2.01 from design.md
-    // Format should have spaces: "1 h 20 m" not "1h 20m"
+    // Format uses "min" consistently (not "m") for readability in monospace font
+    // Examples: "45 min", "1 h 2 min", "2 h" (whole hours without minutes)
     // Note: This is tested indirectly through DepartureBoard rendering
     expect(true).toBe(true); // Placeholder - actual format tested in DepartureBoard component tests
   });
