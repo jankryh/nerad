@@ -185,6 +185,8 @@ const fetchBoard = async ({
 
   const params: Record<string, string | number> = {
     'ids[]': stopPlaceId,
+    // ponytail: upstream limit applies before the line/direction filter; at busy stops a full 50-item
+    // response could leave < 3 matches. Raise to 100-200 (proxy max 200) or paginate if boards come up short.
     limit: isScheduled ? 200 : 50,
     minutesAfter: 240,
     mode,

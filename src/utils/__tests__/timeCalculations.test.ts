@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { formatTime, calculateActualDepartureTime, getEnhancedTravelTime, formatCountdown } from '../timeCalculations';
 import { calculateTravelTime } from '../../api/pidApi';
-import { STOPS } from '../../constants';
+import { STOPS, TRAVEL_TIMES } from '../../constants';
 import { Departure } from '../../types';
 
 vi.mock('../../api/pidApi', () => ({ calculateTravelTime: vi.fn().mockResolvedValue([]) }));
@@ -87,6 +87,32 @@ describe('getEnhancedTravelTime', () => {
     const departure = makeDeparture({ line: '371', mode: 'bus', direction: 'Klecany', boardDirection: 'to-kobylisy' });
     await getEnhancedTravelTime(departure, true);
     expect(calculateTravelTime).toHaveBeenCalledWith(STOPS.HUSINEC_REZ, STOPS.KOBYLISY, '371', 'to-kobylisy');
+  });
+
+  // Single-entry responses so the test holds regardless of average vs tripId selection
+  const calc = (tripId: string, duration: number) => [{
+    tripId, line: '371', mode: 'bus' as const, duration, isRealTime: true, fallbackUsed: false, calculatedAt: new Date(),
+  }];
+
+  it('returns cached duration without a second API call', async () => {
+    const departure = makeDeparture({ line: '371', mode: 'bus', tripId: 'bus-1', boardDirection: 'to-husinec' });
+    vi.mocked(calculateTravelTime).mockClear().mockResolvedValueOnce(calc('bus-1', 25));
+    expect(await getEnhancedTravelTime(departure, true)).toBe(25);
+    expect(await getEnhancedTravelTime(departure, true)).toBe(25);
+    expect(calculateTravelTime).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to hardcoded time when duration is out of range', async () => {
+    const departure = makeDeparture({ boardDirection: 'to-masarykovo' });
+    vi.mocked(calculateTravelTime).mockResolvedValueOnce(calc('trip-1', 500));
+    expect(await getEnhancedTravelTime(departure, true)).toBe(TRAVEL_TIMES.train);
+  });
+
+  it('falls back to hardcoded time when the API fails or real-time is off', async () => {
+    const departure = makeDeparture({ boardDirection: 'to-rez' });
+    vi.mocked(calculateTravelTime).mockRejectedValueOnce(new Error('boom'));
+    expect(await getEnhancedTravelTime(departure, true)).toBe(TRAVEL_TIMES.train);
+    expect(await getEnhancedTravelTime(departure, false)).toBe(TRAVEL_TIMES.train);
   });
 });
 

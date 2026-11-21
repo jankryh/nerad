@@ -159,6 +159,8 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
       const attempt = continues ? Math.min(retryCountRef.current + 1, MAX_AUTO_RETRIES) : 0;
       retryCountRef.current = attempt;
       setRetryCount(attempt);
+      // Self-reference to this render's callback; param changes clear pending timers via effect cleanup
+      // eslint-disable-next-line react-hooks/immutability
       scheduleRetry(attempt, () => fetchData(true));
     } finally {
       if (requestId === requestIdRef.current) {
