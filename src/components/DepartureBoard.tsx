@@ -9,6 +9,9 @@ import {
 } from '../utils/timeCalculations';
 import { logger } from '../utils/logger';
 import { Train, Bus } from 'lucide-react';
+import { AlertButton, AlertToasts } from './AlertButton';
+import { useDepartureAlerts } from '../hooks/useDepartureAlerts';
+import { ALERT_LEAD_OPTIONS } from '../utils/departureAlerts';
 
 interface DepartureBoardProps {
   departures: Departure[];
@@ -22,6 +25,8 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   pragueStation = 'masarykovo',
 }) => {
   const [enhancedTravelTimes, setEnhancedTravelTimes] = useState<Map<string, number>>(new Map());
+  const alertsEnabled = !targetDateTime;
+  const { getLead, setAlert, toasts, dismissToast } = useDepartureAlerts(departures, alertsEnabled);
 
   useEffect(() => {
     if (!TRAVEL_TIME_CONFIG.enableRealTimeInUI || departures.length === 0) {
@@ -107,6 +112,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
         <p className="text-white/50 text-sm">
           {targetDateTime ? 'Žádné odjezdy v tomto čase' : 'Žádné odjezdy'}
         </p>
+        <AlertToasts toasts={toasts} onDismiss={dismissToast} />
       </div>
     );
   }
@@ -173,15 +179,25 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
               <span className="text-xs text-zinc-500">{travelMin}min</span>
             </div>
 
-            <div className="flex-1 text-right" role="cell">
+            <div className="flex-1 flex items-center justify-end gap-0.5" role="cell">
               <span className={`font-mono font-bold text-lg sm:text-xl ${index === 0 ? 'text-primary-400' : 'text-white'}`}>
                 {minutesUntil !== null ? formatCountdown(minutesUntil, !!targetDateTime) : '--'}
               </span>
+              {alertsEnabled && (
+                <AlertButton
+                  timeLabel={formatTime(calculateActualDepartureTime(departure).toISOString())}
+                  departureTime={calculateActualDepartureTime(departure).getTime()}
+                  leadMinutes={getLead(departure.tripId)}
+                  tooLate={minutesUntil !== null && minutesUntil <= ALERT_LEAD_OPTIONS[0]}
+                  onChange={(lead) => setAlert(departure, lead)}
+                />
+              )}
             </div>
           </div>
         );
       })}
 
+      <AlertToasts toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 };
