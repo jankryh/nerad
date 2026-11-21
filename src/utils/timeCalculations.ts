@@ -12,8 +12,8 @@ interface TravelTimeCacheEntry {
 
 const travelTimeCache = new Map<string, TravelTimeCacheEntry>();
 
-const getTravelTimeCacheKey = (departureStopId: string, arrivalStopId: string, line: string): string => {
-  return `travel_time:${departureStopId}:${arrivalStopId}:${line}`;
+const getTravelTimeCacheKey = (departureStopId: string, arrivalStopId: string, line: string, tripId: string): string => {
+  return `travel_time:${departureStopId}:${arrivalStopId}:${line}:${tripId}`;
 };
 
 const getCachedTravelTime = (cacheKey: string): number | null => {
@@ -88,13 +88,14 @@ const getStopIdsForTrip = (departure: Departure, pragueStation: PragueStation = 
   }
 };
 
-const selectBestTravelTime = (travelTimes: TravelTimeCalculation[]): TravelTimeCalculation | null => {
+const selectBestTravelTime = (travelTimes: TravelTimeCalculation[], tripId: string): TravelTimeCalculation | null => {
   if (!travelTimes.length) {
     return null;
   }
 
-  return travelTimes.find((item) => item.tripId.startsWith('average_'))
-    ?? travelTimes.find((item) => !item.tripId.startsWith('average_'))
+  // Přednost má příjezd konkrétního spoje, průměr linky je fallback
+  return travelTimes.find((item) => item.tripId === tripId)
+    ?? travelTimes.find((item) => item.tripId.startsWith('average_'))
     ?? travelTimes[0];
 };
 
@@ -115,7 +116,7 @@ export const getEnhancedTravelTime = async (
     return hardcodedFallback;
   }
 
-  const cacheKey = getTravelTimeCacheKey(departureStopId, arrivalStopId, departure.line);
+  const cacheKey = getTravelTimeCacheKey(departureStopId, arrivalStopId, departure.line, departure.tripId);
   const cachedDuration = getCachedTravelTime(cacheKey);
   if (cachedDuration !== null) {
     return cachedDuration;
@@ -129,7 +130,7 @@ export const getEnhancedTravelTime = async (
       departure.boardDirection,
     );
 
-    const selectedTravelTime = selectBestTravelTime(travelTimes);
+    const selectedTravelTime = selectBestTravelTime(travelTimes, departure.tripId);
     if (!selectedTravelTime) {
       // Fallback na hardcoded čas pro vlak i bus
       return hardcodedFallback;
@@ -137,7 +138,9 @@ export const getEnhancedTravelTime = async (
 
     if (departure.mode === 'bus') {
       if (selectedTravelTime.duration >= 5 && selectedTravelTime.duration <= 60) {
-        cacheTravelTime(cacheKey, selectedTravelTime.duration, departure.line, departure.mode);
+        if (!selectedTravelTime.fallbackUsed) {
+          cacheTravelTime(cacheKey, selectedTravelTime.duration, departure.line, departure.mode);
+        }
         return selectedTravelTime.duration;
       }
 
@@ -149,7 +152,9 @@ export const getEnhancedTravelTime = async (
     const maxReasonable = hardcodedFallback * 2;
 
     if (selectedTravelTime.duration >= minReasonable && selectedTravelTime.duration <= maxReasonable) {
-      cacheTravelTime(cacheKey, selectedTravelTime.duration, departure.line, departure.mode);
+      if (!selectedTravelTime.fallbackUsed) {
+        cacheTravelTime(cacheKey, selectedTravelTime.duration, departure.line, departure.mode);
+      }
       return selectedTravelTime.duration;
     }
 
