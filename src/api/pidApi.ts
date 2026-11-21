@@ -44,7 +44,7 @@ interface BoardApiResponse {
   departures?: BoardApiItem[];
 }
 
-const usesProxy = API_BASE_URL.startsWith('/');
+const usesProxy = !import.meta.env.DEV || API_BASE_URL.startsWith('/');
 const inflightRequests = new Map<string, Promise<BoardApiResponse>>();
 
 const getBoardJson = (params: Record<string, string | number>): Promise<BoardApiResponse> => {
