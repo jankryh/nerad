@@ -37,8 +37,7 @@ export const AlertButton: React.FC<AlertButtonProps> = ({ timeLabel, departureTi
       aria-label={label}
       aria-pressed={active}
       title={disabled ? 'Odjezd je příliš brzy' : active ? `Připomínka ${leadMinutes} min předem — kliknutím změníte` : 'Připomenout odjezd'}
-      // Visually 32px to keep the row compact; the ::before overlay extends the hit area to 44×44px
-      className={`relative before:absolute before:-inset-1.5 before:content-[''] -mr-1.5 sm:mr-0 inline-flex items-center justify-center gap-0.5 rounded-md min-w-8 h-8 px-0.5 transition-colors duration-150 focus-ring disabled:opacity-30 disabled:cursor-not-allowed ${
+      className={`inline-flex items-center justify-center gap-0.5 rounded-md w-8 h-8 px-0.5 transition-colors duration-150 focus-ring disabled:opacity-30 disabled:cursor-not-allowed ${
         active
           ? 'text-primary-400 bg-primary-500/15 hover:bg-primary-500/25'
           : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'

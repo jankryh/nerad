@@ -1,10 +1,23 @@
+import React, { useState } from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { VehiclePosition } from '../VehiclePosition';
+import { VehiclePosition, VehiclePositionDetail } from '../VehiclePosition';
 import { getVehiclePosition } from '../../api/pidApi';
 
 vi.mock('../../api/pidApi', () => ({ getVehiclePosition: vi.fn() }));
 const mockedGet = vi.mocked(getVehiclePosition);
+
+// Test wrapper that manages the open state
+const VehiclePositionWrapper: React.FC<{ tripId: string; line: string }> = ({ tripId, line }) => {
+  const [open, setOpen] = useState(false);
+  const detailId = `pos-${tripId}`;
+  return (
+    <>
+      <VehiclePosition line={line} open={open} onToggle={() => setOpen(!open)} detailId={detailId} />
+      {open && <VehiclePositionDetail tripId={tripId} detailId={detailId} />}
+    </>
+  );
+};
 
 describe('VehiclePosition', () => {
   beforeEach(() => {
@@ -15,7 +28,7 @@ describe('VehiclePosition', () => {
 
   it('loads only on demand, refreshes every 30 s while open and stops when closed', async () => {
     mockedGet.mockResolvedValue({ lastStop: 'Libčice', nextStop: 'Roztoky', delay: 2, timestamp: null });
-    render(<VehiclePosition tripId="1309_1_251214" line="S4" />);
+    render(<VehiclePositionWrapper tripId="1309_1_251214" line="S4" />);
     const button = screen.getByRole('button', { name: 'Kde je spoj S4?' });
 
     expect(button).toHaveAttribute('aria-expanded', 'false');
@@ -39,7 +52,7 @@ describe('VehiclePosition', () => {
     [() => mockedGet.mockRejectedValue(new Error('HTTP 429')), 'Polohu se nepodařilo načíst'],
   ])('shows a fallback message', async (setup, message) => {
     setup();
-    render(<VehiclePosition tripId="1309_1_251214" line="S4" />);
+    render(<VehiclePositionWrapper tripId="1309_1_251214" line="S4" />);
 
     await act(async () => { fireEvent.click(screen.getByRole('button')); });
 

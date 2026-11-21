@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MapPin } from 'lucide-react';
 import { getVehiclePosition } from '../api/pidApi';
 import { REFRESH_INTERVAL } from '../constants';
@@ -24,14 +24,42 @@ const describe = (state: State): string => {
   return `Poloha: ${where}${delay}${at}`;
 };
 
-/** On-demand vehicle position: renders a toggle button cell and returns whether detail should be shown. */
-export const VehiclePosition: React.FC<{ tripId: string; line: string }> = ({ tripId, line }) => {
-  const [open, setOpen] = useState(false);
+interface VehiclePositionProps {
+  line: string;
+  open: boolean;
+  onToggle: () => void;
+  detailId: string;
+}
+
+/** Toggle button for vehicle position */
+export const VehiclePosition: React.FC<VehiclePositionProps> = ({ line, open, onToggle, detailId }) => {
+  return (
+    <div className="w-8 flex-shrink-0 flex justify-end" role="cell">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        aria-controls={detailId}
+        aria-label={`Kde je spoj ${line}?`}
+        title="Kde je?"
+        className={`focus-ring rounded p-1 min-w-9 min-h-9 -mr-1 hover:bg-white/5 ${open ? 'text-primary-400' : 'text-zinc-500'}`}
+      >
+        <MapPin className="w-4 h-4" aria-hidden="true" />
+      </button>
+    </div>
+  );
+};
+
+interface VehiclePositionDetailProps {
+  tripId: string;
+  detailId: string;
+}
+
+/** Detail row showing vehicle position */
+export const VehiclePositionDetail: React.FC<VehiclePositionDetailProps> = ({ tripId, detailId }) => {
   const [state, setState] = useState<State>({ status: 'loading' });
-  const detailId = useId();
 
   useEffect(() => {
-    if (!open) return;
     let cancelled = false;
     const load = () => {
       getVehiclePosition(tripId)
@@ -40,31 +68,14 @@ export const VehiclePosition: React.FC<{ tripId: string; line: string }> = ({ tr
     };
     setState({ status: 'loading' });
     load();
-    // At most one request per 30 s and only while this row is open; skip while the tab is hidden.
+    // At most one request per 30 s; skip while the tab is hidden.
     const intervalId = setInterval(() => { if (!document.hidden) load(); }, REFRESH_INTERVAL);
     return () => { cancelled = true; clearInterval(intervalId); };
-  }, [open, tripId]);
+  }, [tripId]);
 
   return (
-    <>
-      <div className="w-7 flex-shrink-0 flex justify-end" role="cell">
-        <button
-          type="button"
-          onClick={() => setOpen((value) => !value)}
-          aria-expanded={open}
-          aria-controls={detailId}
-          aria-label={`Kde je spoj ${line}?`}
-          title="Kde je?"
-          className={`focus-ring rounded p-1 hover:bg-white/5 ${open ? 'text-primary-400' : 'text-zinc-500'}`}
-        >
-          <MapPin className="w-4 h-4" aria-hidden="true" />
-        </button>
-      </div>
-      {open && (
-        <div id={detailId} className="w-full px-3 pb-2 text-xs text-zinc-400" role="row" aria-live="polite">
-          <div role="cell">{describe(state)}</div>
-        </div>
-      )}
-    </>
+    <div id={detailId} className="px-3 pb-2 text-xs text-zinc-400" role="row" aria-live="polite">
+      <div role="cell">{describe(state)}</div>
+    </div>
   );
 };

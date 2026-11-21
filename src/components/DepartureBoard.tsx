@@ -11,7 +11,7 @@ import { logger } from '../utils/logger';
 import { Train, Bus } from 'lucide-react';
 import { AlertButton } from './AlertButton';
 import { ALERT_LEAD_OPTIONS } from '../utils/departureAlerts';
-import { VehiclePosition } from './VehiclePosition';
+import { VehiclePosition, VehiclePositionDetail } from './VehiclePosition';
 
 interface DepartureBoardProps {
   departures: Departure[];
@@ -29,6 +29,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   setAlert,
 }) => {
   const [enhancedTravelTimes, setEnhancedTravelTimes] = useState<Map<string, number>>(new Map());
+  const [openPositionId, setOpenPositionId] = useState<string | null>(null);
   const alertsEnabled = !targetDateTime;
 
   useEffect(() => {
@@ -122,17 +123,17 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   return (
     <div className="glass rounded-xl border border-white/10 overflow-hidden" role="table" aria-label="Tabule odjezdů">
       <div
-        className="flex items-center gap-2 px-3 py-2 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider border-b border-white/10"
+        className="flex items-center gap-x-1.5 sm:gap-x-2 px-3 py-2 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider border-b border-white/10"
         style={{ color: 'color-mix(in srgb, var(--color-text) 55%, transparent)' }}
         role="row"
       >
-        <div className="w-14 sm:w-16" role="columnheader">Odjezd</div>
+        <div className="w-12 sm:w-16" role="columnheader">Odjezd</div>
         <div className="w-12 sm:w-14 text-center" role="columnheader">Linka</div>
-        <div className="w-14 sm:w-16" role="columnheader">Příjezd</div>
+        <div className="w-12 sm:w-16" role="columnheader">Příjezd</div>
         <div className="hidden sm:block w-14" role="columnheader">Cesta</div>
-        <div className="flex-1 text-right" role="columnheader">Za</div>
-        {alertsEnabled && <div className="w-7" role="columnheader"><span className="sr-only">Připomínka</span></div>}
-        {!targetDateTime && <div className="w-7" role="columnheader"><span className="sr-only">Poloha</span></div>}
+        <div className="flex-1 min-w-0 text-right" role="columnheader">Za</div>
+        {alertsEnabled && <div className="w-8" role="columnheader"><span className="sr-only">Připomínka</span></div>}
+        {!targetDateTime && <div className="w-8" role="columnheader"><span className="sr-only">Poloha</span></div>}
       </div>
 
       {sorted.map((departure, index) => {
@@ -143,69 +144,86 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
         const actualDepartureMs = calculateActualDepartureTime(departure).getTime();
         const msUntilDeparture = actualDepartureMs - referenceTime.getTime();
         const tooLate = msUntilDeparture <= ALERT_LEAD_OPTIONS[0] * 60_000;
+        const rowKey = `${departure.tripId}-${departure.scheduledTime}`;
+        const detailId = `pos-${rowKey}`;
+        const isPositionOpen = openPositionId === rowKey;
 
         return (
-          <div
-            key={`${departure.tripId}-${departure.scheduledTime}`}
-            className={`
-              flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2.5 sm:py-3 transition-colors duration-150
-              hover:bg-white/[0.03]
-              ${index === 0 ? 'bg-white/[0.02]' : ''}
-              ${index < sorted.length - 1 ? 'border-b border-white/[0.08]' : ''}
-            `}
-            role="row"
-          >
-            <div className="w-14 sm:w-16 flex-shrink-0" role="cell">
-              <span
-                className={`font-mono font-bold text-sm sm:text-base lg:text-lg ${hasDelay ? 'text-red-400' : 'text-white'}`}
-              >
-                {hasDelay
-                  ? formatTime(calculateActualDepartureTime(departure).toISOString())
-                  : formatTime(departure.scheduledTime)}
-              </span>
-              {hasDelay && (
-                <span className="text-red-400 text-xs font-bold ml-1">+{departure.delay}</span>
-              )}
-            </div>
+          <React.Fragment key={rowKey}>
+            <div
+              className={`
+                flex items-center gap-x-1.5 sm:gap-x-2 px-3 py-2.5 sm:py-3 min-w-0 transition-colors duration-150
+                hover:bg-white/[0.03]
+                ${index === 0 ? 'bg-white/[0.02]' : ''}
+                ${index < sorted.length - 1 && !isPositionOpen ? 'border-b border-white/[0.08]' : ''}
+              `}
+              role="row"
+            >
+              <div className="w-12 sm:w-16 flex-shrink-0" role="cell">
+                <span
+                  className={`font-mono font-bold text-sm sm:text-base lg:text-lg ${hasDelay ? 'text-red-400' : 'text-white'}`}
+                >
+                  {hasDelay
+                    ? formatTime(calculateActualDepartureTime(departure).toISOString())
+                    : formatTime(departure.scheduledTime)}
+                </span>
+                {hasDelay && (
+                  <span className="text-red-400 text-xs font-bold ml-1">+{departure.delay}</span>
+                )}
+              </div>
 
-            <div className="w-12 sm:w-14 flex-shrink-0 flex justify-center" role="cell">
-              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] sm:text-xs font-bold border ${lineBadgeColor(departure.mode)}`}>
-                {departure.mode === 'train'
-                  ? <Train className="w-3 h-3" aria-hidden="true" />
-                  : <Bus className="w-3 h-3" aria-hidden="true" />}
-                {departure.line}
-              </span>
-            </div>
+              <div className="w-12 sm:w-14 flex-shrink-0 flex justify-center" role="cell">
+                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] sm:text-xs font-bold border ${lineBadgeColor(departure.mode)}`}>
+                  {departure.mode === 'train'
+                    ? <Train className="w-3 h-3" aria-hidden="true" />
+                    : <Bus className="w-3 h-3" aria-hidden="true" />}
+                  {departure.line}
+                </span>
+              </div>
 
-            <div className="w-14 sm:w-16 flex-shrink-0" role="cell">
-              <span className="font-mono text-sm sm:text-base text-zinc-300">
-                {getArrivalTime(departure)}
-              </span>
-            </div>
+              <div className="w-12 sm:w-16 flex-shrink-0" role="cell">
+                <span className="font-mono text-xs sm:text-base text-zinc-300">
+                  {getArrivalTime(departure)}
+                </span>
+              </div>
 
-            <div className="hidden sm:block w-14 flex-shrink-0" role="cell">
-              <span className="text-xs text-zinc-500">{travelMin}min</span>
-            </div>
+              <div className="hidden sm:block w-14 flex-shrink-0" role="cell">
+                <span className="text-xs text-zinc-500">{travelMin}min</span>
+              </div>
 
-            <div className="flex-1 flex items-center justify-end gap-0.5" role="cell">
-              <span className={`whitespace-nowrap font-mono font-bold text-base sm:text-xl ${index === 0 ? 'text-primary-400' : 'text-white'}`}>
-                {minutesUntil !== null ? formatCountdown(minutesUntil, !!targetDateTime) : '--'}
-              </span>
+              <div className="flex-1 min-w-0 text-right" role="cell">
+                <span className={`whitespace-nowrap font-mono font-bold text-sm sm:text-xl ${index === 0 ? 'text-primary-400' : 'text-white'}`}>
+                  {minutesUntil !== null ? formatCountdown(minutesUntil, !!targetDateTime) : '--'}
+                </span>
+              </div>
+
               {alertsEnabled && (
-                <AlertButton
-                  timeLabel={formatTime(calculateActualDepartureTime(departure).toISOString())}
-                  departureTime={actualDepartureMs}
-                  leadMinutes={getLead(departure.tripId)}
-                  tooLate={tooLate}
-                  onChange={(lead) => setAlert(departure, lead)}
-                />
+                <div className="w-8 flex-shrink-0 flex justify-end" role="cell">
+                  <AlertButton
+                    timeLabel={formatTime(calculateActualDepartureTime(departure).toISOString())}
+                    departureTime={actualDepartureMs}
+                    leadMinutes={getLead(departure.tripId)}
+                    tooLate={tooLate}
+                    onChange={(lead) => setAlert(departure, lead)}
+                  />
+                </div>
               )}
-            </div>
 
-            {!targetDateTime && (departure.tripId !== 'N/A'
-              ? <VehiclePosition tripId={departure.tripId} line={departure.line} />
-              : <div className="w-7" role="cell" />)}
-          </div>
+              {!targetDateTime && (departure.tripId !== 'N/A'
+                ? <VehiclePosition
+                    line={departure.line}
+                    open={isPositionOpen}
+                    onToggle={() => setOpenPositionId(isPositionOpen ? null : rowKey)}
+                    detailId={detailId}
+                  />
+                : <div className="w-8 flex-shrink-0" role="cell" />)}
+            </div>
+            {isPositionOpen && departure.tripId !== 'N/A' && (
+              <div className={`${index < sorted.length - 1 ? 'border-b border-white/[0.08]' : ''}`}>
+                <VehiclePositionDetail tripId={departure.tripId} detailId={detailId} />
+              </div>
+            )}
+          </React.Fragment>
         );
       })}
     </div>
