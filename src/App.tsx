@@ -28,6 +28,7 @@ function App() {
     isLoading,
     error,
     lastUpdate,
+    isOffline,
     refreshData,
     retryCount,
     isRetrying,
@@ -47,6 +48,11 @@ function App() {
       </a>
       <div className="relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-12 max-w-7xl">
         <Header onRefresh={refreshData} isRefreshing={isLoading} selectedDateTime={selectedDateTime} onDateTimeChange={setSelectedDateTime} />
+        {isOffline && (
+          <p role="status" className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-center text-sm text-amber-400">
+            Offline{lastUpdate && <> — zobrazuji data z <time className="font-mono">{lastUpdate.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit', hour12: false })}</time></>}
+          </p>
+        )}
         <main id="main-content" className="space-y-6 sm:space-y-8">
           <DepartureGrid
             trainToPrague={trainToPrague}

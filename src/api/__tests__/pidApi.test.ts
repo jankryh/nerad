@@ -28,6 +28,17 @@ describe('pidApi', () => {
     vi.unstubAllGlobals();
   });
 
+  it('reports offlineSince when the service worker served cached data', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(
+      new Response(JSON.stringify({ departures: [] }), { headers: { 'x-sw-cache-date': '1700000000000' } }),
+    )));
+    expect((await getAllDepartures(null, 'masarykovo', false)).offlineSince).toBe(1700000000000);
+
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(JSON.stringify({ departures: [] })))));
+    expect((await getAllDepartures(null, 'masarykovo', false)).offlineSince).toBeNull();
+    vi.unstubAllGlobals();
+  });
+
   it('keeps working boards when one board fails', async () => {
     const fetchMock = vi.fn((url: URL) => Promise.resolve(
       url.searchParams.get('ids[]') === STOPS.BUBNY

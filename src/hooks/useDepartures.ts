@@ -3,6 +3,7 @@ import { Departure, ApiError } from '../types';
 import { getAllDepartures } from '../api/pidApi';
 import { PragueStation, REFRESH_INTERVAL } from '../constants';
 import { logger } from '../utils/logger';
+import { calculateActualDepartureTime } from '../utils/timeCalculations';
 
 interface DeparturesState {
   trainToPrague: Departure[];
@@ -18,6 +19,8 @@ interface UseDeparturesReturn extends DeparturesState {
   isLoading: boolean;
   error: string | null;
   lastUpdate: Date | null;
+  // Data come from the service worker cache or the browser reports no network
+  isOffline: boolean;
   refreshData: () => void;
   retryCount: number;
   isRetrying: boolean;
@@ -38,6 +41,10 @@ const MAX_AUTO_RETRIES = 5;
 const BACKOFF_BASE_MS = 5000;
 const BACKOFF_MAX_MS = 30000;
 
+// Cached data age; drop trains that already left instead of showing them as "teď"
+const notDeparted = (departures: Departure[]) =>
+  departures.filter((d) => calculateActualDepartureTime(d).getTime() > Date.now() - 60_000);
+
 const getBackoffDelay = (retryCount: number): number => {
   const delay = BACKOFF_BASE_MS * Math.pow(2, retryCount);
   return Math.min(delay, BACKOFF_MAX_MS);
@@ -48,6 +55,8 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [fromSwCache, setFromSwCache] = useState(false);
+  const [browserOffline, setBrowserOffline] = useState(() => !navigator.onLine);
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
   const [nextRetryIn, setNextRetryIn] = useState<number | null>(null);
@@ -125,15 +134,18 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
         busToPrague: data.husinecsToKobylisy,
         busFromPrague: data.kobylisyToHusinec,
       };
+      const { offlineSince } = data;
+      const pick = offlineSince ? notDeparted : (d: Departure[]) => d;
       setDepartures({
-        trainToPrague: boards.trainToPrague.departures,
-        trainFromPrague: boards.trainFromPrague.departures,
-        busToPrague: boards.busToPrague.departures,
-        busFromPrague: boards.busFromPrague.departures,
+        trainToPrague: pick(boards.trainToPrague.departures),
+        trainFromPrague: pick(boards.trainFromPrague.departures),
+        busToPrague: pick(boards.busToPrague.departures),
+        busFromPrague: pick(boards.busFromPrague.departures),
         failedBoards: Object.keys(boards).filter((key) => boards[key as keyof typeof boards].error),
         bubnyHasTrains: data.masarykovoToRez.bubnyHasTrains ?? false,
       });
-      setLastUpdate(new Date());
+      setLastUpdate(new Date(offlineSince ?? Date.now()));
+      setFromSwCache(Boolean(offlineSince));
       setError(null);
       retryCountRef.current = 0;
       setRetryCount(0);
@@ -207,11 +219,22 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
     };
   }, [fetchData, targetDateTime]);
 
+  useEffect(() => {
+    const update = () => setBrowserOffline(!navigator.onLine);
+    window.addEventListener('online', update);
+    window.addEventListener('offline', update);
+    return () => {
+      window.removeEventListener('online', update);
+      window.removeEventListener('offline', update);
+    };
+  }, []);
+
   return {
     ...departures,
     isLoading,
     error,
     lastUpdate,
+    isOffline: fromSwCache || browserOffline,
     refreshData: () => manualFetch(false),
     retryCount,
     isRetrying,

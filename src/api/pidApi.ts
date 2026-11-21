@@ -42,9 +42,13 @@ interface BoardApiItem {
 
 interface BoardApiResponse {
   departures?: BoardApiItem[];
+  cachedAt?: number;
 }
 
 const usesProxy = !import.meta.env.DEV || API_BASE_URL.startsWith('/');
+// Oldest x-sw-cache-date seen since the last getAllDepartures start: the service worker answered from its cache (offline).
+// ponytail: module-level, a concurrent travel-time lookup can also set it; only ever while offline, so harmless.
+let swCachedAt: number | null = null;
 const inflightRequests = new Map<string, Promise<BoardApiResponse>>();
 
 const getBoardJson = (params: Record<string, string | number>): Promise<BoardApiResponse> => {
@@ -68,7 +72,9 @@ const getBoardJson = (params: Record<string, string | number>): Promise<BoardApi
       if (!response.ok) {
         throw Object.assign(new Error(`HTTP ${response.status}`), { status: response.status });
       }
-      return response.json() as Promise<BoardApiResponse>;
+      const cachedAt = Number(response.headers.get('x-sw-cache-date'));
+      if (cachedAt) swCachedAt = Math.min(swCachedAt ?? cachedAt, cachedAt);
+      return response.json().then((json: BoardApiResponse) => (cachedAt ? { ...json, cachedAt } : json));
     })
     .finally(() => inflightRequests.delete(key));
   inflightRequests.set(key, request);
@@ -223,8 +229,8 @@ const fetchBoard = async ({
 
   filtered = filtered.slice(0, limit);
 
-  // Always store fresh live data, also when the read bypassed the cache
-  if (!isScheduled) {
+  // Always store fresh live data, also when the read bypassed the cache (not SW-cached offline data)
+  if (!isScheduled && !data.cachedAt) {
     boardCache.set(cacheKey, {
       expiresAt: now + BOARD_CACHE_TTL,
       data: { departures: filtered },
@@ -287,6 +293,7 @@ export const getArrivals = async (
 export const getAllDepartures = async (targetDateTime?: Date | null, pragueStation: PragueStation = 'masarykovo', useCache = true) => {
   const perBoardLimit = targetDateTime ? 6 : 3;
   const fromPragueStopId = pragueStation === 'bubny' ? STOPS.BUBNY : STOPS.MASARYKOVO;
+  swCachedAt = null;
 
   // Start Bubny hint check in parallel when Masarykovo is selected (always with cache)
   const bubnyHintPromise = pragueStation === 'masarykovo'
@@ -336,6 +343,8 @@ export const getAllDepartures = async (targetDateTime?: Date | null, pragueStati
     masarykovoToRez,
     husinecsToKobylisy,
     kobylisyToHusinec,
+    // Set when the service worker served cached data (offline): time of that last successful fetch
+    offlineSince: swCachedAt as number | null,
   };
 };
 
