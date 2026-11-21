@@ -11,6 +11,8 @@ export interface DepartureAlert {
   departureTime: number;
   line: string;
   boardDirection?: string;
+  /** Stop ID where this reminder was set, to distinguish the same trip at different stops */
+  stopId?: string;
 }
 
 const MINUTE = 60_000;
@@ -35,6 +37,7 @@ export const createAlert = (departure: Departure, leadMinutes: number): Departur
   departureTime: calculateActualDepartureTime(departure).getTime(),
   line: departure.line,
   boardDirection: departure.boardDirection,
+  stopId: departure.boardDirection,
 });
 
 export interface ReconcileResult {
@@ -45,10 +48,10 @@ export interface ReconcileResult {
 
 /**
  * Sync alerts with the current board and decide which ones fire.
- * - matched by tripId → departure time follows the current delay
- * - missing from a loaded feed of the same direction → dropped silently
+ * - matched by tripId + stopId → departure time follows the current delay
+ * - missing from a loaded feed that includes the same stop → dropped silently
  * - missing while its feed is absent (error / other board) → kept as-is
- * - departure already left → dropped without firing
+ * - departure already left (+ 2 min grace) → dropped without firing
  * - fire time reached → fired and removed
  */
 export const reconcileAlerts = (
@@ -56,34 +59,47 @@ export const reconcileAlerts = (
   departures: Departure[],
   now: number,
 ): ReconcileResult => {
-  const byTrip = new Map(departures.map((d) => [d.tripId, d]));
-  const loadedDirections = new Set(departures.map((d) => d.boardDirection));
+  const byTripAndStop = new Map<string, Departure>();
+  const loadedStops = new Set<string>();
+
+  for (const d of departures) {
+    const key = `${d.tripId}:${d.boardDirection}`;
+    byTripAndStop.set(key, d);
+    if (d.boardDirection) loadedStops.add(d.boardDirection);
+  }
+
   const kept: DepartureAlert[] = [];
   const toFire: DepartureAlert[] = [];
   let changed = false;
 
   for (const alert of alerts) {
     let current = alert;
-    const departure = byTrip.get(alert.tripId);
+    const key = `${alert.tripId}:${alert.boardDirection}`;
+    const departure = byTripAndStop.get(key);
 
     if (departure) {
+      // Trip is on the current board: update departure time with fresh delay
       const departureTime = calculateActualDepartureTime(departure).getTime();
       if (departureTime !== alert.departureTime) {
         current = { ...alert, departureTime };
         changed = true;
       }
-    } else if (loadedDirections.has(alert.boardDirection)) {
+    } else if (alert.boardDirection && loadedStops.has(alert.boardDirection)) {
+      // Trip is not on the board that should contain it (same direction is loaded) → dropped
       changed = true;
       continue;
     }
+    // Otherwise: trip is not on any loaded board → keep the reminder with the last known time
 
-    if (now >= current.departureTime) {
-      changed = true;
-      continue;
-    }
-
-    if (now >= getFireTime(current)) {
+    // Fire reminders when the fire time is reached AND departure hasn't left yet
+    if (now >= getFireTime(current) && now < current.departureTime) {
       toFire.push(current);
+      changed = true;
+      continue;
+    }
+
+    // Drop reminders after departure time + 1 min grace period (without firing)
+    if (now >= current.departureTime + 60_000) {
       changed = true;
       continue;
     }

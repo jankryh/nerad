@@ -1,7 +1,7 @@
-/* global self, caches, Headers, Response */
+/* global self, caches, Headers, Response, URLSearchParams */
 // Bump on SW logic changes; activate deletes every other cache.
 // ponytail: hashed assets from older deploys pile up within one version; bump CACHE to purge.
-const CACHE = 'nerad-v1';
+const CACHE = 'nerad-v2';
 const CACHE_DATE = 'x-sw-cache-date';
 
 self.addEventListener('install', (event) => {
@@ -31,11 +31,11 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     // SPA: one shell under '/', whatever the path or query
-    event.respondWith(networkFirst(request, '/'));
+    event.respondWith(networkFirstNavigation(request));
   } else if (url.pathname.startsWith('/assets/')) {
     event.respondWith(cacheFirst(request));
   } else if (url.pathname === '/api/departureboards') {
-    event.respondWith(networkFirst(request, request, true));
+    event.respondWith(networkFirstAPI(request));
   }
   // Everything else (other /api endpoints, icons, manifest) goes straight to the network
 });
@@ -51,22 +51,54 @@ async function cacheFirst(request) {
   return res;
 }
 
-// ponytail: no SW-side timeout; on a hanging network the client's own 8 s timeout fires first and shows the error.
-async function networkFirst(request, cacheKey, stampDate = false) {
+// Navigation: only cache text/html for app routes (/, /index.html, possibly with query string)
+async function networkFirstNavigation(request) {
   const cache = await caches.open(CACHE);
   try {
     const res = await fetch(request);
-    if (res.ok) {
-      // The stamp is only visible to the page when this copy is served as the offline fallback
-      const copy = stampDate ? await stamp(res.clone()) : res.clone();
-      await cache.put(cacheKey, copy);
+    if (res.ok && res.headers.get('content-type')?.includes('text/html')) {
+      const url = new URL(request.url);
+      if (url.pathname === '/' || url.pathname === '/index.html') {
+        // Cache write failures don't block returning the network response
+        cache.put('/', res.clone()).catch(() => undefined);
+      }
     }
     return res;
   } catch (err) {
-    const cached = await cache.match(cacheKey);
+    const cached = await cache.match('/');
     if (cached) return cached;
     throw err;
   }
+}
+
+// API: normalize the cache key (drop time window params) and stamp the date
+async function networkFirstAPI(request) {
+  const cache = await caches.open(CACHE);
+  const normalizedKey = normalizeAPIKey(request.url);
+  try {
+    const res = await fetch(request);
+    if (res.ok) {
+      const stamped = await stamp(res.clone());
+      // Cache write failures don't block returning the network response
+      cache.put(normalizedKey, stamped).catch(() => undefined);
+    }
+    return res;
+  } catch (err) {
+    const cached = await cache.match(normalizedKey);
+    if (cached) return cached;
+    throw err;
+  }
+}
+
+function normalizeAPIKey(urlString) {
+  const url = new URL(urlString);
+  const params = new URLSearchParams(url.search);
+  // Keep stable params, drop the time window (minutesBefore/minutesAfter changes every minute)
+  params.delete('minutesBefore');
+  params.delete('minutesAfter');
+  params.sort();
+  url.search = params.toString();
+  return url.toString();
 }
 
 async function stamp(res) {

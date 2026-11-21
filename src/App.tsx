@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Header } from './components/Header';
 import { DepartureGrid } from './components/DepartureGrid';
+import { AlertToasts } from './components/AlertButton';
 import { useDepartures } from './hooks/useDepartures';
+import { useDepartureAlerts } from './hooks/useDepartureAlerts';
 import { PragueStation } from './constants';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { PRAGUE_TIME_ZONE } from './utils/pragueDateTime';
@@ -54,6 +56,10 @@ function App() {
     bubnyHasTrains,
   } = useDepartures(selectedDateTime, pragueStation);
 
+  const allDepartures = [...trainToPrague, ...trainFromPrague, ...busToPrague, ...busFromPrague];
+  const alertsEnabled = !selectedDateTime;
+  const { getLead, setAlert, toasts, dismissToast } = useDepartureAlerts(allDepartures, alertsEnabled);
+
   return (
     <ThemeProvider>
       <div className="min-h-screen w-full">
@@ -87,6 +93,8 @@ function App() {
             pragueStation={pragueStation}
             onPragueStationChange={handlePragueStationChange}
             bubnyHasTrains={bubnyHasTrains}
+            getLead={getLead}
+            setAlert={setAlert}
           />
           
           {lastUpdate && !error && (
@@ -106,6 +114,7 @@ function App() {
           )}
         </main>
       </div>
+      <AlertToasts toasts={toasts} onDismiss={dismissToast} />
       </div>
     </ThemeProvider>
   );

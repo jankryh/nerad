@@ -9,8 +9,7 @@ import {
 } from '../utils/timeCalculations';
 import { logger } from '../utils/logger';
 import { Train, Bus } from 'lucide-react';
-import { AlertButton, AlertToasts } from './AlertButton';
-import { useDepartureAlerts } from '../hooks/useDepartureAlerts';
+import { AlertButton } from './AlertButton';
 import { ALERT_LEAD_OPTIONS } from '../utils/departureAlerts';
 import { VehiclePosition } from './VehiclePosition';
 
@@ -18,16 +17,19 @@ interface DepartureBoardProps {
   departures: Departure[];
   targetDateTime?: Date | null;
   pragueStation?: PragueStation;
+  getLead: (tripId: string) => number | null;
+  setAlert: (departure: Departure, leadMinutes: number | null) => void;
 }
 
 export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   departures,
   targetDateTime = null,
   pragueStation = 'masarykovo',
+  getLead,
+  setAlert,
 }) => {
   const [enhancedTravelTimes, setEnhancedTravelTimes] = useState<Map<string, number>>(new Map());
   const alertsEnabled = !targetDateTime;
-  const { getLead, setAlert, toasts, dismissToast } = useDepartureAlerts(departures, alertsEnabled);
 
   useEffect(() => {
     if (!TRAVEL_TIME_CONFIG.enableRealTimeInUI || departures.length === 0) {
@@ -113,7 +115,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
         <p className="text-white/50 text-sm">
           {targetDateTime ? 'Žádné odjezdy v tomto čase' : 'Žádné odjezdy'}
         </p>
-        <AlertToasts toasts={toasts} onDismiss={dismissToast} />
       </div>
     );
   }
@@ -130,6 +131,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
         <div className="w-14 sm:w-16" role="columnheader">Příjezd</div>
         <div className="hidden sm:block w-14" role="columnheader">Cesta</div>
         <div className="flex-1 text-right" role="columnheader">Za</div>
+        {alertsEnabled && <div className="w-7" role="columnheader"><span className="sr-only">Připomínka</span></div>}
         {!targetDateTime && <div className="w-7" role="columnheader"><span className="sr-only">Poloha</span></div>}
       </div>
 
@@ -137,10 +139,14 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
         const minutesUntil = getMinutesUntilDeparture(departure);
         const hasDelay = Boolean(departure.delay && departure.delay > 0);
         const travelMin = getTravelTime(departure);
+        const referenceTime = targetDateTime ?? new Date();
+        const actualDepartureMs = calculateActualDepartureTime(departure).getTime();
+        const msUntilDeparture = actualDepartureMs - referenceTime.getTime();
+        const tooLate = msUntilDeparture <= ALERT_LEAD_OPTIONS[0] * 60_000;
 
         return (
           <div
-            key={`${departure.line}-${departure.scheduledTime}-${index}`}
+            key={`${departure.tripId}-${departure.scheduledTime}`}
             className={`
               flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2.5 sm:py-3 transition-colors duration-150
               hover:bg-white/[0.03]
@@ -182,15 +188,15 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
             </div>
 
             <div className="flex-1 flex items-center justify-end gap-0.5" role="cell">
-              <span className={`font-mono font-bold text-lg sm:text-xl ${index === 0 ? 'text-primary-400' : 'text-white'}`}>
+              <span className={`whitespace-nowrap font-mono font-bold text-base sm:text-xl ${index === 0 ? 'text-primary-400' : 'text-white'}`}>
                 {minutesUntil !== null ? formatCountdown(minutesUntil, !!targetDateTime) : '--'}
               </span>
               {alertsEnabled && (
                 <AlertButton
                   timeLabel={formatTime(calculateActualDepartureTime(departure).toISOString())}
-                  departureTime={calculateActualDepartureTime(departure).getTime()}
+                  departureTime={actualDepartureMs}
                   leadMinutes={getLead(departure.tripId)}
-                  tooLate={minutesUntil !== null && minutesUntil <= ALERT_LEAD_OPTIONS[0]}
+                  tooLate={tooLate}
                   onChange={(lead) => setAlert(departure, lead)}
                 />
               )}
@@ -202,8 +208,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
           </div>
         );
       })}
-
-      <AlertToasts toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 };

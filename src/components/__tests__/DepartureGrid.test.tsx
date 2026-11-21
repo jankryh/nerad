@@ -28,6 +28,8 @@ const defaultProps = {
   busToPrague: [],
   busFromPrague: [],
   isLoading: false,
+  getLead: vi.fn().mockReturnValue(null),
+  setAlert: vi.fn(),
   error: null,
   pragueStation: 'masarykovo' as const,
   onPragueStationChange: vi.fn(),

@@ -1,8 +1,10 @@
+import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { DepartureBoard } from '../DepartureBoard';
+import { AlertToasts } from '../AlertButton';
 import { Departure } from '../../types';
-import { __resetAlertsForTesting } from '../../hooks/useDepartureAlerts';
+import { __resetAlertsForTesting, useDepartureAlerts } from '../../hooks/useDepartureAlerts';
 import { ALERTS_STORAGE_KEY } from '../../utils/departureAlerts';
 
 vi.mock('../../utils/timeCalculations', async (importOriginal) => ({
@@ -17,6 +19,18 @@ const dep = (tripId: string, scheduledTime: string, delay: number | null = null)
   id: tripId, tripId, routeId: 'S4', line: 'S4', mode: 'train', direction: 'Praha', scheduledTime, delay,
   boardDirection: 'to-masarykovo',
 });
+
+// Test wrapper that provides the alerts hook
+const DepartureBoardWithAlerts: React.FC<{ departures: Departure[]; targetDateTime?: Date | null }> = ({ departures, targetDateTime }) => {
+  const alertsEnabled = !targetDateTime;
+  const { getLead, setAlert, toasts, dismissToast } = useDepartureAlerts(departures, alertsEnabled);
+  return (
+    <>
+      <DepartureBoard departures={departures} targetDateTime={targetDateTime} getLead={getLead} setAlert={setAlert} />
+      <AlertToasts toasts={toasts} onDismiss={dismissToast} />
+    </>
+  );
+};
 
 const bell = () => screen.getByRole('button', { name: /^Připomenout odjezd/ });
 
@@ -36,7 +50,7 @@ afterEach(() => {
 
 describe('AlertButton in DepartureBoard', () => {
   it('cycles 5 → 10 → 15 → off with aria-pressed and persists to localStorage', () => {
-    render(<DepartureBoard departures={[dep('t1', '2026-03-20T10:30:00.000Z')]} />);
+    render(<DepartureBoardWithAlerts departures={[dep('t1', '2026-03-20T10:30:00.000Z')]} />);
     expect(bell()).toHaveAttribute('aria-pressed', 'false');
     expect(bell().getAttribute('aria-label')).toMatch(/^Připomenout odjezd \d{2}:\d{2}$/);
 
@@ -56,7 +70,7 @@ describe('AlertButton in DepartureBoard', () => {
   it('falls back to an in-page alert + vibration when Notification API is missing', () => {
     const vibrate = vi.fn();
     Object.defineProperty(navigator, 'vibrate', { value: vibrate, configurable: true });
-    render(<DepartureBoard departures={[dep('t1', '2026-03-20T10:30:00.000Z')]} />);
+    render(<DepartureBoardWithAlerts departures={[dep('t1', '2026-03-20T10:30:00.000Z')]} />);
     fireEvent.click(bell()); // 5 min → fires at 10:25
 
     act(() => { vi.advanceTimersByTime(25 * MIN - 1000); });
@@ -69,14 +83,14 @@ describe('AlertButton in DepartureBoard', () => {
   });
 
   it('follows a new delay and cancels silently when the departure disappears', () => {
-    const { rerender } = render(<DepartureBoard departures={[dep('t1', '2026-03-20T10:30:00.000Z')]} />);
+    const { rerender } = render(<DepartureBoardWithAlerts departures={[dep('t1', '2026-03-20T10:30:00.000Z')]} />);
     fireEvent.click(bell());
 
-    rerender(<DepartureBoard departures={[dep('t1', '2026-03-20T10:30:00.000Z', 10)]} />);
+    rerender(<DepartureBoardWithAlerts departures={[dep('t1', '2026-03-20T10:30:00.000Z', 10)]} />);
     act(() => { vi.advanceTimersByTime(26 * MIN); });
     expect(screen.queryByRole('alert')).toBeNull(); // shifted to 10:35
 
-    rerender(<DepartureBoard departures={[dep('t2', '2026-03-20T10:50:00.000Z')]} />);
+    rerender(<DepartureBoardWithAlerts departures={[dep('t2', '2026-03-20T10:50:00.000Z')]} />);
     expect(localStorage.getItem(ALERTS_STORAGE_KEY)).toBeNull();
     act(() => { vi.advanceTimersByTime(20 * MIN); });
     expect(screen.queryByRole('alert')).toBeNull();
@@ -87,7 +101,7 @@ describe('AlertButton in DepartureBoard', () => {
       { tripId: 't1', leadMinutes: 10, departureTime: T0 + 30 * MIN, line: 'S4', boardDirection: 'to-masarykovo' },
       { tripId: 'gone', leadMinutes: 5, departureTime: T0 - MIN, line: 'S4', boardDirection: 'to-masarykovo' },
     ]));
-    render(<DepartureBoard departures={[dep('t1', '2026-03-20T10:30:00.000Z')]} />);
+    render(<DepartureBoardWithAlerts departures={[dep('t1', '2026-03-20T10:30:00.000Z')]} />);
     expect(bell()).toHaveAttribute('aria-pressed', 'true');
     expect(JSON.parse(localStorage.getItem(ALERTS_STORAGE_KEY)!)).toHaveLength(1);
   });
@@ -102,7 +116,7 @@ describe('AlertButton in DepartureBoard', () => {
     }
     vi.stubGlobal('Notification', FakeNotification);
 
-    render(<DepartureBoard departures={[dep('t1', '2026-03-20T10:30:00.000Z')]} />);
+    render(<DepartureBoardWithAlerts departures={[dep('t1', '2026-03-20T10:30:00.000Z')]} />);
     expect(requestPermission).not.toHaveBeenCalled();
     fireEvent.click(bell());
     expect(requestPermission).toHaveBeenCalledTimes(1);
@@ -114,7 +128,7 @@ describe('AlertButton in DepartureBoard', () => {
   });
 
   it('fires immediately when a hidden tab becomes visible after the reminder time', () => {
-    render(<DepartureBoard departures={[dep('t1', '2026-03-20T10:30:00.000Z')]} />);
+    render(<DepartureBoardWithAlerts departures={[dep('t1', '2026-03-20T10:30:00.000Z')]} />);
     fireEvent.click(bell());
     // Simulate throttled timers: move the clock without running timers
     vi.setSystemTime(T0 + 27 * MIN);
@@ -124,10 +138,10 @@ describe('AlertButton in DepartureBoard', () => {
 
   it('hides the bell in scheduled mode and disables it when too late', () => {
     const { rerender } = render(
-      <DepartureBoard departures={[dep('t1', '2026-03-20T10:30:00.000Z')]} targetDateTime={new Date(T0)} />,
+      <DepartureBoardWithAlerts departures={[dep('t1', '2026-03-20T10:30:00.000Z')]} targetDateTime={new Date(T0)} />,
     );
     expect(screen.queryByRole('button', { name: /^Připomenout odjezd/ })).toBeNull();
-    rerender(<DepartureBoard departures={[dep('t1', '2026-03-20T10:04:00.000Z')]} />);
+    rerender(<DepartureBoardWithAlerts departures={[dep('t1', '2026-03-20T10:04:00.000Z')]} />);
     expect(bell()).toBeDisabled();
   });
 });

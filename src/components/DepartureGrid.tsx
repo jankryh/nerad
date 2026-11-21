@@ -20,6 +20,8 @@ interface DepartureGridProps {
   pragueStation: PragueStation;
   onPragueStationChange: (station: PragueStation) => void;
   bubnyHasTrains?: boolean;
+  getLead: (tripId: string) => number | null;
+  setAlert: (departure: Departure, leadMinutes: number | null) => void;
 }
 
 export const DepartureGrid: React.FC<DepartureGridProps> = ({
@@ -38,6 +40,8 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
   pragueStation,
   onPragueStationChange,
   bubnyHasTrains = false,
+  getLead,
+  setAlert,
 }) => {
   const toPragueDepartures = [...trainToPrague, ...busToPrague];
   const fromPragueDepartures = [...trainFromPrague, ...busFromPrague];
@@ -145,7 +149,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
             <span>Do Prahy</span>
           </h2>
           {boardError('trainToPrague', 'busToPrague')}
-          <DepartureBoard departures={toPragueDepartures} targetDateTime={targetDateTime} pragueStation={pragueStation} />
+          <DepartureBoard departures={toPragueDepartures} targetDateTime={targetDateTime} pragueStation={pragueStation} getLead={getLead} setAlert={setAlert} />
         </section>
 
         <section className="space-y-2" aria-label="Odjezdy z Prahy">
@@ -166,7 +170,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
               </button>
             </div>
           )}
-          <DepartureBoard departures={fromPragueDepartures} targetDateTime={targetDateTime} pragueStation={pragueStation} />
+          <DepartureBoard departures={fromPragueDepartures} targetDateTime={targetDateTime} pragueStation={pragueStation} getLead={getLead} setAlert={setAlert} />
         </section>
       </div>
     );

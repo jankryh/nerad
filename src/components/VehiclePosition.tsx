@@ -24,7 +24,7 @@ const describe = (state: State): string => {
   return `Poloha: ${where}${delay}${at}`;
 };
 
-/** On-demand vehicle position: renders a toggle cell and, when open, a full-width detail cell (parent row must flex-wrap). */
+/** On-demand vehicle position: renders a toggle button cell and returns whether detail should be shown. */
 export const VehiclePosition: React.FC<{ tripId: string; line: string }> = ({ tripId, line }) => {
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<State>({ status: 'loading' });
@@ -60,9 +60,11 @@ export const VehiclePosition: React.FC<{ tripId: string; line: string }> = ({ tr
           <MapPin className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
-      <div id={detailId} className="basis-full text-xs text-zinc-400" role="cell" aria-live="polite" hidden={!open}>
-        {open ? describe(state) : null}
-      </div>
+      {open && (
+        <div id={detailId} className="w-full px-3 pb-2 text-xs text-zinc-400" role="row" aria-live="polite">
+          <div role="cell">{describe(state)}</div>
+        </div>
+      )}
     </>
   );
 };

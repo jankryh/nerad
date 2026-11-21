@@ -16,6 +16,9 @@ const dep = (tripId: string, scheduledTime: string, delay: number | null = null)
 afterEach(() => vi.useRealTimers());
 
 describe('DepartureBoard', () => {
+  const mockGetLead = vi.fn().mockReturnValue(null);
+  const mockSetAlert = vi.fn();
+
   it('sorts by effective (delayed) time and shows live countdown', () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-03-20T10:00:00.000Z'));
@@ -28,6 +31,8 @@ describe('DepartureBoard', () => {
           dep('b', '2026-03-20T11:05:00.000Z'),
           dep('c', '2026-03-20T10:08:00.000Z'),
         ]}
+        getLead={mockGetLead}
+        setAlert={mockSetAlert}
       />,
     );
 
@@ -40,6 +45,8 @@ describe('DepartureBoard', () => {
       <DepartureBoard
         departures={[dep('a', '2026-03-20T10:30:00.000Z')]}
         targetDateTime={new Date('2026-03-20T10:00:00.000Z')}
+        getLead={mockGetLead}
+        setAlert={mockSetAlert}
       />,
     );
 
