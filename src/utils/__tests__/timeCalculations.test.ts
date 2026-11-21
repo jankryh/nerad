@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { formatTime, calculateActualDepartureTime, getEnhancedTravelTime } from '../timeCalculations';
+import { formatTime, calculateActualDepartureTime, getEnhancedTravelTime, formatCountdown } from '../timeCalculations';
 import { calculateTravelTime } from '../../api/pidApi';
 import { STOPS } from '../../constants';
 import { Departure } from '../../types';
@@ -90,13 +90,37 @@ describe('getEnhancedTravelTime', () => {
   });
 });
 
-describe('formatCountdown (via DepartureBoard)', () => {
-  // Integration test to verify the countdown format matches design requirements
-  it('formats countdown consistently: "29 min", "1 h", "1 h 15 min"', () => {
-    // This verifies the design fix: D2.01 from design.md
-    // Format uses "min" consistently (not "m") for readability in monospace font
-    // Examples: "45 min", "1 h 2 min", "2 h" (whole hours without minutes)
-    // Note: This is tested indirectly through DepartureBoard rendering
-    expect(true).toBe(true); // Placeholder - actual format tested in DepartureBoard component tests
+describe('formatCountdown', () => {
+  it('formats "teď" for 0 or negative minutes in live mode', () => {
+    expect(formatCountdown(0, false)).toBe('teď');
+    expect(formatCountdown(-1, false)).toBe('teď');
+    expect(formatCountdown(-5, false)).toBe('teď');
+  });
+
+  it('formats minutes under 60 with "min" suffix in live mode', () => {
+    expect(formatCountdown(1, false)).toBe('1 min');
+    expect(formatCountdown(29, false)).toBe('29 min');
+    expect(formatCountdown(45, false)).toBe('45 min');
+    expect(formatCountdown(59, false)).toBe('59 min');
+  });
+
+  it('formats whole hours with "h" suffix in live mode', () => {
+    expect(formatCountdown(60, false)).toBe('1 h');
+    expect(formatCountdown(120, false)).toBe('2 h');
+    expect(formatCountdown(180, false)).toBe('3 h');
+  });
+
+  it('formats hours with minutes using "h" and "min" in live mode', () => {
+    expect(formatCountdown(61, false)).toBe('1 h 1 min');
+    expect(formatCountdown(65, false)).toBe('1 h 5 min');
+    expect(formatCountdown(75, false)).toBe('1 h 15 min');
+    expect(formatCountdown(131, false)).toBe('2 h 11 min');
+  });
+
+  it('formats scheduled mode with +/- prefix and "min" suffix', () => {
+    expect(formatCountdown(0, true)).toBe('0 min');
+    expect(formatCountdown(30, true)).toBe('+30 min');
+    expect(formatCountdown(-5, true)).toBe('-5 min');
+    expect(formatCountdown(120, true)).toBe('+120 min');
   });
 });

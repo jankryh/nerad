@@ -62,7 +62,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
           role="radio"
           aria-checked={pragueStation === station}
           onClick={() => onPragueStationChange(station)}
-          className={`px-3 py-2.5 font-medium transition-colors duration-150 focus-ring ${
+          className={`px-3 py-2.5 min-h-11 sm:min-h-0 font-medium transition-colors duration-150 focus-ring ${
             pragueStation === station
               ? 'bg-primary-500/20 text-primary-400 border-primary-500/30'
               : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.03]'
@@ -81,10 +81,10 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
     );
   };
 
-  if (isLoading && !hasData) {
-    return (
-      <section className="w-full" aria-label="Načítání spojů" role="status">
-        <div className="flex px-1 mb-2">{stationToggle}</div>
+  // Render toggle in consistent position across all states
+  const renderContent = () => {
+    if (isLoading && !hasData) {
+      return (
         <div className="flex justify-center items-center min-h-[300px]">
           <div className="text-center glass rounded-xl p-8 border border-white/10 max-w-md">
             <div className="mb-4 flex justify-center">
@@ -99,14 +99,11 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
             <p className="text-white/60 text-sm mt-2">Získávám odjezdy z PID...</p>
           </div>
         </div>
-      </section>
-    );
-  }
+      );
+    }
 
-  if (error) {
-    return (
-      <section className="w-full" aria-label="Chyba">
-        <div className="flex px-1 mb-2">{stationToggle}</div>
+    if (error) {
+      return (
         <div className="flex justify-center items-center min-h-[300px]" role="alert">
           <div className="text-center glass rounded-xl p-8 border border-red-500/20 max-w-md">
             <div className="mb-4">
@@ -137,13 +134,12 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
             </div>
           </div>
         </div>
-      </section>
-    );
-  }
+      );
+    }
 
-  return (
-    <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <section className="space-y-2" aria-label="Odjezdy do Prahy">
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <section className="space-y-2" aria-label="Odjezdy do Prahy">
           <h2 className="flex items-center gap-2 px-1 text-sm sm:text-base font-semibold text-zinc-300">
             <ArrowRight className="w-4 h-4 text-primary-400" aria-hidden="true" />
             <span>Do Prahy</span>
@@ -152,16 +148,15 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
           <DepartureBoard departures={toPragueDepartures} targetDateTime={targetDateTime} pragueStation={pragueStation} />
         </section>
 
-      <section className="space-y-2" aria-label="Odjezdy z Prahy">
+        <section className="space-y-2" aria-label="Odjezdy z Prahy">
           <h2 className="flex items-center gap-2 px-1 text-sm sm:text-base font-semibold text-zinc-300">
             <ArrowLeft className="w-4 h-4 text-primary-400" aria-hidden="true" />
             <span>Z Prahy</span>
-            {stationToggle}
           </h2>
           {boardError('trainFromPrague', 'busFromPrague')}
           {bubnyHasTrains && pragueStation === 'masarykovo' && (
             <div className="px-2 py-2 rounded-lg bg-primary-500/10 border border-primary-500/20 text-xs text-primary-300" role="status">
-              <span className="font-medium">S4 teď jede z Bubnů</span>
+              <span className="font-medium">S4 jede z Bubnů</span>
               {' — '}
               <button
                 onClick={handleSwitchToBubny}
@@ -173,6 +168,14 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
           )}
           <DepartureBoard departures={fromPragueDepartures} targetDateTime={targetDateTime} pragueStation={pragueStation} />
         </section>
+      </div>
+    );
+  };
+
+  return (
+    <div className="w-full">
+      <div className="flex px-1 mb-2">{stationToggle}</div>
+      {renderContent()}
     </div>
   );
 };

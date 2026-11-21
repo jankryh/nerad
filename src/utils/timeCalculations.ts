@@ -160,3 +160,15 @@ export const getEnhancedTravelTime = async (
     return hardcodedFallback;
   }
 };
+
+export const formatCountdown = (minutes: number, isScheduledMode: boolean = false): string => {
+  if (isScheduledMode) {
+    const sign = minutes > 0 ? '+' : '';
+    return `${sign}${minutes} min`;
+  }
+  if (minutes <= 0) return 'teď';
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const rem = minutes % 60;
+  return rem === 0 ? `${hours} h` : `${hours} h ${rem} min`;
+};
