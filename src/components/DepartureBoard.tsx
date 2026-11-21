@@ -114,7 +114,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 
   if (!departures.length) {
     return (
-      <div className="glass rounded-xl border border-white/10 p-4 text-center">
+      <div className="glass rounded-xl border border-white/10 p-4 text-center" role="status">
         <p className="text-white/50 text-sm">
           {targetDateTime ? 'Žádné odjezdy v tomto čase' : 'Žádné odjezdy'}
         </p>

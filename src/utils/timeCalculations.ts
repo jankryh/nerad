@@ -82,7 +82,9 @@ const getStopIdsForTrip = (departure: Departure, pragueStation: PragueStation = 
     case 'to-rez': return { departureStopId: pragueStopId, arrivalStopId: STOPS.REZ };
     case 'to-kobylisy': return { departureStopId: STOPS.HUSINEC_REZ, arrivalStopId: STOPS.KOBYLISY };
     case 'to-husinec': return { departureStopId: STOPS.KOBYLISY, arrivalStopId: STOPS.HUSINEC_REZ };
-    default: return { departureStopId: null, arrivalStopId: null };
+    default:
+      logger.warn('Unknown boardDirection', departure.boardDirection, 'for line', departure.line);
+      return { departureStopId: null, arrivalStopId: null };
   }
 };
 

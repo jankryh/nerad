@@ -104,6 +104,14 @@ describe('DepartureGrid station toggle', () => {
     fireEvent.click(screen.getByRole('radio', { checked: false }));
     expect(onPragueStationChange).toHaveBeenCalledWith('masarykovo');
   });
+
+  it('has focus-ring class on toggle buttons for keyboard navigation', () => {
+    render(<DepartureGrid {...defaultProps} pragueStation="masarykovo" />);
+    const buttons = screen.getAllByRole('radio');
+    buttons.forEach(button => {
+      expect(button).toHaveClass('focus-ring');
+    });
+  });
 });
 
 describe('DepartureGrid partial failure', () => {

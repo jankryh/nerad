@@ -67,7 +67,7 @@ function App() {
           />
           
           {lastUpdate && !error && (
-            <p className="text-center text-zinc-500 text-xs" aria-label="Poslední aktualizace">
+            <p className="text-center text-zinc-500 text-xs" role="status" aria-label="Poslední aktualizace" aria-live="polite">
               {selectedDateTime ? 'Jízdní řád pro ' : 'Aktualizováno '}
               <time className="font-mono text-zinc-400">
                 {selectedDateTime

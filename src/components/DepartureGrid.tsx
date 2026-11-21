@@ -53,7 +53,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
           role="radio"
           aria-checked={pragueStation === station}
           onClick={() => onPragueStationChange(station)}
-          className={`px-2.5 py-1 font-medium transition-colors duration-150 ${
+          className={`px-2.5 py-1 font-medium transition-colors duration-150 focus-ring ${
             pragueStation === station
               ? 'bg-primary-500/20 text-primary-400 border-primary-500/30'
               : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.03]'
@@ -113,7 +113,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
               {manualRetry && (
                 <button
                   onClick={manualRetry}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600/80 hover:bg-primary-500/80 text-void-DEFAULT font-semibold rounded-lg border border-primary-400/30 transition-all duration-200 text-sm"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600/80 hover:bg-primary-500/80 text-void-DEFAULT font-semibold rounded-lg border border-primary-400/30 transition-all duration-200 text-sm focus-ring"
                 >
                   <RefreshCw className="w-4 h-4" aria-hidden="true" />
                   Zkusit znovu
