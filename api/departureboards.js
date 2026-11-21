@@ -68,21 +68,20 @@ export default async function handler(req, res) {
       },
     });
 
+    if (!upstreamResponse.ok) {
+      return sendError(res, upstreamResponse.status, 'Upstream API request failed.');
+    }
+
     const contentType = upstreamResponse.headers.get('content-type')?.split(';')[0].trim().toLowerCase();
     if (contentType !== 'application/json') {
       return sendError(res, 502, 'Invalid upstream response.');
     }
 
-    if (!upstreamResponse.ok) {
-      return sendError(res, upstreamResponse.status, 'Upstream API request failed.');
-    }
-
     const body = await upstreamResponse.text();
     res.setHeader('content-type', 'application/json');
-    let cacheControl = 's-maxage=15, stale-while-revalidate=45';
-    if (minutesBefore !== undefined) {
-      cacheControl = Number(minutesBefore) < 0 ? 's-maxage=15' : 's-maxage=60, stale-while-revalidate=120';
-    }
+    const cacheControl = minutesBefore !== undefined
+      ? 's-maxage=15'
+      : 's-maxage=15, stale-while-revalidate=45';
     res.setHeader('cache-control', cacheControl);
     return res.status(upstreamResponse.status).send(body);
   } catch (error) {

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { formatTime, calculateActualDepartureTime, getEnhancedTravelTime, formatCountdown } from '../timeCalculations';
+import { formatTime, calculateActualDepartureTime, getEnhancedTravelTime, formatCountdown, __clearCacheForTesting } from '../timeCalculations';
 import { calculateTravelTime } from '../../api/pidApi';
 import { STOPS, TRAVEL_TIMES } from '../../constants';
 import { Departure, TravelTimeCalculation } from '../../types';
@@ -144,6 +144,47 @@ describe('getEnhancedTravelTime', () => {
     vi.mocked(calculateTravelTime).mockRejectedValueOnce(new Error('boom'));
     expect(await getEnhancedTravelTime(departure, true)).toBe(TRAVEL_TIMES.train);
     expect(await getEnhancedTravelTime(departure, false)).toBe(TRAVEL_TIMES.train);
+  });
+
+  it('does not cache the line average, allowing per-trip data to take priority', async () => {
+    __clearCacheForTesting();
+    vi.mocked(calculateTravelTime).mockClear();
+
+    const departure = makeDeparture({ tripId: 'trip-123', boardDirection: 'to-masarykovo' });
+
+    // First call returns only the average (27 min)
+    vi.mocked(calculateTravelTime).mockResolvedValueOnce([calc('average_S4', 27)]);
+    expect(await getEnhancedTravelTime(departure, true)).toBe(27);
+
+    // Second call returns trip-specific data (22 min) - should use it, not cached average
+    vi.mocked(calculateTravelTime).mockResolvedValueOnce([
+      calc('trip-123', 22),
+      calc('average_S4', 27),
+    ]);
+    expect(await getEnhancedTravelTime(departure, true)).toBe(22);
+    expect(calculateTravelTime).toHaveBeenCalledTimes(2);
+  });
+
+  it('uses the average when tripId match is out of range', async () => {
+    const departure = makeDeparture({ tripId: 'trip-slow', boardDirection: 'to-masarykovo' });
+
+    // Trip match is 45 min (out of range: 9-36 for hardcoded 18), average is 27 (in range)
+    vi.mocked(calculateTravelTime).mockResolvedValueOnce([
+      calc('trip-slow', 45),
+      calc('average_S4', 27),
+    ]);
+    expect(await getEnhancedTravelTime(departure, true)).toBe(27);
+  });
+
+  it('falls back to hardcoded when both tripId match and average are out of range', async () => {
+    const departure = makeDeparture({ tripId: 'trip-wrong', boardDirection: 'to-masarykovo' });
+
+    // Both out of range
+    vi.mocked(calculateTravelTime).mockResolvedValueOnce([
+      calc('trip-wrong', 100),
+      calc('average_S4', 50),
+    ]);
+    expect(await getEnhancedTravelTime(departure, true)).toBe(TRAVEL_TIMES.train);
   });
 });
 
