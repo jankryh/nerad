@@ -7,12 +7,7 @@ import { formatTime } from '../utils/timeCalculations';
 
 type State = { status: 'loading' } | { status: 'error' } | { status: 'ok'; position: Position | null };
 
-const describe = (state: State): string => {
-  if (state.status === 'loading') return 'Načítám polohu…';
-  if (state.status === 'error') return 'Polohu se nepodařilo načíst';
-  const { position } = state;
-  if (!position || (!position.lastStop && !position.nextStop)) return 'Poloha není k dispozici';
-
+const describe = (position: Position): string => {
   const where = position.lastStop && position.nextStop && position.lastStop !== position.nextStop
     ? `${position.lastStop} → ${position.nextStop}`
     : `u zastávky ${position.lastStop ?? position.nextStop}`;
@@ -24,39 +19,8 @@ const describe = (state: State): string => {
   return `Poloha: ${where}${delay}${at}`;
 };
 
-interface VehiclePositionProps {
-  line: string;
-  open: boolean;
-  onToggle: () => void;
-  detailId: string;
-}
-
-/** Toggle button for vehicle position */
-export const VehiclePosition: React.FC<VehiclePositionProps> = ({ line, open, onToggle, detailId }) => {
-  return (
-    <div className="w-8 flex-shrink-0 flex justify-end" role="cell">
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-expanded={open}
-        aria-controls={detailId}
-        aria-label={`Kde je spoj ${line}?`}
-        title="Kde je?"
-        className={`focus-ring rounded p-1 min-w-9 min-h-9 -mr-1 hover:bg-white/5 ${open ? 'text-primary-400' : 'text-zinc-500'}`}
-      >
-        <MapPin className="w-4 h-4" aria-hidden="true" />
-      </button>
-    </div>
-  );
-};
-
-interface VehiclePositionDetailProps {
-  tripId: string;
-  detailId: string;
-}
-
-/** Detail row showing vehicle position */
-export const VehiclePositionDetail: React.FC<VehiclePositionDetailProps> = ({ tripId, detailId }) => {
+/** Live position of the nearest departure; renders nothing until a position is known */
+export const VehiclePosition: React.FC<{ tripId: string }> = ({ tripId }) => {
   const [state, setState] = useState<State>({ status: 'loading' });
 
   useEffect(() => {
@@ -73,9 +37,13 @@ export const VehiclePositionDetail: React.FC<VehiclePositionDetailProps> = ({ tr
     return () => { cancelled = true; clearInterval(intervalId); };
   }, [tripId]);
 
+  // Hide loading/error/unknown states: the hint only helps when a real position is known
+  if (state.status !== 'ok' || !state.position || (!state.position.lastStop && !state.position.nextStop)) return null;
+
   return (
-    <div id={detailId} className="px-3 pb-2 text-xs text-zinc-400" role="row" aria-live="polite">
-      <div role="cell">{describe(state)}</div>
+    <div className="flex items-center gap-1.5 px-3 pb-2 -mt-1 text-xs text-zinc-400" role="row">
+      <MapPin className="w-3.5 h-3.5 text-primary-400 flex-shrink-0" aria-hidden="true" />
+      <div role="cell">{describe(state.position)}</div>
     </div>
   );
 };

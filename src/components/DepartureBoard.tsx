@@ -11,7 +11,7 @@ import { logger } from '../utils/logger';
 import { Train, Bus } from 'lucide-react';
 import { AlertButton } from './AlertButton';
 import { ALERT_LEAD_OPTIONS } from '../utils/departureAlerts';
-import { VehiclePosition, VehiclePositionDetail } from './VehiclePosition';
+import { VehiclePosition } from './VehiclePosition';
 
 interface DepartureBoardProps {
   departures: Departure[];
@@ -29,7 +29,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
   setAlert,
 }) => {
   const [enhancedTravelTimes, setEnhancedTravelTimes] = useState<Map<string, number>>(new Map());
-  const [openPositionId, setOpenPositionId] = useState<string | null>(null);
   const alertsEnabled = !targetDateTime;
 
   useEffect(() => {
@@ -133,7 +132,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
         <div className="hidden sm:block w-14" role="columnheader">Cesta</div>
         <div className="flex-1 min-w-0 text-right" role="columnheader">Za</div>
         {alertsEnabled && <div className="w-8" role="columnheader"><span className="sr-only">Připomínka</span></div>}
-        {!targetDateTime && <div className="w-8" role="columnheader"><span className="sr-only">Poloha</span></div>}
       </div>
 
       {sorted.map((departure, index) => {
@@ -145,8 +143,8 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
         const msUntilDeparture = actualDepartureMs - referenceTime.getTime();
         const tooLate = msUntilDeparture <= ALERT_LEAD_OPTIONS[0] * 60_000;
         const rowKey = `${departure.tripId}-${departure.scheduledTime}`;
-        const detailId = `pos-${rowKey}`;
-        const isPositionOpen = openPositionId === rowKey;
+        // ponytail: position only for the nearest departure; later ones haven't started their trip yet
+        const showPosition = !targetDateTime && index === 0 && departure.tripId !== 'N/A';
 
         return (
           <React.Fragment key={rowKey}>
@@ -155,7 +153,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                 flex items-center gap-x-1.5 sm:gap-x-2 px-3 py-2.5 sm:py-3 min-w-0 transition-colors duration-150
                 hover:bg-white/[0.03]
                 ${index === 0 ? 'bg-white/[0.02]' : ''}
-                ${index < sorted.length - 1 && !isPositionOpen ? 'border-b border-white/[0.08]' : ''}
+                ${index < sorted.length - 1 && !showPosition ? 'border-b border-white/[0.08]' : ''}
               `}
               role="row"
             >
@@ -209,19 +207,10 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                 </div>
               )}
 
-              {/* ponytail: position only for the nearest departure; later ones haven't started their trip yet */}
-              {!targetDateTime && (index === 0 && departure.tripId !== 'N/A'
-                ? <VehiclePosition
-                    line={departure.line}
-                    open={isPositionOpen}
-                    onToggle={() => setOpenPositionId(isPositionOpen ? null : rowKey)}
-                    detailId={detailId}
-                  />
-                : <div className="w-8 flex-shrink-0" role="cell" />)}
             </div>
-            {isPositionOpen && index === 0 && departure.tripId !== 'N/A' && (
-              <div className={`${index < sorted.length - 1 ? 'border-b border-white/[0.08]' : ''}`}>
-                <VehiclePositionDetail tripId={departure.tripId} detailId={detailId} />
+            {showPosition && (
+              <div className={`${index === 0 ? 'bg-white/[0.02]' : ''} ${index < sorted.length - 1 ? 'border-b border-white/[0.08]' : ''}`}>
+                <VehiclePosition tripId={departure.tripId} />
               </div>
             )}
           </React.Fragment>

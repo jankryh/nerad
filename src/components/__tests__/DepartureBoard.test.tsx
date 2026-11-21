@@ -2,11 +2,14 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { DepartureBoard } from '../DepartureBoard';
 import { Departure } from '../../types';
+import { VehiclePosition } from '../VehiclePosition';
 
 vi.mock('../../utils/timeCalculations', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../utils/timeCalculations')>()),
   getEnhancedTravelTime: vi.fn().mockResolvedValue(18),
 }));
+
+vi.mock('../VehiclePosition', () => ({ VehiclePosition: vi.fn(() => null) }));
 
 const dep = (tripId: string, scheduledTime: string, delay: number | null = null): Departure => ({
   id: tripId, tripId, routeId: 'S4', line: 'S4', mode: 'train', direction: 'Praha', scheduledTime, delay,
@@ -65,7 +68,7 @@ describe('DepartureBoard', () => {
       />,
     );
 
-    expect(screen.getAllByRole('button', { name: /Kde je spoj/ })).toHaveLength(1);
-    expect(screen.getAllByRole('row')[1].querySelector('button[aria-controls]')).not.toBeNull();
+    expect(VehiclePosition).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(VehiclePosition).mock.calls[0][0]).toEqual({ tripId: 'a' });
   });
 });
