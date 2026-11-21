@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Train, Clock, RefreshCw, Calendar } from 'lucide-react';
 import { ThemeSelector } from './ThemeSelector';
 import { DateTimePicker } from './DateTimePicker';
+import { PRAGUE_TIME_ZONE } from '../utils/pragueDateTime';
 
 interface HeaderProps {
   onRefresh: () => void;
@@ -92,11 +93,13 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh, isRefreshing, selecte
                 <Calendar className="w-3 h-3" aria-hidden="true" />
                 <span className="font-medium">
                   {selectedDateTime.toLocaleDateString('cs-CZ', {
+                    timeZone: PRAGUE_TIME_ZONE,
                     weekday: 'short',
                     day: 'numeric',
                     month: 'short',
                   })}{' '}
                   {selectedDateTime.toLocaleTimeString('cs-CZ', {
+                    timeZone: PRAGUE_TIME_ZONE,
                     hour: '2-digit',
                     minute: '2-digit',
                     hour12: false,

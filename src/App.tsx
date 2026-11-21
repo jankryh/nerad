@@ -4,19 +4,36 @@ import { DepartureGrid } from './components/DepartureGrid';
 import { useDepartures } from './hooks/useDepartures';
 import { PragueStation } from './constants';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { PRAGUE_TIME_ZONE } from './utils/pragueDateTime';
+import { parseStationParam, parseTimeParam, serializeUrlState } from './utils/urlState';
 
 const getStoredPragueStation = (): PragueStation => {
-  const stored = localStorage.getItem('pragueStation');
-  return stored === 'bubny' ? 'bubny' : 'masarykovo';
+  return parseStationParam(localStorage.getItem('pragueStation')) ?? 'masarykovo';
+};
+
+const replaceUrlState = (station: PragueStation, time?: Date | null) => {
+  const url = new URL(window.location.href);
+  url.search = serializeUrlState(url.searchParams, station, time).toString();
+  window.history.replaceState(window.history.state, '', url);
 };
 
 function App() {
-  const [selectedDateTime, setSelectedDateTime] = useState<Date | null>(null);
-  const [pragueStation, setPragueStation] = useState<PragueStation>(getStoredPragueStation);
+  const [selectedDateTime, setSelectedDateTime] = useState(() => (
+    parseTimeParam(new URLSearchParams(window.location.search).get('t'))
+  ));
+  const [pragueStation, setPragueStation] = useState(() => (
+    parseStationParam(new URLSearchParams(window.location.search).get('s')) ?? getStoredPragueStation()
+  ));
 
   const handlePragueStationChange = (station: PragueStation) => {
     setPragueStation(station);
     localStorage.setItem('pragueStation', station);
+    replaceUrlState(station, selectedDateTime ? undefined : null);
+  };
+
+  const handleDateTimeChange = (date: Date | null) => {
+    setSelectedDateTime(date);
+    replaceUrlState(pragueStation, date);
   };
 
   const {
@@ -46,7 +63,7 @@ function App() {
         Přeskočit na hlavní obsah
       </a>
       <div className="relative z-10 container mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-12 max-w-7xl">
-        <Header onRefresh={refreshData} isRefreshing={isLoading} selectedDateTime={selectedDateTime} onDateTimeChange={setSelectedDateTime} />
+        <Header onRefresh={refreshData} isRefreshing={isLoading} selectedDateTime={selectedDateTime} onDateTimeChange={handleDateTimeChange} />
         <main id="main-content" className="space-y-6 sm:space-y-8">
           <DepartureGrid
             trainToPrague={trainToPrague}
@@ -72,6 +89,7 @@ function App() {
               <time className="font-mono text-zinc-400">
                 {selectedDateTime
                   ? selectedDateTime.toLocaleString('cs-CZ', {
+                      timeZone: PRAGUE_TIME_ZONE,
                       weekday: 'short', day: 'numeric', month: 'short',
                       hour: '2-digit', minute: '2-digit', hour12: false,
                     })
