@@ -83,4 +83,5 @@ dist
 
 # Temporary folders
 tmp/
-temp/.omc/
+temp/
+.omc/
