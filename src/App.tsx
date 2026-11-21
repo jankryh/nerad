@@ -24,6 +24,7 @@ function App() {
     trainFromPrague,
     busToPrague,
     busFromPrague,
+    failedBoards,
     isLoading,
     error,
     lastUpdate,
@@ -51,6 +52,7 @@ function App() {
             trainFromPrague={trainFromPrague}
             busToPrague={busToPrague}
             busFromPrague={busFromPrague}
+            failedBoards={failedBoards}
             isLoading={isLoading}
             error={error}
             retryCount={retryCount}

@@ -9,6 +9,8 @@ interface DeparturesState {
   trainFromPrague: Departure[];
   busToPrague: Departure[];
   busFromPrague: Departure[];
+  // Boards that failed while others loaded (shown inline, not as the global error)
+  failedBoards: string[];
 }
 
 interface UseDeparturesReturn extends DeparturesState {
@@ -27,6 +29,7 @@ const emptyState: DeparturesState = {
   trainFromPrague: [],
   busToPrague: [],
   busFromPrague: [],
+  failedBoards: [],
 };
 
 const MAX_AUTO_RETRIES = 5;
@@ -102,23 +105,30 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
     }, delayMs);
   }, [stopTimers]);
 
-  const fetchData = useCallback(async (isRetryAttempt = false, useCache = true) => {
+  const fetchData = useCallback(async (isRetryAttempt = false, useCache = true, isPoll = false) => {
     // Ignore responses from requests superseded by a newer one (station/date switch, poll)
     const requestId = ++requestIdRef.current;
     try {
       setIsLoading(true);
-      if (!isRetryAttempt) {
+      if (!isRetryAttempt && !isPoll) {
         setError(null);
       }
 
       const data = await getAllDepartures(targetDateTime, pragueStation, useCache);
       if (requestId !== requestIdRef.current) return;
 
+      const boards = {
+        trainToPrague: data.rezToMasarykovo,
+        trainFromPrague: data.masarykovoToRez,
+        busToPrague: data.husinecsToKobylisy,
+        busFromPrague: data.kobylisyToHusinec,
+      };
       setDepartures({
-        trainToPrague: data.rezToMasarykovo.departures,
-        trainFromPrague: data.masarykovoToRez.departures,
-        busToPrague: data.husinecsToKobylisy.departures,
-        busFromPrague: data.kobylisyToHusinec.departures,
+        trainToPrague: boards.trainToPrague.departures,
+        trainFromPrague: boards.trainFromPrague.departures,
+        busToPrague: boards.busToPrague.departures,
+        busFromPrague: boards.busFromPrague.departures,
+        failedBoards: Object.keys(boards).filter((key) => boards[key as keyof typeof boards].error),
       });
       setLastUpdate(new Date());
       setError(null);
@@ -131,13 +141,19 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
       // 401/403 carry their own config hint; other 4xx in scheduled mode mean no data for that date
       const status = apiError.status ?? 0;
       const noDataForDate = targetDateTime && status >= 400 && status < 500 && status !== 401 && status !== 403;
-      const message = noDataForDate
-        ? 'Pro toto datum nejsou dostupná data. Zkuste bližší termín.'
-        : (apiError.message || 'Nepodařilo se načíst data');
+      const message = status === 429
+        ? 'Příliš mnoho požadavků, zkusím to znovu za chvíli.'
+        : noDataForDate
+          ? 'Pro toto datum nejsou dostupná data. Zkuste bližší termín.'
+          : (apiError.message || 'Nepodařilo se načíst data');
       setError(message);
       logger.error('Chyba při načítání dat', err);
 
-      const attempt = isRetryAttempt ? retryCountRef.current + 1 : 0;
+      // A poll failing after earlier failures continues the count, so the cap holds: once reached,
+      // no short retries are scheduled and the 30 s poll acts as a slow probe. Only manual retry/refresh
+      // or a parameter change start again from 0.
+      const continues = isRetryAttempt || (isPoll && retryCountRef.current > 0);
+      const attempt = continues ? Math.min(retryCountRef.current + 1, MAX_AUTO_RETRIES) : 0;
       retryCountRef.current = attempt;
       setRetryCount(attempt);
       scheduleRetry(attempt, () => fetchData(true));
@@ -167,15 +183,18 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
   // Skipped while a backoff retry is pending, otherwise the poll would reset the backoff.
   useEffect(() => {
     if (targetDateTime) return;
-    const refresh = () => {
+    // Poll bypasses the cache: its TTL equals the poll interval, so a cache hit would show stale data as "updated".
+    const refresh = (useCache: boolean) => {
       if (document.hidden || retryTimerRef.current) return;
-      fetchData(false, false);
+      fetchData(false, useCache, true);
     };
-    const interval = setInterval(refresh, REFRESH_INTERVAL);
-    document.addEventListener('visibilitychange', refresh);
+    const poll = () => refresh(false);
+    const onVisible = () => refresh(true);
+    const interval = setInterval(poll, REFRESH_INTERVAL);
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       clearInterval(interval);
-      document.removeEventListener('visibilitychange', refresh);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [fetchData, targetDateTime]);
 

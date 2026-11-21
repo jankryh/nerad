@@ -279,24 +279,30 @@ export const getArrivals = async (
 export const getAllDepartures = async (targetDateTime?: Date | null, pragueStation: PragueStation = 'masarykovo', useCache = true) => {
   const perBoardLimit = targetDateTime ? 6 : 3;
   const fromPragueStopId = pragueStation === 'bubny' ? STOPS.BUBNY : STOPS.MASARYKOVO;
-  try {
-    const [rezToMasarykovo, masarykovoToRez, husinecsToKobylisy, kobylisyToHusinec] = await Promise.all([
-      getDepartures(ROUTES.rezToMasarykovo.stopPlaceId, ROUTES.rezToMasarykovo.lineId, perBoardLimit, ROUTES.rezToMasarykovo.direction, targetDateTime, useCache),
-      getDepartures(fromPragueStopId, ROUTES.masarykovoToRez.lineId, perBoardLimit, ROUTES.masarykovoToRez.direction, targetDateTime, useCache),
-      getDepartures(ROUTES.husinecsToKobylisy.stopPlaceId, ROUTES.husinecsToKobylisy.lineId, perBoardLimit, ROUTES.husinecsToKobylisy.direction, targetDateTime, useCache),
-      getDepartures(ROUTES.kobylisyToHusinec.stopPlaceId, ROUTES.kobylisyToHusinec.lineId, perBoardLimit, ROUTES.kobylisyToHusinec.direction, targetDateTime, useCache),
-    ]);
-
-    return {
-      rezToMasarykovo,
-      masarykovoToRez,
-      husinecsToKobylisy,
-      kobylisyToHusinec,
-    };
-  } catch (error) {
-    logger.error('Failed to load all departures', error);
-    throw toApiError(error);
+  // allSettled: one failed board (e.g. Bubny 502) must not hide the others; throw only when all fail
+  const results = await Promise.allSettled([
+    getDepartures(ROUTES.rezToMasarykovo.stopPlaceId, ROUTES.rezToMasarykovo.lineId, perBoardLimit, ROUTES.rezToMasarykovo.direction, targetDateTime, useCache),
+    getDepartures(fromPragueStopId, ROUTES.masarykovoToRez.lineId, perBoardLimit, ROUTES.masarykovoToRez.direction, targetDateTime, useCache),
+    getDepartures(ROUTES.husinecsToKobylisy.stopPlaceId, ROUTES.husinecsToKobylisy.lineId, perBoardLimit, ROUTES.husinecsToKobylisy.direction, targetDateTime, useCache),
+    getDepartures(ROUTES.kobylisyToHusinec.stopPlaceId, ROUTES.kobylisyToHusinec.lineId, perBoardLimit, ROUTES.kobylisyToHusinec.direction, targetDateTime, useCache),
+  ]);
+  const failed = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+  if (failed.length === results.length) {
+    logger.error('Failed to load all departures', failed[0].reason);
+    throw toApiError(failed[0].reason);
   }
+
+  const [rezToMasarykovo, masarykovoToRez, husinecsToKobylisy, kobylisyToHusinec] = results.map(
+    (r): DepartureBoardResponse => r.status === 'fulfilled'
+      ? r.value
+      : { departures: [], error: toApiError(r.reason).message },
+  );
+  return {
+    rezToMasarykovo,
+    masarykovoToRez,
+    husinecsToKobylisy,
+    kobylisyToHusinec,
+  };
 };
 
 const getActualTime = (isoTime: string, delay?: number | null) => {

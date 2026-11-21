@@ -105,3 +105,12 @@ describe('DepartureGrid station toggle', () => {
     expect(onPragueStationChange).toHaveBeenCalledWith('masarykovo');
   });
 });
+
+describe('DepartureGrid partial failure', () => {
+  it('shows an inline error only on the section with a failed board', () => {
+    render(<DepartureGrid {...defaultProps} failedBoards={['trainFromPrague']} />);
+
+    expect(screen.getAllByTestId('departure-board')).toHaveLength(2);
+    expect(screen.getByRole('alert')).toHaveTextContent('Nepodařilo se načíst: vlaky');
+  });
+});

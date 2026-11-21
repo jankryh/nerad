@@ -9,6 +9,7 @@ interface DepartureGridProps {
   trainFromPrague: Departure[];
   busToPrague: Departure[];
   busFromPrague: Departure[];
+  failedBoards?: string[];
   isLoading: boolean;
   error: string | null;
   retryCount?: number;
@@ -25,6 +26,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
   trainFromPrague,
   busToPrague,
   busFromPrague,
+  failedBoards = [],
   isLoading,
   error,
   retryCount = 0,
@@ -59,7 +61,14 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
         </button>
       ))}
     </span>
-);
+  );
+
+  const boardError = (train: string, bus: string) => {
+    const failed = [failedBoards.includes(train) && 'vlaky', failedBoards.includes(bus) && 'autobusy'].filter(Boolean);
+    return failed.length > 0 && (
+      <p className="px-1 text-xs text-red-300" role="alert">Nepodařilo se načíst: {failed.join(', ')}</p>
+    );
+  };
 
   if (isLoading && !hasData) {
     return (
@@ -127,6 +136,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
             <ArrowRight className="w-4 h-4 text-primary-400" aria-hidden="true" />
             <span>Do Prahy</span>
           </h2>
+          {boardError('trainToPrague', 'busToPrague')}
           <DepartureBoard departures={toPragueDepartures} targetDateTime={targetDateTime} pragueStation={pragueStation} />
         </section>
 
@@ -136,6 +146,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
             <span>Z Prahy</span>
             {stationToggle}
           </h2>
+          {boardError('trainFromPrague', 'busFromPrague')}
           <DepartureBoard departures={fromPragueDepartures} targetDateTime={targetDateTime} pragueStation={pragueStation} />
         </section>
     </div>
