@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { DepartureBoard } from './DepartureBoard';
 import { Departure } from '../types';
 import { PragueStation, PRAGUE_STATION_LABELS } from '../constants';
@@ -43,6 +43,14 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
   const fromPragueDepartures = [...trainFromPrague, ...busFromPrague];
 
   const hasData = toPragueDepartures.length > 0 || fromPragueDepartures.length > 0;
+  const bubnyToggleRef = useRef<HTMLButtonElement>(null);
+
+  const handleSwitchToBubny = () => {
+    onPragueStationChange('bubny');
+    requestAnimationFrame(() => {
+      bubnyToggleRef.current?.focus();
+    });
+  };
 
   // Rendered in every state so a failing station choice (persisted in localStorage) can always be switched back
   const stationToggle = (
@@ -50,6 +58,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
       {(['masarykovo', 'bubny'] as PragueStation[]).map((station) => (
         <button
           key={station}
+          ref={station === 'bubny' ? bubnyToggleRef : undefined}
           role="radio"
           aria-checked={pragueStation === station}
           onClick={() => onPragueStationChange(station)}
@@ -75,6 +84,7 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
   if (isLoading && !hasData) {
     return (
       <section className="w-full" aria-label="Načítání spojů" role="status">
+        <div className="flex px-1 mb-2">{stationToggle}</div>
         <div className="flex justify-center items-center min-h-[300px]">
           <div className="text-center glass rounded-xl p-8 border border-white/10 max-w-md">
             <div className="mb-4 flex justify-center">
@@ -154,8 +164,8 @@ export const DepartureGrid: React.FC<DepartureGridProps> = ({
               <span className="font-medium">S4 teď jede z Bubnů</span>
               {' — '}
               <button
-                onClick={() => onPragueStationChange('bubny')}
-                className="underline hover:text-primary-200 transition-colors"
+                onClick={handleSwitchToBubny}
+                className="underline hover:text-primary-200 transition-colors focus-ring"
               >
                 Přepnout na Bubny
               </button>

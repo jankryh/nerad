@@ -77,6 +77,12 @@ const getBoardJson = (params: Record<string, string | number>): Promise<BoardApi
 
 const boardCache = new Map<string, { expiresAt: number; data: BoardApiResponse }>();
 
+// Test helper to clear cache between tests
+export const __clearCacheForTesting = () => {
+  boardCache.clear();
+  inflightRequests.clear();
+};
+
 // ROUTES derived from BOARD_CONFIG for backward compatibility
 const ROUTES = {
   rezToMasarykovo: { stopPlaceId: BOARD_CONFIG.trainToPrague.stopId, lineId: BOARD_CONFIG.trainToPrague.lineIds[0], direction: BOARD_CONFIG.trainToPrague.direction as Direction },
@@ -279,6 +285,12 @@ export const getArrivals = async (
 export const getAllDepartures = async (targetDateTime?: Date | null, pragueStation: PragueStation = 'masarykovo', useCache = true) => {
   const perBoardLimit = targetDateTime ? 6 : 3;
   const fromPragueStopId = pragueStation === 'bubny' ? STOPS.BUBNY : STOPS.MASARYKOVO;
+
+  // Start Bubny hint check in parallel when Masarykovo is selected (always with cache)
+  const bubnyHintPromise = pragueStation === 'masarykovo'
+    ? getDepartures(STOPS.BUBNY, ROUTES.masarykovoToRez.lineId, perBoardLimit, ROUTES.masarykovoToRez.direction, targetDateTime, true).catch(() => null)
+    : null;
+
   // allSettled: one failed board (e.g. Bubny 502) must not hide the others; throw only when all fail
   const results = await Promise.allSettled([
     getDepartures(ROUTES.rezToMasarykovo.stopPlaceId, ROUTES.rezToMasarykovo.lineId, perBoardLimit, ROUTES.rezToMasarykovo.direction, targetDateTime, useCache),
@@ -300,23 +312,11 @@ export const getAllDepartures = async (targetDateTime?: Date | null, pragueStati
       : { departures: [], error: toApiError(r.reason).message },
   );
 
-  // When Masarykovo is selected and has no S4 trains, check if Bubny has trains
-  if (pragueStation === 'masarykovo' && masarykovoToRez.departures.length === 0 && !masarykovoToRez.error) {
-    try {
-      const bubnyBoard = await getDepartures(
-        STOPS.BUBNY,
-        ROUTES.masarykovoToRez.lineId,
-        perBoardLimit,
-        ROUTES.masarykovoToRez.direction,
-        targetDateTime,
-        useCache
-      );
-      if (bubnyBoard.departures.length > 0) {
-        masarykovoToRez.bubnyHasTrains = true;
-      }
-    } catch (error) {
-      // Ignore Bubny check failures — they must not break the main result
-      logger.error('Failed to check Bubny departures', error);
+  // Evaluate Bubny hint flag only when Masarykovo board is empty
+  if (bubnyHintPromise && masarykovoToRez.departures.length === 0 && !masarykovoToRez.error) {
+    const bubnyBoard = await bubnyHintPromise;
+    if (bubnyBoard && bubnyBoard.departures.length > 0) {
+      masarykovoToRez.bubnyHasTrains = true;
     }
   }
 
