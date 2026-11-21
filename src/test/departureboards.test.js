@@ -38,6 +38,7 @@ describe('departureboards proxy', () => {
 
   it.each([
     [validQuery, 's-maxage=15, stale-while-revalidate=45'],
+    [{ ...validQuery, minutesBefore: '0' }, 's-maxage=15'],
     [{ ...validQuery, minutesBefore: '-4320', minutesAfter: '4560' }, 's-maxage=15'],
   ])('forwards valid queries and caches JSON responses', async (query, cacheControl) => {
     upstreamFetch.mockResolvedValue(new globalThis.Response(body, {
@@ -75,10 +76,12 @@ describe('departureboards proxy', () => {
   });
 
   it.each([
+    [429, 'text/plain', 429],
+    [503, 'text/html', 503],
     [500, 'application/json', 500],
+    [400, 'application/json', 400],
     [200, 'text/html', 502],
     [200, 'application/problem+json', 502],
-    [400, 'application/problem+json', 502],
   ])('returns a generic error with no-store for upstream %i (%s)', async (status, contentType, expectedStatus) => {
     upstreamFetch.mockResolvedValue(new globalThis.Response('upstream details', {
       status,

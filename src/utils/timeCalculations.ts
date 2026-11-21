@@ -12,6 +12,11 @@ interface TravelTimeCacheEntry {
 
 const travelTimeCache = new Map<string, TravelTimeCacheEntry>();
 
+// Test helper to clear cache between tests
+export const __clearCacheForTesting = () => {
+  travelTimeCache.clear();
+};
+
 const getTravelTimeCacheKey = (departureStopId: string, arrivalStopId: string, line: string, tripId: string): string => {
   return `travel_time:${departureStopId}:${arrivalStopId}:${line}:${tripId}`;
 };
@@ -88,15 +93,24 @@ const getStopIdsForTrip = (departure: Departure, pragueStation: PragueStation = 
   }
 };
 
-const selectBestTravelTime = (travelTimes: TravelTimeCalculation[], tripId: string): TravelTimeCalculation | null => {
+const selectBestTravelTime = (
+  travelTimes: TravelTimeCalculation[],
+  tripId: string,
+  minDuration: number,
+  maxDuration: number,
+): TravelTimeCalculation | null => {
   if (!travelTimes.length) {
     return null;
   }
 
-  // Přednost má příjezd konkrétního spoje, průměr linky je fallback
-  return travelTimes.find((item) => item.tripId === tripId)
-    ?? travelTimes.find((item) => item.tripId.startsWith('average_'))
-    ?? travelTimes[0];
+  const inRange = (item: TravelTimeCalculation) =>
+    item.duration >= minDuration && item.duration <= maxDuration;
+
+  // Přednost má příjezd konkrétního spoje v rozsahu, jinak průměr v rozsahu
+  return travelTimes.find((item) => item.tripId === tripId && inRange(item))
+    ?? travelTimes.find((item) => item.tripId.startsWith('average_') && inRange(item))
+    ?? travelTimes.find((item) => inRange(item))
+    ?? null;
 };
 
 export const getEnhancedTravelTime = async (
@@ -130,35 +144,19 @@ export const getEnhancedTravelTime = async (
       departure.boardDirection,
     );
 
-    const selectedTravelTime = selectBestTravelTime(travelTimes, departure.tripId);
+    const minDuration = departure.mode === 'bus' ? 5 : Math.max(5, hardcodedFallback * 0.5);
+    const maxDuration = departure.mode === 'bus' ? 60 : hardcodedFallback * 2;
+
+    const selectedTravelTime = selectBestTravelTime(travelTimes, departure.tripId, minDuration, maxDuration);
     if (!selectedTravelTime) {
       // Fallback na hardcoded čas pro vlak i bus
       return hardcodedFallback;
     }
 
-    if (departure.mode === 'bus') {
-      if (selectedTravelTime.duration >= 5 && selectedTravelTime.duration <= 60) {
-        if (!selectedTravelTime.fallbackUsed) {
-          cacheTravelTime(cacheKey, selectedTravelTime.duration, departure.line, departure.mode);
-        }
-        return selectedTravelTime.duration;
-      }
-
-      // Bus: vždy hardcoded fallback místo 0
-      return hardcodedFallback;
+    if (!selectedTravelTime.fallbackUsed && selectedTravelTime.tripId === departure.tripId) {
+      cacheTravelTime(cacheKey, selectedTravelTime.duration, departure.line, departure.mode);
     }
-
-    const minReasonable = Math.max(5, hardcodedFallback * 0.5);
-    const maxReasonable = hardcodedFallback * 2;
-
-    if (selectedTravelTime.duration >= minReasonable && selectedTravelTime.duration <= maxReasonable) {
-      if (!selectedTravelTime.fallbackUsed) {
-        cacheTravelTime(cacheKey, selectedTravelTime.duration, departure.line, departure.mode);
-      }
-      return selectedTravelTime.duration;
-    }
-
-    return hardcodedFallback;
+    return selectedTravelTime.duration;
   } catch (error) {
     logger.warn('Failed to get enhanced travel time', error);
     // Vždy vrať hardcoded fallback — nikdy 0
