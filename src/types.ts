@@ -59,3 +59,11 @@ export interface TravelTimeCalculation {
   minDuration?: number;
   maxDuration?: number;
 }
+
+/** Minimal vehicle position returned by /api/vehicleposition */
+export interface VehiclePosition {
+  lastStop: string | null;
+  nextStop: string | null;
+  delay: number | null;
+  timestamp: string | null;
+}

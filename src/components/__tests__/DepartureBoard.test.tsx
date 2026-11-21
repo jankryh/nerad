@@ -31,7 +31,7 @@ describe('DepartureBoard', () => {
       />,
     );
 
-    const countdowns = screen.getAllByRole('row').slice(1).map((row) => row.lastElementChild?.textContent);
+    const countdowns = screen.getAllByRole('row').slice(1).map((row) => row.querySelectorAll('[role="cell"]')[4]?.textContent);
     expect(countdowns).toEqual(['5 min', '8 min', '10 min', '1 h 5 min']);
   });
 

@@ -15,6 +15,7 @@ import {
   Departure,
   DepartureBoardResponse,
   TravelTimeCalculation,
+  VehiclePosition,
 } from '../types';
 import { logger } from '../utils/logger';
 
@@ -451,4 +452,15 @@ export const calculateTravelTime = async (
         }]
       : [];
   }
+};
+
+// ponytail: always the same-origin serverless proxy; the Vite dev proxy rewrites /api to Golemio, so use `vercel dev` locally.
+export const getVehiclePosition = async (tripId: string): Promise<VehiclePosition | null> => {
+  const response = await fetch(`/api/vehicleposition?tripId=${encodeURIComponent(tripId)}`, {
+    headers: { Accept: 'application/json' },
+    signal: AbortSignal.timeout(API_REQUEST_TIMEOUT),
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const data = (await response.json()) as { position: VehiclePosition | null };
+  return data.position;
 };

@@ -9,6 +9,7 @@ import {
 } from '../utils/timeCalculations';
 import { logger } from '../utils/logger';
 import { Train, Bus } from 'lucide-react';
+import { VehiclePosition } from './VehiclePosition';
 
 interface DepartureBoardProps {
   departures: Departure[];
@@ -123,6 +124,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
         <div className="w-14 sm:w-16" role="columnheader">Příjezd</div>
         <div className="hidden sm:block w-14" role="columnheader">Cesta</div>
         <div className="flex-1 text-right" role="columnheader">Za</div>
+        {!targetDateTime && <div className="w-7" role="columnheader"><span className="sr-only">Poloha</span></div>}
       </div>
 
       {sorted.map((departure, index) => {
@@ -134,7 +136,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
           <div
             key={`${departure.line}-${departure.scheduledTime}-${index}`}
             className={`
-              flex items-center gap-2 px-3 py-2.5 sm:py-3 transition-colors duration-150
+              flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2.5 sm:py-3 transition-colors duration-150
               hover:bg-white/[0.03]
               ${index === 0 ? 'bg-white/[0.02]' : ''}
               ${index < sorted.length - 1 ? 'border-b border-white/[0.08]' : ''}
@@ -178,6 +180,10 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
                 {minutesUntil !== null ? formatCountdown(minutesUntil, !!targetDateTime) : '--'}
               </span>
             </div>
+
+            {!targetDateTime && (departure.tripId !== 'N/A'
+              ? <VehiclePosition tripId={departure.tripId} line={departure.line} />
+              : <div className="w-7" role="cell" />)}
           </div>
         );
       })}
