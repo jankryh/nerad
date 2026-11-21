@@ -5,6 +5,7 @@ import {
   formatTime,
   getEnhancedTravelTime,
   calculateActualDepartureTime,
+  formatCountdown,
 } from '../utils/timeCalculations';
 import { logger } from '../utils/logger';
 import { Train, Bus } from 'lucide-react';
@@ -88,18 +89,6 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
     } catch {
       return null;
     }
-  };
-
-  const formatCountdown = (minutes: number): string => {
-    if (targetDateTime) {
-      const sign = minutes > 0 ? '+' : '';
-      return `${sign}${minutes} min`;
-    }
-    if (minutes <= 0) return 'teď';
-    if (minutes < 60) return `${minutes} min`;
-    const hours = Math.floor(minutes / 60);
-    const rem = minutes % 60;
-    return rem === 0 ? `${hours} h` : `${hours} h ${rem} min`;
   };
 
   const sorted = useMemo(() =>
@@ -186,7 +175,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
 
             <div className="flex-1 text-right" role="cell">
               <span className={`font-mono font-bold text-lg sm:text-xl ${index === 0 ? 'text-primary-400' : 'text-white'}`}>
-                {minutesUntil !== null ? formatCountdown(minutesUntil) : '--'}
+                {minutesUntil !== null ? formatCountdown(minutesUntil, !!targetDateTime) : '--'}
               </span>
             </div>
           </div>

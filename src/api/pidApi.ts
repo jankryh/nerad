@@ -314,7 +314,16 @@ export const getAllDepartures = async (targetDateTime?: Date | null, pragueStati
 
   // Evaluate Bubny hint flag only when Masarykovo board is empty
   if (bubnyHintPromise && masarykovoToRez.departures.length === 0 && !masarykovoToRez.error) {
-    const bubnyBoard = await bubnyHintPromise;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const timeoutPromise = new Promise<null>((resolve) => {
+      timeoutId = setTimeout(() => resolve(null), 1500);
+    });
+
+    const bubnyBoard = await Promise.race([bubnyHintPromise, timeoutPromise]);
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
+
     if (bubnyBoard && bubnyBoard.departures.length > 0) {
       masarykovoToRez.bubnyHasTrains = true;
     }

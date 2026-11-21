@@ -35,7 +35,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({ value, onChange 
         <Calendar className="absolute left-2 w-3.5 h-3.5 text-zinc-400 pointer-events-none" aria-hidden="true" />
         <input
           type="datetime-local"
-          value={value ? toInputValue(value) : ''}
+          value={toInputValue(value ?? now)}
           onChange={handleChange}
           min={toInputValue(now)}
           max={toInputValue(maxDate)}
