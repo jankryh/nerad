@@ -126,7 +126,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
         style={{ color: 'color-mix(in srgb, var(--color-text) 55%, transparent)' }}
         role="row"
       >
-        <div className="w-12 sm:w-16" role="columnheader">Odjezd</div>
+        <div className="w-[4.25rem] sm:w-20" role="columnheader">Odjezd</div>
         <div className="w-12 sm:w-14 text-center" role="columnheader">Linka</div>
         <div className="w-12 sm:w-16" role="columnheader">Příjezd</div>
         <div className="hidden sm:block w-14" role="columnheader">Cesta</div>
@@ -157,7 +157,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
               `}
               role="row"
             >
-              <div className="w-12 sm:w-16 flex-shrink-0" role="cell">
+              <div className="w-[4.25rem] sm:w-20 flex-shrink-0 whitespace-nowrap" role="cell">
                 <span
                   className={`font-mono font-bold text-sm sm:text-base lg:text-lg ${hasDelay ? 'text-red-400' : 'text-white'}`}
                 >
