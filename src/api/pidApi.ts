@@ -288,8 +288,10 @@ export const getAllDepartures = async (targetDateTime?: Date | null, pragueStati
   ]);
   const failed = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
   if (failed.length === results.length) {
-    logger.error('Failed to load all departures', failed[0].reason);
-    throw toApiError(failed[0].reason);
+    // Prefer 429 from any board so the hook shows the rate-limit message
+    const reason = failed.find((r) => (r.reason as ApiError | null)?.status === 429)?.reason ?? failed[0].reason;
+    logger.error('Failed to load all departures', reason);
+    throw toApiError(reason);
   }
 
   const [rezToMasarykovo, masarykovoToRez, husinecsToKobylisy, kobylisyToHusinec] = results.map(

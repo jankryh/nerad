@@ -46,4 +46,11 @@ describe('pidApi', () => {
     await expect(getAllDepartures(null, 'masarykovo', false)).rejects.toMatchObject({ status: 503 });
     vi.unstubAllGlobals();
   });
+
+  it('reports 429 when any of the failed boards was rate limited', async () => {
+    let call = 0;
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response('', { status: ++call === 3 ? 429 : 503 }))));
+    await expect(getAllDepartures(null, 'masarykovo', false)).rejects.toMatchObject({ status: 429 });
+    vi.unstubAllGlobals();
+  });
 });

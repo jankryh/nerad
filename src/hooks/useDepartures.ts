@@ -164,11 +164,15 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
     }
   }, [clearTimers, scheduleRetry, targetDateTime, pragueStation]);
 
-  const manualRetry = useCallback(() => {
+  // Manual retry/refresh cancels a pending retry (it would overwrite this result) and restarts the count
+  const manualFetch = useCallback((useCache: boolean) => {
     clearTimers();
+    retryCountRef.current = 0;
+    setRetryCount(0);
     setError(null);
-    fetchData(false);
+    fetchData(false, useCache);
   }, [clearTimers, fetchData]);
+  const manualRetry = useCallback(() => manualFetch(true), [manualFetch]);
 
   useEffect(() => {
     // New selection (date/station): don't show the previous selection's departures meanwhile
@@ -203,7 +207,7 @@ export const useDepartures = (targetDateTime?: Date | null, pragueStation: Pragu
     isLoading,
     error,
     lastUpdate,
-    refreshData: () => fetchData(false, false),
+    refreshData: () => manualFetch(false),
     retryCount,
     isRetrying,
     nextRetryIn,
