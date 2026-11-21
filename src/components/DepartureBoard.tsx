@@ -99,7 +99,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
     if (minutes < 60) return `${minutes} min`;
     const hours = Math.floor(minutes / 60);
     const rem = minutes % 60;
-    return rem === 0 ? `${hours}h` : `${hours}h ${rem}m`;
+    return rem === 0 ? `${hours} h` : `${hours} h ${rem} m`;
   };
 
   const sorted = useMemo(() =>
@@ -185,7 +185,7 @@ export const DepartureBoard: React.FC<DepartureBoardProps> = ({
             </div>
 
             <div className="flex-1 text-right" role="cell">
-              <span className={`font-mono font-bold text-sm sm:text-base lg:text-lg ${index === 0 ? 'text-primary-400' : 'text-white'}`}>
+              <span className={`font-mono font-bold text-lg sm:text-xl ${index === 0 ? 'text-primary-400' : 'text-white'}`}>
                 {minutesUntil !== null ? formatCountdown(minutesUntil) : '--'}
               </span>
             </div>
